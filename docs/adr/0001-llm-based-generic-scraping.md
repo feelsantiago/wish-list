@@ -1,0 +1,3 @@
+# LLM-based generic scraping instead of per-vendor parsers
+
+Items are captured from arbitrary retailer URLs, so we need to extract name/price/image/currency from pages we don't control. Instead of writing structured scrapers per vendor (Amazon parser, Mercado Livre parser, ...), we feed page content to an LLM and ask for structured JSON. This works immediately on any site without per-vendor maintenance, at the cost of per-request latency/spend and occasional extraction errors — mitigated by letting users manually correct fields afterward. Per-vendor parsers can be added later for specific high-volume vendors if precision or cost demands it.

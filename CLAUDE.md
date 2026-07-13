@@ -21,3 +21,8 @@
 - The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
 
 <!-- nx configuration end-->
+
+# Code Style
+
+- No `try`/`catch` in `libs/domain` (or anywhere `Result` is idiomatic). Use `Result.fromThrowable` and chain `.map`/`.mapErr`/`.unwrapOr` instead.
+- No `switch` statements on discriminated unions. Use `ts-pattern`'s `match(...).with(...).exhaustive()` instead.
