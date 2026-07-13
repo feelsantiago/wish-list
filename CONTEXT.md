@@ -47,14 +47,14 @@ The currency an Item's price was scraped in (e.g. USD, BRL). Never converted or 
 An Item's price after its attached Coupon is factored in, shown alongside the original scraped price. Items can be filtered by whether one is present.
 
 **Sharing**:
-Publishing a Wishlist at an unlisted link, viewable by anyone with it, without requiring the viewer to sign in.
+Publishing a Wishlist at its own stable, unlisted link, viewable by anyone with it, without requiring the viewer to sign in. Every Wishlist carries this link from creation but is only reachable by it while published; the owner can unpublish (closing the link entirely) or replace the link (invalidating the old one without unpublishing).
 
 **Reservation**:
-A Pro-only claim a Sharing viewer places on an Item, with their name attached, to signal to other viewers it's already being gifted. Whether the Wishlist's owner can see Reservations is controlled per-Wishlist (see Surprise Mode).
+A Pro-only claim a Sharing viewer places on an Item, with their name attached, to signal to other viewers it's already being gifted. At most one per Item. The viewer who placed it can cancel it later. Whether the Wishlist's owner can see Reservations at all is controlled per-Wishlist (see Surprise Mode).
 _Avoid_: Purchased, Claimed
 
 **Surprise Mode**:
-A per-Wishlist setting controlling whether the owner can see Reservations on their own Items. On for gift lists (owner stays surprised); off for lists like donations, where the owner wants to see who's taking what.
+A per-Wishlist style, either `surprise` (owner can't see Reservations on their own Items — the default, for gift lists) or `default` (owner can see them, e.g. for donation-style lists where the owner wants to see who's taking what).
 
 **Tracked Item**:
 An Item a User has opted into daily automatic price fetching for (Pro-only). Each fetch appends to the Item's Price History rather than triggering a notification.

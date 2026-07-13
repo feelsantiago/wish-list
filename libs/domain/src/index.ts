@@ -12,6 +12,12 @@ export { Currency } from './lib/currency/currency.js';
 export { Vendor } from './lib/vendor/vendor.js';
 export { Category } from './lib/category/category.js';
 export { Wishlist } from './lib/wishlist/wishlist.js';
+export type {
+  WishlistStyle,
+  DefaultWishlist,
+  SurpriseWishlist,
+} from './lib/wishlist/wishlist.js';
+export { Reservation } from './lib/reservation/reservation.js';
 export { Money } from './lib/money/money.js';
 export { Item } from './lib/item/item.js';
 export type {
@@ -30,3 +36,5 @@ export type {
   PercentageCoupon,
 } from './lib/coupon/coupon.js';
 export { CouponRule } from './lib/coupon-rule/coupon-rule.js';
+export { TrackedItem } from './lib/tracked-item/tracked-item.js';
+export { PriceHistory } from './lib/price-history/price-history.js';
