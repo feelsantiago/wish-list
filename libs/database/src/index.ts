@@ -10,4 +10,9 @@ export type {
   RepositoryTable,
   RepositoryOptions,
 } from './lib/repository/repository.js';
+export { UserRepository } from './lib/user/user.repository.js';
+export { WishlistRepository } from './lib/wishlist/wishlist.repository.js';
+export { CategoryRepository } from './lib/category/category.repository.js';
+export { VendorRepository } from './lib/vendor/vendor.repository.js';
+export { ItemRepository } from './lib/item/item.repository.js';
 

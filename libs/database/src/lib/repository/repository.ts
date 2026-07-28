@@ -35,7 +35,7 @@ export abstract class Repository<
   protected readonly db: LibSQLDatabase;
   protected readonly table: TTable;
   private readonly toRowFn: (entity: TEntity) => TRow;
-  private readonly fromRowFn: (row: TRow) => Result<TEntity, DatabaseFailure>;
+  protected readonly fromRowFn: (row: TRow) => Result<TEntity, DatabaseFailure>;
 
   protected constructor(options: RepositoryOptions<TEntity, TRow, TTable>) {
     this.db = options.db;
@@ -81,7 +81,17 @@ export abstract class Repository<
     );
   }
 
-  private translate(error: unknown): DatabaseFailure {
+  protected sequence(rows: readonly TRow[]): Result<TEntity[], DatabaseFailure> {
+    const entities: TEntity[] = [];
+    for (const row of rows) {
+      const result = this.fromRowFn(row);
+      if (result.isErr()) return result as unknown as Result<TEntity[], DatabaseFailure>;
+      entities.push(result.value);
+    }
+    return Result.ok(entities);
+  }
+
+  protected translate(error: unknown): DatabaseFailure {
     const err = error instanceof Error ? error : new Error(String(error));
     return this.isConstraintError(err)
       ? DatabaseFailure.constraint(err)
