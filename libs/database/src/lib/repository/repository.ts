@@ -92,14 +92,6 @@ export abstract class Repository<
   }
 
   protected translate(error: unknown): DatabaseFailure {
-    const err = error instanceof Error ? error : new Error(String(error));
-    return this.isConstraintError(err)
-      ? DatabaseFailure.constraint(err)
-      : DatabaseFailure.query(err);
-  }
-
-  private isConstraintError(error: Error): boolean {
-    const code = (error as { code?: unknown }).code;
-    return typeof code === 'string' && code.startsWith('SQLITE_CONSTRAINT');
+    return DatabaseFailure.fromDriverError(error);
   }
 }
