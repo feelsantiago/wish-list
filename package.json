@@ -12,6 +12,7 @@
     "@nx/vite": "^23.0.1",
     "@nx/vitest": "23.0.1",
     "@nx/web": "23.0.1",
+    "@nestjs/testing": "^11.1.28",
     "@swc-node/register": "1.11.1",
     "@swc/core": "1.15.8",
     "@swc/helpers": "0.5.18",
@@ -37,6 +38,7 @@
   "dependencies": {
     "@libsql/client": "^0.17.4",
     "@nestjs/common": "^11.1.28",
+    "@nestjs/core": "^11.1.28",
     "drizzle-orm": "^0.45.2",
     "magic-regexp": "^0.11.0",
     "picocolors": "^1.1.1",

@@ -15,4 +15,6 @@ export { WishlistRepository } from './lib/wishlist/wishlist.repository.js';
 export { CategoryRepository } from './lib/category/category.repository.js';
 export { VendorRepository } from './lib/vendor/vendor.repository.js';
 export { ItemRepository } from './lib/item/item.repository.js';
+export { createDatabaseClient } from './lib/client/client.js';
+export { DatabaseModule, DATABASE_CLIENT } from './lib/database.module.js';
 
