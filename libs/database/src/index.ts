@@ -12,6 +12,7 @@ export type {
   RepositoryOptions,
 } from './lib/repository/repository.js';
 export { DatabaseDomainMapper } from './lib/mapper/database-domain-mapper.js';
+export type { DomainMapper } from './lib/mapper/domain-mapper.js';
 export { UserRepository } from './lib/user/user.repository.js';
 export { WishlistRepository } from './lib/wishlist/wishlist.repository.js';
 export { CategoryRepository } from './lib/category/category.repository.js';

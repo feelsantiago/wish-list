@@ -1,6 +1,7 @@
 import { Result } from '@wish-list/common-result';
 import type { DomainFailure } from '@wish-list/domain';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
+import type { DomainMapper } from './domain-mapper.js';
 
 function wrap<TRow, TEntity>(
   fromFn: (row: TRow) => TEntity,
@@ -11,7 +12,9 @@ function wrap<TRow, TEntity>(
     );
 }
 
-export class DatabaseDomainMapper<TEntity, TRow> {
+export class DatabaseDomainMapper<TEntity, TRow>
+  implements DomainMapper<TEntity, TRow>
+{
   private readonly toRowFn: (entity: TEntity) => TRow;
   private readonly fromRowFn: (row: TRow) => Result<TEntity, DatabaseFailure>;
 

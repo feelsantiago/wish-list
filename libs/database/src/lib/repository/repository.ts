@@ -3,7 +3,7 @@ import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { AsyncResult } from '@wish-list/common-result';
 import type { Id } from '@wish-list/domain';
-import type { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
+import type { DomainMapper } from '../mapper/domain-mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
 import { DatabaseError } from '../database-failure/database-error.js';
 
@@ -27,7 +27,7 @@ export abstract class Repository<
     this.table = options.table;
   }
 
-  protected abstract mapper(): DatabaseDomainMapper<TEntity, TRow>;
+  protected abstract mapper(): DomainMapper<TEntity, TRow>;
 
   public find(id: Id): AsyncResult<TEntity, DatabaseFailure> {
     return AsyncResult.fromThrowable(
