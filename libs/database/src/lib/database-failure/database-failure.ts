@@ -20,14 +20,4 @@ export namespace DatabaseFailure {
   export function mapping(source: DomainFailure): Failure<'mapping'> {
     return Failure.from(source, {}, 'mapping');
   }
-
-  export function fromDriverError(error: unknown): DatabaseFailure {
-    const source = error instanceof Error ? error : new Error(String(error));
-    return isConstraintError(source) ? constraint(source) : query(source);
-  }
-
-  function isConstraintError(error: Error): boolean {
-    const code = (error as { code?: unknown }).code;
-    return typeof code === 'string' && code.startsWith('SQLITE_CONSTRAINT');
-  }
 }

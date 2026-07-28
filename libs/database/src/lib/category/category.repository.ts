@@ -3,8 +3,10 @@ import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Category } from '@wish-list/domain';
 import type { Plain, Id } from '@wish-list/domain';
 import { AsyncResult } from '@wish-list/common-result';
-import { Repository, wrap } from '../repository/repository.js';
-import type { DatabaseFailure } from '../database-failure/database-failure.js';
+import { Repository } from '../repository/repository.js';
+import { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
+import { DatabaseFailure } from '../database-failure/database-failure.js';
+import { DatabaseError } from '../database-failure/database-error.js';
 import { categories } from './category.schema.js';
 
 export class CategoryRepository extends Repository<
@@ -12,24 +14,29 @@ export class CategoryRepository extends Repository<
   Plain<Category>,
   typeof categories
 > {
+  private readonly _mapper = DatabaseDomainMapper.create(
+    Category.plain,
+    Category.from,
+  );
+
   public constructor(db: LibSQLDatabase) {
     super({
       db,
       table: categories,
-      toRow: Category.plain,
-      fromRow: wrap(Category.from),
     });
+  }
+
+  protected mapper(): DatabaseDomainMapper<Category, Plain<Category>> {
+    return this._mapper;
   }
 
   public findByUser(user: Id): AsyncResult<Category[], DatabaseFailure> {
     return AsyncResult.fromThrowable(
       () =>
-        this.db
-          .select()
-          .from(this.table)
-          .where(eq(this.table.user, user))
-          .then((rows) => rows as Plain<Category>[]),
-      (error) => this.translate(error),
-    ).andThen((rows) => this.sequence(rows));
+        this.db.select().from(this.table).where(eq(this.table.user, user)) as unknown as Promise<
+          Plain<Category>[]
+        >,
+      (error) => DatabaseError.from(error).failure(),
+    ).andThen((rows) => this.mapper().domain(rows));
   }
 }

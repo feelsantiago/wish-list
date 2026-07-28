@@ -1,30 +1,17 @@
 import { eq } from 'drizzle-orm';
 import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
-import { Result, AsyncResult } from '@wish-list/common-result';
-import type { Id, DomainFailure } from '@wish-list/domain';
+import { AsyncResult } from '@wish-list/common-result';
+import type { Id } from '@wish-list/domain';
+import type { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
+import { DatabaseError } from '../database-failure/database-error.js';
 
 export type RepositoryTable = SQLiteTable & { readonly id: SQLiteColumn };
 
-export interface RepositoryOptions<
-  TEntity,
-  TRow extends { readonly id: string },
-  TTable extends RepositoryTable,
-> {
+export interface RepositoryOptions<TTable extends RepositoryTable> {
   readonly db: LibSQLDatabase;
   readonly table: TTable;
-  readonly toRow: (entity: TEntity) => TRow;
-  readonly fromRow: (row: TRow) => Result<TEntity, DatabaseFailure>;
-}
-
-export function wrap<TRow, TEntity>(
-  fromFn: (row: TRow) => TEntity,
-): (row: TRow) => Result<TEntity, DatabaseFailure> {
-  return (row) =>
-    Result.fromThrowable<TEntity, DomainFailure>(() => fromFn(row)).mapErr(
-      (error) => DatabaseFailure.mapping(error),
-    );
 }
 
 export abstract class Repository<
@@ -34,15 +21,13 @@ export abstract class Repository<
 > {
   protected readonly db: LibSQLDatabase;
   protected readonly table: TTable;
-  private readonly toRowFn: (entity: TEntity) => TRow;
-  protected readonly fromRowFn: (row: TRow) => Result<TEntity, DatabaseFailure>;
 
-  protected constructor(options: RepositoryOptions<TEntity, TRow, TTable>) {
+  protected constructor(options: RepositoryOptions<TTable>) {
     this.db = options.db;
     this.table = options.table;
-    this.toRowFn = options.toRow;
-    this.fromRowFn = options.fromRow;
   }
+
+  protected abstract mapper(): DatabaseDomainMapper<TEntity, TRow>;
 
   public find(id: Id): AsyncResult<TEntity, DatabaseFailure> {
     return AsyncResult.fromThrowable(
@@ -52,24 +37,20 @@ export abstract class Repository<
           .from(this.table)
           .where(eq(this.table.id, id))
           .then((rows) => rows[0] as TRow | undefined),
-      (error) => this.translate(error),
-    ).andThen((row) =>
-      row === undefined
-        ? Result.err(DatabaseFailure.notFound(id))
-        : this.fromRowFn(row),
-    );
+      (error) => DatabaseError.from(error).failure(),
+    ).andThen((row) => this.mapper().domain(row, DatabaseFailure.notFound(id)));
   }
 
   public insert(entity: TEntity): AsyncResult<TEntity, DatabaseFailure> {
-    const row = this.toRowFn(entity);
+    const row = this.mapper().database(entity);
     return AsyncResult.fromThrowable(
       () => this.db.insert(this.table).values(row).then(() => entity),
-      (error) => this.translate(error),
+      (error) => DatabaseError.from(error).failure(),
     );
   }
 
   public update(entity: TEntity): AsyncResult<TEntity, DatabaseFailure> {
-    const row = this.toRowFn(entity);
+    const row = this.mapper().database(entity);
     return AsyncResult.fromThrowable(
       () =>
         this.db
@@ -77,21 +58,7 @@ export abstract class Repository<
           .set(row)
           .where(eq(this.table.id, row.id))
           .then(() => entity),
-      (error) => this.translate(error),
+      (error) => DatabaseError.from(error).failure(),
     );
-  }
-
-  protected sequence(rows: readonly TRow[]): Result<TEntity[], DatabaseFailure> {
-    const entities: TEntity[] = [];
-    for (const row of rows) {
-      const result = this.fromRowFn(row);
-      if (result.isErr()) return result as unknown as Result<TEntity[], DatabaseFailure>;
-      entities.push(result.value);
-    }
-    return Result.ok(entities);
-  }
-
-  protected translate(error: unknown): DatabaseFailure {
-    return DatabaseFailure.fromDriverError(error);
   }
 }

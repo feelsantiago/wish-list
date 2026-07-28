@@ -4,8 +4,10 @@ import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Item } from '@wish-list/domain';
 import type { Currency, Id, Plain, Url } from '@wish-list/domain';
 import { AsyncResult } from '@wish-list/common-result';
-import { Repository, wrap } from '../repository/repository.js';
-import type { DatabaseFailure } from '../database-failure/database-failure.js';
+import { Repository } from '../repository/repository.js';
+import { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
+import { DatabaseFailure } from '../database-failure/database-failure.js';
+import { DatabaseError } from '../database-failure/database-error.js';
 import { items } from './item.schema.js';
 
 type ItemRow = typeof items.$inferSelect;
@@ -85,16 +87,21 @@ function toPlainItem(row: ItemRow): Plain<Item> {
     .exhaustive();
 }
 
-const fromRow = wrap((row: ItemRow) => Item.from(toPlainItem(row)));
-
 export class ItemRepository extends Repository<Item, ItemRow, typeof items> {
+  private readonly _mapper = DatabaseDomainMapper.create(
+    toRow,
+    (row: ItemRow) => Item.from(toPlainItem(row)),
+  );
+
   public constructor(db: LibSQLDatabase) {
     super({
       db,
       table: items,
-      toRow,
-      fromRow,
     });
+  }
+
+  protected mapper(): DatabaseDomainMapper<Item, ItemRow> {
+    return this._mapper;
   }
 
   public findByWishlist(wishlist: Id): AsyncResult<Item[], DatabaseFailure> {
@@ -103,9 +110,10 @@ export class ItemRepository extends Repository<Item, ItemRow, typeof items> {
         this.db
           .select()
           .from(this.table)
-          .where(eq(this.table.wishlist, wishlist))
-          .then((rows) => rows as ItemRow[]),
-      (error) => this.translate(error),
-    ).andThen((rows) => this.sequence(rows));
+          .where(eq(this.table.wishlist, wishlist)) as unknown as Promise<
+          ItemRow[]
+        >,
+      (error) => DatabaseError.from(error).failure(),
+    ).andThen((rows) => this.mapper().domain(rows));
   }
 }
