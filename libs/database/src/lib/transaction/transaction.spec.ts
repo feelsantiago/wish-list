@@ -1,6 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect } from 'vitest';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
+import { User } from '@wish-list/domain';
 import { Database } from './transaction.js';
+import { createTestDatabase } from '../testing/test-db.js';
+import type { TestDatabase } from '../testing/test-db.js';
+import { makeUser } from '../testing/fixtures.js';
+import { users } from '../user/user.schema.js';
+import { UserRepository } from '../user/user.repository.js';
 
 function fakeDb(
   transactionImpl: (fn: (tx: never) => unknown) => Promise<unknown>,
@@ -37,5 +43,36 @@ describe('Database.transaction', () => {
       { ok: () => 'ok', err: (failure) => failure.name },
     );
     expect(name).toBe('query');
+  });
+});
+
+describe('Database.transaction (real db)', () => {
+  let testDb: TestDatabase;
+  let db: LibSQLDatabase;
+
+  beforeEach(async () => {
+    testDb = await createTestDatabase();
+    db = testDb.db;
+  });
+
+  afterEach(() => testDb.close());
+
+  it('rolls back the first write when the second write violates a constraint', async () => {
+    const first = makeUser();
+    const second = makeUser({ email: first.email });
+
+    const name = await Database.transaction(db, async (tx) => {
+      await tx.insert(users).values(User.plain(first));
+      await tx.insert(users).values(User.plain(second));
+    }).match({ ok: () => 'ok', err: (failure) => failure.name });
+
+    expect(name).toBe('constraint');
+
+    await new UserRepository(db).find(first.id).match({
+      ok: () => {
+        throw new Error('expected notFound: first insert should have rolled back');
+      },
+      err: (failure) => expect(failure.name).toBe('notFound'),
+    });
   });
 });
