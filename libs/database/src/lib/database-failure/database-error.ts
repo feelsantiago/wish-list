@@ -10,8 +10,11 @@ export class DatabaseError {
   }
 
   public failure(): DatabaseFailure {
-    const source = this.source as Error & { code?: unknown };
-    return match(source)
+    const source = this.source as Error & {
+      code?: unknown;
+      cause?: { code?: unknown };
+    };
+    return match({ code: source.code ?? source.cause?.code })
       .with(
         { code: P.string.startsWith('SQLITE_CONSTRAINT') },
         () => DatabaseFailure.constraint(this.source),
