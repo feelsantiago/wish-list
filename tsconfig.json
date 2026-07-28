@@ -11,6 +11,9 @@
     },
     {
       "path": "./libs/domain"
+    },
+    {
+      "path": "./libs/database"
     }
   ]
 }

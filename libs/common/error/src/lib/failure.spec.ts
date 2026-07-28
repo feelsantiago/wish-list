@@ -29,6 +29,14 @@ describe('Failure.from', () => {
     expect(f.metadata).toEqual({ context: 'test' });
   });
 
+  it('creates from Error with target name, keeps Error as source', () => {
+    const err = new Error('SQLITE_CONSTRAINT');
+    const f = Failure.from(err, { driver: err.name }, 'constraint');
+    expect(f.name).toBe('constraint');
+    expect(f.source).toBe(err);
+    expect(f.metadata).toEqual({ driver: err.name });
+  });
+
   it('creates from unknown by stringifying', () => {
     const f = Failure.from(123);
     expect(f.message).toBe('123');
@@ -46,6 +54,21 @@ describe('Failure.from', () => {
     expect(wrapped).not.toBe(original);
     expect(wrapped.source).toBe(original);
     expect(wrapped.metadata).toEqual({ extra: 'data' });
+  });
+
+  it('overrides name when target name given, keeps source chain', () => {
+    const original = Failure.create('validation', 'invalid input');
+    const wrapped = Failure.from(original, { entity: 'User' }, 'mapping');
+    expect(wrapped.name).toBe('mapping');
+    expect(wrapped.source).toBe(original);
+    expect(wrapped.toString()).toContain('caused by:');
+  });
+
+  it('overrides name even with empty metadata', () => {
+    const original = Failure.create('validation', 'invalid input');
+    const wrapped = Failure.from(original, {}, 'mapping');
+    expect(wrapped.name).toBe('mapping');
+    expect(wrapped).not.toBe(original);
   });
 });
 

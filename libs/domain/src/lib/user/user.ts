@@ -1,11 +1,12 @@
 import { z, ZodError } from 'zod';
-import { Result } from '@wish-list/common-result';
+import { Result, Option } from '@wish-list/common-result';
 import type { Plain } from '../plain/plain.js';
 import { Id } from '../id/id.js';
 import { Email } from '../email/email.js';
 import { DomainFailure } from '../domain-failure/domain-failure.js';
 
 export type Plan = 'free' | 'pro';
+export type Status = 'active' | 'deactivated';
 
 export interface User {
   readonly id: Id;
@@ -14,12 +15,17 @@ export interface User {
   readonly provider: string;
   readonly providerId: string;
   readonly plan: Plan;
+  readonly status: Status;
+  readonly deactivatedAt: Option<Date>;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
 
 export type FreeUser = User & { readonly plan: 'free' };
 export type ProUser = User & { readonly plan: 'pro' };
+
+export type ActiveUser = User & { readonly status: 'active' };
+export type DeactivatedUser = User & { readonly status: 'deactivated' };
 
 export namespace User {
   export const $ = z.object({
@@ -54,10 +60,30 @@ export namespace User {
           provider: value.provider,
           providerId: value.providerId,
           plan: 'free',
+          status: 'active',
+          deactivatedAt: Option.none(),
           createdAt: now,
           updatedAt: now,
         };
       });
+  }
+
+  export function deactivate(user: ActiveUser): DeactivatedUser {
+    return {
+      ...user,
+      status: 'deactivated',
+      deactivatedAt: Option.some(new Date()),
+      updatedAt: new Date(),
+    };
+  }
+
+  export function reactivate(user: DeactivatedUser): ActiveUser {
+    return {
+      ...user,
+      status: 'active',
+      deactivatedAt: Option.none(),
+      updatedAt: new Date(),
+    };
   }
 
   export function from(plain: Plain<User>): User {
@@ -68,6 +94,10 @@ export namespace User {
       provider: plain.provider,
       providerId: plain.providerId,
       plan: plain.plan,
+      status: plain.status,
+      deactivatedAt: Option.from(plain.deactivatedAt).map(
+        (value) => new Date(value),
+      ),
       createdAt: new Date(plain.createdAt),
       updatedAt: new Date(plain.updatedAt),
     };
@@ -81,6 +111,11 @@ export namespace User {
       provider: user.provider,
       providerId: user.providerId,
       plan: user.plan,
+      status: user.status,
+      deactivatedAt: user.deactivatedAt.match({
+        some: (value) => value.toISOString(),
+        none: () => null,
+      }),
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     };

@@ -45,10 +45,16 @@ export class Failure<T extends string = 'Failure'> extends Error {
     input: Error,
     metadata: Record<string, unknown>,
   ): Failure<'Failure'>;
-  public static from<F extends Failure>(input: F): F;
   public static from<N extends string>(
-    input: Failure,
+    input: Error,
+    metadata: Record<string, unknown>,
+    name: N,
+  ): Failure<N>;
+  public static from<F extends Failure<string>>(input: F): F;
+  public static from<N extends string>(
+    input: Failure<string>,
     metadata?: Record<string, unknown>,
+    name?: N,
   ): Failure<N>;
   public static from(
     input: unknown,
@@ -57,26 +63,29 @@ export class Failure<T extends string = 'Failure'> extends Error {
   public static from<N extends string = 'Failure'>(
     input: unknown,
     metadata: Record<string, unknown> = {},
+    name?: N,
   ): Failure<N> | Failure<'Failure'> {
     return match(input)
       .with(
         P.when(
           (v): v is Failure =>
-            v instanceof Failure && Object.keys(metadata).length === 0,
+            v instanceof Failure &&
+            Object.keys(metadata).length === 0 &&
+            name === undefined,
         ),
         (f) => f as Failure<N>,
       )
       .with(
         P.when((v): v is Failure => v instanceof Failure),
         (f) =>
-          new Failure<N>(f.name as N, f.message, f, {
+          new Failure<N>(name ?? (f.name as N), f.message, f, {
             ...f.metadata,
             ...metadata,
           }),
       )
       .with(
         P.when((v): v is Error => v instanceof Error),
-        (e) => new Failure<'Failure'>('Failure', e.message, e, metadata),
+        (e) => new Failure<N>(name ?? ('Failure' as N), e.message, e, metadata),
       )
       .with(
         P.string,
