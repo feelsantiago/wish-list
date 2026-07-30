@@ -7,6 +7,11 @@ import { WishlistRepository } from './wishlist/wishlist.repository.js';
 import { CategoryRepository } from './category/category.repository.js';
 import { VendorRepository } from './vendor/vendor.repository.js';
 import { ItemRepository } from './item/item.repository.js';
+import { CouponRepository } from './coupon/coupon.repository.js';
+import { CouponRuleRepository } from './coupon-rule/coupon-rule.repository.js';
+import { ReservationRepository } from './reservation/reservation.repository.js';
+import { TrackedItemRepository } from './tracked-item/tracked-item.repository.js';
+import { PriceHistoryRepository } from './price-history/price-history.repository.js';
 
 export const DATABASE_CLIENT = Symbol('DATABASE_CLIENT');
 
@@ -38,6 +43,11 @@ const repositoryProviders = [
   repositoryProvider(CategoryRepository),
   repositoryProvider(VendorRepository),
   repositoryProvider(ItemRepository),
+  repositoryProvider(CouponRepository),
+  repositoryProvider(CouponRuleRepository),
+  repositoryProvider(ReservationRepository),
+  repositoryProvider(TrackedItemRepository),
+  repositoryProvider(PriceHistoryRepository),
 ];
 
 @Module({
@@ -49,6 +59,11 @@ const repositoryProviders = [
     CategoryRepository,
     VendorRepository,
     ItemRepository,
+    CouponRepository,
+    CouponRuleRepository,
+    ReservationRepository,
+    TrackedItemRepository,
+    PriceHistoryRepository,
   ],
 })
 export class DatabaseModule {}
