@@ -6,7 +6,7 @@
 
 Add `TrackedItem` (`libs/domain/src/lib/tracked-item/tracked-item.ts`, ADR-0007 interface + namespace pattern): a single row per `Item`, for the `Item`'s whole life, toggled on/off rather than recreated. `active: boolean` records whether daily fetching is currently happening; `stop`/`resume` flip it (mirroring `Wishlist.publish`/`unpublish` exactly — a boolean flip can't fail, so both return `TrackedItem` directly, no `Result`). `create` likewise takes only an already-trusted `item: Id` with nothing to validate, so it also returns `TrackedItem` directly.
 
-Add `PriceHistory` (`libs/domain/src/lib/price-history/price-history.ts`): an immutable, create-only record of one fetched price at one point in time, FK'd to `TrackedItem` (not directly to `Item`) via `trackedItem: Id`. `price: Money` arrives pre-constructed, so `create` is also a plain-returning function — this PRD introduces the domain's first two entities with zero `Result`/`DomainFailure` surface, a direct consequence of both `create` functions taking only already-trusted/already-validated inputs.
+Add `PriceHistory` (`libs/domain/src/lib/price-history/price-history.ts`): an immutable, create-only record of one fetched price at one point in time, FK'd to `Item` via `item: Id`. `price: Money` arrives pre-constructed, so `create` is also a plain-returning function — this PRD introduces the domain's first two entities with zero `Result`/`DomainFailure` surface, a direct consequence of both `create` functions taking only already-trusted/already-validated inputs.
 
 ## User Stories
 
@@ -19,15 +19,15 @@ Add `PriceHistory` (`libs/domain/src/lib/price-history/price-history.ts`): an im
 
 ### PriceHistory
 
-5. As a developer, I want a `PriceHistory` interface: `id: Id`, `trackedItem: Id`, `price: Money`, `fetchedAt: Date` — no `updatedAt` (immutable once recorded; create-only, same as `Reservation`).
-6. As a developer, I want `PriceHistory.create(input: { trackedItem: Id; price: Money }): PriceHistory` — treats both `trackedItem` and `price` as already-trusted/already-validated, generates `id`, stamps `fetchedAt`. No `Result`, no `zod` schema.
+5. As a developer, I want a `PriceHistory` interface: `id: Id`, `item: Id`, `price: Money`, `fetchedAt: Date` — no `updatedAt` (immutable once recorded; create-only, same as `Reservation`).
+6. As a developer, I want `PriceHistory.create(input: { item: Id; price: Money }): PriceHistory` — treats both `item` and `price` as already-trusted/already-validated, generates `id`, stamps `fetchedAt`. No `Result`, no `zod` schema.
 7. As a developer, I want `PriceHistory.from(plain)`/`PriceHistory.plain(priceHistory)` per ADR-0007/0009.
 
 ## Implementation Decisions
 
 - **File locations:** `libs/domain/src/lib/tracked-item/tracked-item.ts` and `libs/domain/src/lib/price-history/price-history.ts`, following the `coupon`/`coupon-rule` two-folder pattern for paired-but-separate entities.
 - **One `TrackedItem` per `Item`, for its lifetime:** re-tracking after `stop` calls `resume` on the same row, it does not `create` a new one. A `libs/database` unique constraint on `TrackedItem.item` enforces this — same precedent as `Reservation.item`, `Category.name`, `Coupon.code`.
-- **`PriceHistory.trackedItem` FK, not `PriceHistory.item`:** Price History rows point at the `TrackedItem`, not the `Item` directly, since `TrackedItem` is the entity that owns the tracking relationship and its lifecycle.
+- **`PriceHistory.item` FK, not `PriceHistory.trackedItem`:** Price History rows point directly at the `Item`, not at the `TrackedItem`.
 - **No dedup on unchanged price:** `PriceHistory.create` is called on every fetch regardless of whether the price changed since the last row. Skipping unchanged fetches (if ever wanted) is a service-layer/db-layer optimization, not a domain concern.
 - **Pro-only gating** isn't threaded into `TrackedItem.create`'s signature — service layer checks `plan === 'pro'` (ADR-0012) before calling it, same treatment as `CouponRule` (PRD-0007) and `Reservation` (PRD-0008).
 - **Trend ("trending lower/higher")** is not a domain function. Same treatment as Effective Price (PRD-0007's Coupon Rule): a read-time computation over stored rows, deferred to a later layer.
