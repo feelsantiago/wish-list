@@ -10,7 +10,7 @@ import { CouponDatabaseDomainMapper } from './coupon.mapper.js';
 import type { CouponRow } from './coupon.mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
 import { DatabaseError } from '../database-failure/database-error.js';
-import { DATABASE_CLIENT } from '../database-client.token.js';
+import { DATABASE_CLIENT } from '../client/client.token.js';
 import { coupons } from './coupon.schema.js';
 
 @Injectable()

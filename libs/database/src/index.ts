@@ -30,10 +30,8 @@ export { TrackedItemRepository } from './lib/tracked-item/tracked-item.repositor
 export { PriceHistoryRepository } from './lib/price-history/price-history.repository.js';
 export { Repositories } from './lib/repository/repositories.js';
 export { createDatabaseClient } from './lib/client/client.js';
-export {
-  DatabaseModule,
-  DATABASE_CLIENT,
-} from './lib/database.module.js';
+export { DATABASE_CLIENT } from './lib/client/client.token.js';
+export { DatabaseModule } from './lib/database.module.js';
 export type { DatabaseModuleOptions } from './lib/database.module.js';
 export { Database } from './lib/transaction/transaction.js';
 

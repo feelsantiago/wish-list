@@ -4,7 +4,7 @@ import { User } from '@wish-list/domain';
 import type { Plain } from '@wish-list/domain';
 import { Repository } from '../repository/repository.js';
 import { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
-import { DATABASE_CLIENT } from '../database-client.token.js';
+import { DATABASE_CLIENT } from '../client/client.token.js';
 import { USER_MAPPER } from './user.mapper.js';
 import { users } from './user.schema.js';
 

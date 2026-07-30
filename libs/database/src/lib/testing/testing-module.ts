@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { Test } from '@nestjs/testing';
 import type { TestingModule } from '@nestjs/testing';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
-import { DATABASE_CLIENT } from '../database-client.token.js';
+import { DATABASE_CLIENT } from '../client/client.token.js';
 import { userMapperProvider } from '../user/user.mapper.js';
 import { wishlistMapperProvider } from '../wishlist/wishlist.mapper.js';
 import { categoryMapperProvider } from '../category/category.mapper.js';

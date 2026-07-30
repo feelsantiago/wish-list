@@ -9,7 +9,7 @@ import { Repository } from '../repository/repository.js';
 import { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
 import { DatabaseError } from '../database-failure/database-error.js';
-import { DATABASE_CLIENT } from '../database-client.token.js';
+import { DATABASE_CLIENT } from '../client/client.token.js';
 import { VENDOR_MAPPER } from './vendor.mapper.js';
 import { vendors } from './vendor.schema.js';
 

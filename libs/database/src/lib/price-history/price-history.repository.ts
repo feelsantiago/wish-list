@@ -10,7 +10,7 @@ import { PriceHistoryDatabaseDomainMapper } from './price-history.mapper.js';
 import type { PriceHistoryRow } from './price-history.mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
 import { DatabaseError } from '../database-failure/database-error.js';
-import { DATABASE_CLIENT } from '../database-client.token.js';
+import { DATABASE_CLIENT } from '../client/client.token.js';
 import { priceHistory } from './price-history.schema.js';
 
 @Injectable()
