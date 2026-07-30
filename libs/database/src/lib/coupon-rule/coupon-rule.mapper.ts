@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { CouponRule } from '@wish-list/domain';
 import type { Currency, Id, Plain } from '@wish-list/domain';
 import type { Result } from '@wish-list/common-result';
@@ -8,6 +9,7 @@ import { couponRules } from './coupon-rule.schema.js';
 
 export type CouponRuleRow = typeof couponRules.$inferSelect;
 
+@Injectable()
 export class CouponRuleDatabaseDomainMapper
   implements DomainMapper<CouponRule, CouponRuleRow>
 {

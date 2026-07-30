@@ -1,3 +1,4 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Wishlist } from '@wish-list/domain';
@@ -7,19 +8,21 @@ import { Repository } from '../repository/repository.js';
 import { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
 import { DatabaseError } from '../database-failure/database-error.js';
+import { DATABASE_CLIENT } from '../database-client.token.js';
+import { WISHLIST_MAPPER } from './wishlist.mapper.js';
 import { wishlists } from './wishlist.schema.js';
 
+@Injectable()
 export class WishlistRepository extends Repository<
   Wishlist,
   Plain<Wishlist>,
   typeof wishlists
 > {
-  private readonly _mapper = DatabaseDomainMapper.create(
-    Wishlist.plain,
-    Wishlist.from,
-  );
-
-  public constructor(db: LibSQLDatabase) {
+  public constructor(
+    @Inject(DATABASE_CLIENT) db: LibSQLDatabase,
+    @Inject(WISHLIST_MAPPER)
+    private readonly _mapper: DatabaseDomainMapper<Wishlist, Plain<Wishlist>>,
+  ) {
     super({
       db,
       table: wishlists,

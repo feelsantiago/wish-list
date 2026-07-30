@@ -28,7 +28,12 @@ export { CouponRuleRepository } from './lib/coupon-rule/coupon-rule.repository.j
 export { ReservationRepository } from './lib/reservation/reservation.repository.js';
 export { TrackedItemRepository } from './lib/tracked-item/tracked-item.repository.js';
 export { PriceHistoryRepository } from './lib/price-history/price-history.repository.js';
+export { Repositories } from './lib/repository/repositories.js';
 export { createDatabaseClient } from './lib/client/client.js';
-export { DatabaseModule, DATABASE_CLIENT } from './lib/database.module.js';
+export {
+  DatabaseModule,
+  DATABASE_CLIENT,
+} from './lib/database.module.js';
+export type { DatabaseModuleOptions } from './lib/database.module.js';
 export { Database } from './lib/transaction/transaction.js';
 

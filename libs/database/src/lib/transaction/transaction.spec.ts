@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, it, expect } from 'vitest';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
+import type { TestingModule } from '@nestjs/testing';
 import { User } from '@wish-list/domain';
 import { Database } from './transaction.js';
 import { createTestDatabase } from '../testing/test-db.js';
 import type { TestDatabase } from '../testing/test-db.js';
+import { createTestingModule } from '../testing/testing-module.js';
 import { makeUser } from '../testing/fixtures.js';
 import { users } from '../user/user.schema.js';
 import { UserRepository } from '../user/user.repository.js';
@@ -49,10 +51,12 @@ describe('Database.transaction', () => {
 describe('Database.transaction (real db)', () => {
   let testDb: TestDatabase;
   let db: LibSQLDatabase;
+  let moduleRef: TestingModule;
 
   beforeEach(async () => {
     testDb = await createTestDatabase();
     db = testDb.db;
+    moduleRef = await createTestingModule(db);
   });
 
   afterEach(() => testDb.close());
@@ -68,7 +72,7 @@ describe('Database.transaction (real db)', () => {
 
     expect(name).toBe('constraint');
 
-    await new UserRepository(db).find(first.id).match({
+    await moduleRef.get(UserRepository).find(first.id).match({
       ok: () => {
         throw new Error('expected notFound: first insert should have rolled back');
       },

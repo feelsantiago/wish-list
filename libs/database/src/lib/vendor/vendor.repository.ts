@@ -1,3 +1,4 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Vendor } from '@wish-list/domain';
@@ -8,19 +9,21 @@ import { Repository } from '../repository/repository.js';
 import { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
 import { DatabaseError } from '../database-failure/database-error.js';
+import { DATABASE_CLIENT } from '../database-client.token.js';
+import { VENDOR_MAPPER } from './vendor.mapper.js';
 import { vendors } from './vendor.schema.js';
 
+@Injectable()
 export class VendorRepository extends Repository<
   Vendor,
   Plain<Vendor>,
   typeof vendors
 > {
-  private readonly _mapper = DatabaseDomainMapper.create(
-    Vendor.plain,
-    Vendor.from,
-  );
-
-  public constructor(db: LibSQLDatabase) {
+  public constructor(
+    @Inject(DATABASE_CLIENT) db: LibSQLDatabase,
+    @Inject(VENDOR_MAPPER)
+    private readonly _mapper: DatabaseDomainMapper<Vendor, Plain<Vendor>>,
+  ) {
     super({
       db,
       table: vendors,

@@ -29,6 +29,7 @@
     "@wish-list/common-error": "*",
     "@nestjs/common": "^11.1.28",
     "@nestjs/core": "^11.1.28",
+    "@nestjs/testing": "^11.1.28",
     "drizzle-orm": "^0.45.2",
     "@libsql/client": "^0.17.4",
     "reflect-metadata": "^0.2.2",

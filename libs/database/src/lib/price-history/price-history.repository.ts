@@ -1,3 +1,4 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { PriceHistory } from '@wish-list/domain';
@@ -5,20 +6,23 @@ import type { Id } from '@wish-list/domain';
 import { AsyncResult } from '@wish-list/common-result';
 import { Repository } from '../repository/repository.js';
 import type { DomainMapper } from '../mapper/domain-mapper.js';
-import { PriceHistoryDatabaseDomainMapper } from './price-history-database-domain-mapper.js';
-import type { PriceHistoryRow } from './price-history-database-domain-mapper.js';
+import { PriceHistoryDatabaseDomainMapper } from './price-history.mapper.js';
+import type { PriceHistoryRow } from './price-history.mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
 import { DatabaseError } from '../database-failure/database-error.js';
+import { DATABASE_CLIENT } from '../database-client.token.js';
 import { priceHistory } from './price-history.schema.js';
 
+@Injectable()
 export class PriceHistoryRepository extends Repository<
   PriceHistory,
   PriceHistoryRow,
   typeof priceHistory
 > {
-  private readonly _mapper = new PriceHistoryDatabaseDomainMapper();
-
-  public constructor(db: LibSQLDatabase) {
+  public constructor(
+    @Inject(DATABASE_CLIENT) db: LibSQLDatabase,
+    private readonly _mapper: PriceHistoryDatabaseDomainMapper,
+  ) {
     super({
       db,
       table: priceHistory,

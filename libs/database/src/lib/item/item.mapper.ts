@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { match } from 'ts-pattern';
 import { Item } from '@wish-list/domain';
 import type { Currency, Id, Plain, Url } from '@wish-list/domain';
@@ -9,6 +10,7 @@ import { items } from './item.schema.js';
 
 export type ItemRow = typeof items.$inferSelect;
 
+@Injectable()
 export class ItemDatabaseDomainMapper implements DomainMapper<Item, ItemRow> {
   private readonly delegate: DatabaseDomainMapper<Item, ItemRow> =
     DatabaseDomainMapper.create(

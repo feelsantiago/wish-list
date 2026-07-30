@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Id } from '@wish-list/domain';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
+import type { TestingModule } from '@nestjs/testing';
 import { createTestDatabase } from '../testing/test-db.js';
 import type { TestDatabase } from '../testing/test-db.js';
+import { createTestingModule } from '../testing/testing-module.js';
 import { makeUser, makeWishlist } from '../testing/fixtures.js';
 import { UserRepository } from '../user/user.repository.js';
 import { WishlistRepository } from './wishlist.repository.js';
@@ -10,16 +12,18 @@ import { WishlistRepository } from './wishlist.repository.js';
 describe('WishlistRepository', () => {
   let testDb: TestDatabase;
   let db: LibSQLDatabase;
+  let moduleRef: TestingModule;
   let repository: WishlistRepository;
   let userId: Id;
 
   beforeEach(async () => {
     testDb = await createTestDatabase();
     db = testDb.db;
-    repository = new WishlistRepository(db);
+    moduleRef = await createTestingModule(db);
+    repository = moduleRef.get(WishlistRepository);
 
     const user = makeUser();
-    await new UserRepository(db).insert(user).unwrapOr(user);
+    await moduleRef.get(UserRepository).insert(user).unwrapOr(user);
     userId = user.id;
   });
 

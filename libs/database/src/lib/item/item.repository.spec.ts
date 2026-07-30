@@ -2,8 +2,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Id, Item, Money, Url } from '@wish-list/domain';
 import type { PendingItem } from '@wish-list/domain';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
+import type { TestingModule } from '@nestjs/testing';
 import { createTestDatabase } from '../testing/test-db.js';
 import type { TestDatabase } from '../testing/test-db.js';
+import { createTestingModule } from '../testing/testing-module.js';
 import { makeCategory, makeUser, makeVendor, makeWishlist } from '../testing/fixtures.js';
 import { UserRepository } from '../user/user.repository.js';
 import { WishlistRepository } from '../wishlist/wishlist.repository.js';
@@ -20,6 +22,7 @@ function money(): Money {
 describe('ItemRepository', () => {
   let testDb: TestDatabase;
   let db: LibSQLDatabase;
+  let moduleRef: TestingModule;
   let repository: ItemRepository;
   let wishlistId: Id;
   let vendorId: Id;
@@ -37,21 +40,22 @@ describe('ItemRepository', () => {
   beforeEach(async () => {
     testDb = await createTestDatabase();
     db = testDb.db;
-    repository = new ItemRepository(db);
+    moduleRef = await createTestingModule(db);
+    repository = moduleRef.get(ItemRepository);
 
     const user = makeUser();
-    await new UserRepository(db).insert(user).unwrapOr(user);
+    await moduleRef.get(UserRepository).insert(user).unwrapOr(user);
 
     const wishlist = makeWishlist(user.id);
-    await new WishlistRepository(db).insert(wishlist).unwrapOr(wishlist);
+    await moduleRef.get(WishlistRepository).insert(wishlist).unwrapOr(wishlist);
     wishlistId = wishlist.id;
 
     const vendor = makeVendor();
-    await new VendorRepository(db).insert(vendor).unwrapOr(vendor);
+    await moduleRef.get(VendorRepository).insert(vendor).unwrapOr(vendor);
     vendorId = vendor.id;
 
     const category = makeCategory(user.id);
-    await new CategoryRepository(db).insert(category).unwrapOr(category);
+    await moduleRef.get(CategoryRepository).insert(category).unwrapOr(category);
     categoryId = category.id;
   });
 

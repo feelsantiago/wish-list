@@ -1,20 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Id } from '@wish-list/domain';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
+import type { TestingModule } from '@nestjs/testing';
 import { createTestDatabase } from '../testing/test-db.js';
 import type { TestDatabase } from '../testing/test-db.js';
+import { createTestingModule } from '../testing/testing-module.js';
 import { makeUser } from '../testing/fixtures.js';
 import { UserRepository } from './user.repository.js';
 
 describe('UserRepository', () => {
   let testDb: TestDatabase;
   let db: LibSQLDatabase;
+  let moduleRef: TestingModule;
   let repository: UserRepository;
 
   beforeEach(async () => {
     testDb = await createTestDatabase();
     db = testDb.db;
-    repository = new UserRepository(db);
+    moduleRef = await createTestingModule(db);
+    repository = moduleRef.get(UserRepository);
   });
 
   afterEach(() => testDb.close());

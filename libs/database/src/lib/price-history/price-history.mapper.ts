@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { PriceHistory } from '@wish-list/domain';
 import type { Currency, Id, Plain } from '@wish-list/domain';
 import type { Result } from '@wish-list/common-result';
@@ -8,6 +9,7 @@ import { priceHistory } from './price-history.schema.js';
 
 export type PriceHistoryRow = typeof priceHistory.$inferSelect;
 
+@Injectable()
 export class PriceHistoryDatabaseDomainMapper
   implements DomainMapper<PriceHistory, PriceHistoryRow>
 {

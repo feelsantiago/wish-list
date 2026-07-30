@@ -5,7 +5,7 @@ import { DatabaseFailure } from '../database-failure/database-failure.js';
 import {
   ItemDatabaseDomainMapper,
   type ItemRow,
-} from './item-database-domain-mapper.js';
+} from './item.mapper.js';
 
 function pendingItem(): PendingItem {
   return Item.create({
