@@ -20,7 +20,7 @@ A named, ownable collection of Items belonging to one User. A User may own sever
 _Avoid_: List, Wish list (one word)
 
 **Item**:
-A product a User wants, captured by pasting its URL. Metadata (name, price, image, currency) is extracted automatically via LLM-based scraping and may be corrected manually by the User afterward. Belongs to exactly one Wishlist, one Category (defaulting to Unsorted), and one Vendor. Carries a Status.
+A product a User wants, captured by pasting its URL. Metadata (name, price, image, currency) is extracted automatically via LLM-based scraping and may be corrected manually by the User afterward. Belongs to exactly one Wishlist, one Category (defaulting to Unsorted), and one Vendor. Carries a Status. Two Users saving the same URL get two independent Items — there is no shared Item, and correcting one never affects the other.
 _Avoid_: Product, Wishlist item (just Item within this context)
 
 **Status** (of an Item):
@@ -29,9 +29,16 @@ _Avoid_: don't confuse with Extraction Status
 
 **Extraction Status**:
 Tracks the async LLM-based scraping outcome for an Item, separate from its Wanted/Fulfilled Status. An Item is created immediately from just its URL and exists in a pending state until scraping fills in its fields, or fails and leaves them blank for manual entry.
+_Avoid_: don't confuse with Extraction — this is the Item's own state, not the attempt record
+
+**Extraction**:
+A single recorded attempt to read a product's details from a URL. Every attempt is kept, whether it succeeded or failed, so the system can tell what a page said at a given moment, how often a retailer has refused, and whether a recent enough reading already exists to reuse instead of fetching again. Global rather than per-User — one attempt serves whoever asks next. Distinct from Price History: an Extraction belongs to a URL and records an attempt, a Price History entry belongs to a Tracked Item and records a price.
+
+**Extraction Key**:
+The identity under which Extractions for the same product page are grouped. Two URLs that differ only in tracking or referral decoration share one Extraction Key; URLs that select genuinely different products — a different size or colour — do not.
 
 **Vendor**:
-The retailer an Item was scraped from, derived automatically from the URL's registrable domain the first time it's seen (e.g. `amazon.com` → Amazon). Not a curated allowlist. Each registrable domain is its own Vendor — `amazon.com` and `amazon.com.br` are two distinct Vendors, not merged by brand, since they also differ in Currency.
+The retailer an Item was scraped from, derived automatically from the URL's registrable domain the first time it's seen (e.g. `amazon.com` → Amazon). Not a curated allowlist. Each registrable domain is its own Vendor — `amazon.com` and `amazon.com.br` are two distinct Vendors, not merged by brand, since they also differ in Currency. A Vendor is **provisional** when it is known only by its domain, and **resolved** once an Extraction has established its name and Currency; a provisional Vendor cannot carry Coupons, since a Coupon's discount is denominated in the Vendor's Currency. Resolution happens once and is never undone.
 _Avoid_: Store, Retailer, Site
 
 **Category**:
@@ -64,4 +71,4 @@ A per-Wishlist style, either `surprise` (owner can't see Reservations on their o
 An Item a User has opted into daily automatic price fetching for (Pro-only). Each fetch appends to the Item's Price History rather than triggering a notification.
 
 **Price History**:
-The chronological record of an Item's fetched prices over time, used to show whether it's trending lower or higher.
+The chronological record of an Item's fetched prices over time, used to show whether it's trending lower or higher. Belongs to one User's Tracked Item, and is the series shown to that User — not to be merged with Extraction, which records attempts against a URL for the whole system.
