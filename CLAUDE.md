@@ -27,3 +27,4 @@
 - No `try`/`catch` in `libs/domain` (or anywhere `Result` is idiomatic). Use `Result.fromThrowable` and chain `.map`/`.mapErr`/`.unwrapOr` instead.
 - No `switch` statements on discriminated unions. Use `ts-pattern`'s `match(...).with(...).exhaustive()` instead.
 - No bare `null`/`undefined` for absent values. Use `Option` from `@wish-list/common-result` (`Option.from`, `.map`, `.okOr`/`.okOrElse`, etc.) instead.
+- No top-level helper functions in files exporting a class. Class is top-level structure — put helpers as `private` methods on class instead.
