@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Vendor } from '@wish-list/domain';
-import type { Plain, VendorDomain, Id } from '@wish-list/domain';
+import type { VendorDomain, Id } from '@wish-list/domain';
 import { AsyncResult } from '@wish-list/common-result';
 import { Failure } from '@wish-list/common-error';
 import type {
@@ -16,23 +16,22 @@ import {
   update,
   type RepositoryOptions,
 } from '../repository/operation.js';
-import { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
+import { VendorDatabaseDomainMapper } from './vendor.mapper.js';
+import type { VendorRow } from './vendor.mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
 import { DatabaseError } from '../database-failure/database-error.js';
 import { DATABASE_CLIENT } from '../client/client.token.js';
-import { VENDOR_MAPPER } from './vendor.mapper.js';
 import { vendors } from './vendor.schema.js';
 
 @Injectable()
 export class VendorRepository
   implements Readable<Vendor>, Insertable<Vendor>, Updatable<Vendor>
 {
-  private readonly options: RepositoryOptions<Vendor, Plain<Vendor>, typeof vendors>;
+  private readonly options: RepositoryOptions<Vendor, VendorRow, typeof vendors>;
 
   public constructor(
     @Inject(DATABASE_CLIENT) db: LibSQLDatabase,
-    @Inject(VENDOR_MAPPER)
-    mapper: DatabaseDomainMapper<Vendor, Plain<Vendor>>,
+    mapper: VendorDatabaseDomainMapper,
   ) {
     this.options = { db, table: vendors, mapper };
   }
@@ -58,7 +57,7 @@ export class VendorRepository
           .select()
           .from(this.options.table)
           .where(eq(this.options.table.vendorDomain, domain))
-          .then((rows) => rows[0] as Plain<Vendor> | undefined),
+          .then((rows) => rows[0] as VendorRow | undefined),
       (error) => DatabaseError.from(error).failure(),
     ).andThen((row) =>
       this.options.mapper.domain(

@@ -5,7 +5,7 @@ import type { Plain } from '../plain/plain.js';
 import { Id } from '../id/id.js';
 import { Money } from '../money/money.js';
 import { Currency } from '../currency/currency.js';
-import type { Vendor } from '../vendor/vendor.js';
+import type { ResolvedVendor } from '../vendor/vendor.js';
 import { DomainFailure } from '../domain-failure/domain-failure.js';
 
 export interface BaseCoupon {
@@ -33,7 +33,7 @@ export type Coupon = FixedCoupon | PercentageCoupon;
 export namespace Coupon {
   export interface CreateInput {
     readonly user: Id;
-    readonly vendor: Vendor;
+    readonly vendor: ResolvedVendor;
     readonly code: string;
     readonly expiresAt: Date;
     readonly discount:

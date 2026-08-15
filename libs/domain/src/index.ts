@@ -10,6 +10,7 @@ export { VendorDomain } from './lib/vendor-domain/vendor-domain.js';
 export { Url } from './lib/url/url.js';
 export { Currency } from './lib/currency/currency.js';
 export { Vendor } from './lib/vendor/vendor.js';
+export type { ProvisionalVendor, ResolvedVendor } from './lib/vendor/vendor.js';
 export { Category } from './lib/category/category.js';
 export { Wishlist } from './lib/wishlist/wishlist.js';
 export type {

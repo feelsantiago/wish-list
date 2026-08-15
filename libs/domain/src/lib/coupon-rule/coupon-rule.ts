@@ -4,7 +4,7 @@ import type { Plain } from '../plain/plain.js';
 import { Id } from '../id/id.js';
 import type { Money } from '../money/money.js';
 import { Currency } from '../currency/currency.js';
-import type { Vendor } from '../vendor/vendor.js';
+import type { ResolvedVendor } from '../vendor/vendor.js';
 import { Coupon } from '../coupon/coupon.js';
 import { DomainFailure } from '../domain-failure/domain-failure.js';
 
@@ -19,7 +19,7 @@ export interface CouponRule {
 export namespace CouponRule {
   export interface CreateInput {
     readonly coupon: Id;
-    readonly vendor: Vendor;
+    readonly vendor: ResolvedVendor;
     readonly threshold: {
       readonly amount: number;
       readonly currency: Currency;

@@ -7,9 +7,11 @@ import type {
   Money,
   PercentageCoupon,
   PriceHistory,
+  ResolvedVendor,
   Reservation,
   TrackedItem,
-  Vendor,
+  Url,
+  VendorDomain,
   Wishlist,
 } from '@wish-list/domain';
 import {
@@ -19,8 +21,10 @@ import {
   PriceHistory as PriceHistoryEntity,
   Reservation as ReservationEntity,
   TrackedItem as TrackedItemEntity,
+  Url as UrlEntity,
   User,
   Vendor as VendorEntity,
+  VendorDomain as VendorDomainEntity,
   Wishlist as WishlistEntity,
 } from '@wish-list/domain';
 import type { CouponRule, Id } from '@wish-list/domain';
@@ -45,15 +49,25 @@ export function makeUser(overrides: Partial<User.CreateInput> = {}): FreeUser {
   );
 }
 
-export function makeVendor(overrides: Partial<Vendor.CreateInput> = {}): Vendor {
+export interface MakeVendorOverrides {
+  readonly vendorDomain?: VendorDomain;
+  readonly website?: Url;
+  readonly name?: string;
+  readonly currency?: Currency;
+}
+
+export function makeVendor(overrides: MakeVendorOverrides = {}): ResolvedVendor {
   const id = randomUUID();
+  const vendorDomain =
+    overrides.vendorDomain ?? VendorDomainEntity.from(`vendor-${id}.example.com`);
+  const website = overrides.website ?? UrlEntity.from(`https://vendor-${id}.example.com`);
+  const provisional = VendorEntity.provisional({ vendorDomain, website });
+
   return unwrap(
-    VendorEntity.create({
-      vendorDomain: `vendor-${id}.example.com`,
-      website: `https://vendor-${id}.example.com`,
-      name: 'Test Vendor',
-      currency: 'USD',
-      ...overrides,
+    VendorEntity.resolve(provisional, {
+      name: overrides.name ?? 'Test Vendor',
+      website,
+      currency: overrides.currency ?? 'USD',
     }),
   );
 }
@@ -94,7 +108,7 @@ function money(overrides: Partial<Money> = {}): Money {
 
 export function makeFixedCoupon(
   user: Id,
-  vendor: Vendor,
+  vendor: ResolvedVendor,
   overrides: Partial<{
     code: string;
     expiresAt: Date;
@@ -120,7 +134,7 @@ export function makeFixedCoupon(
 
 export function makePercentageCoupon(
   user: Id,
-  vendor: Vendor,
+  vendor: ResolvedVendor,
   overrides: Partial<{
     code: string;
     expiresAt: Date;
@@ -144,7 +158,7 @@ export function makePercentageCoupon(
 
 export function makeCouponRule(
   coupon: Id,
-  vendor: Vendor,
+  vendor: ResolvedVendor,
   overrides: Partial<{ amount: number; currency: Currency }> = {},
 ): CouponRule {
   return unwrap(

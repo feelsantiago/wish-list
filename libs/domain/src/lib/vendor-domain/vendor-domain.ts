@@ -8,8 +8,10 @@ import {
   letter,
   digit,
 } from 'magic-regexp';
+import { getDomain } from 'tldts';
 import { Result } from '@wish-list/common-result';
 import type { Brand } from '../brand/brand.js';
+import type { Url } from '../url/url.js';
 import { DomainFailure } from '../domain-failure/domain-failure.js';
 
 const alnum = anyOf(letter, digit);
@@ -43,5 +45,19 @@ export namespace VendorDomain {
 
   export function from(value: string): VendorDomain {
     return value as VendorDomain;
+  }
+
+  export function fromUrl(url: Url): Result<VendorDomain, DomainFailure> {
+    const domain = getDomain(url);
+
+    if (domain === null) {
+      return Result.err(
+        DomainFailure.validation(url, [
+          { field: 'url', message: 'Could not resolve a registrable domain' },
+        ]).context('Creating VendorDomain from URL'),
+      );
+    }
+
+    return Result.ok(from(domain));
   }
 }

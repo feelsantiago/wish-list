@@ -23,6 +23,7 @@
     "@wish-list/common-error": "*",
     "@wish-list/common-result": "*",
     "magic-regexp": "^0.11.0",
+    "tldts": "^7.4.10",
     "tslib": "^2.3.0",
     "zod": "^3.25.76"
   }

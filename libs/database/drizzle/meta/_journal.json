@@ -15,6 +15,13 @@
       "when": 1785442001938,
       "tag": "0001_previous_jimmy_woo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1786818589580,
+      "tag": "0002_misty_maria_hill",
+      "breakpoints": true
     }
   ]
 }

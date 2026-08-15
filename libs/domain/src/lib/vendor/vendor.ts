@@ -1,4 +1,5 @@
 import { z, ZodError } from 'zod';
+import { match } from 'ts-pattern';
 import { Result } from '@wish-list/common-result';
 import type { Plain } from '../plain/plain.js';
 import { Id } from '../id/id.js';
@@ -7,73 +8,125 @@ import { Url } from '../url/url.js';
 import { Currency } from '../currency/currency.js';
 import { DomainFailure } from '../domain-failure/domain-failure.js';
 
-export interface Vendor {
+interface BaseVendor {
   readonly id: Id;
   readonly vendorDomain: VendorDomain;
   readonly website: Url;
-  readonly name: string;
-  readonly currency: Currency;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
 
+export interface ProvisionalVendor extends BaseVendor {
+  readonly _tag: 'provisional';
+}
+
+export interface ResolvedVendor extends BaseVendor {
+  readonly _tag: 'resolved';
+  readonly name: string;
+  readonly currency: Currency;
+}
+
+export type Vendor = ProvisionalVendor | ResolvedVendor;
+
 export namespace Vendor {
-  export const $ = z.object({
-    vendorDomain: VendorDomain.$,
-    website: Url.$,
+  const extractionData$ = z.object({
     name: z.string().min(1),
-    currency: Currency.$,
   });
 
-  export interface CreateInput {
-    readonly vendorDomain: string;
-    readonly website: string;
+  export interface ExtractionData {
     readonly name: string;
+    readonly website: Url;
     readonly currency: Currency;
   }
 
-  export function create(input: CreateInput): Result<Vendor, DomainFailure> {
-    return Result.fromThrowable<z.infer<typeof $>, ZodError>(() =>
-      $.parse(input),
+  export interface ProvisionalInput {
+    readonly vendorDomain: VendorDomain;
+    readonly website: Url;
+  }
+
+  export function provisional(input: ProvisionalInput): ProvisionalVendor {
+    const now = new Date();
+    return {
+      _tag: 'provisional',
+      id: Id.generate(),
+      vendorDomain: input.vendorDomain,
+      website: input.website,
+      createdAt: now,
+      updatedAt: now,
+    };
+  }
+
+  export function resolve(
+    vendor: Vendor,
+    data: ExtractionData,
+  ): Result<ResolvedVendor, DomainFailure> {
+    return Result.fromThrowable<z.infer<typeof extractionData$>, ZodError>(() =>
+      extractionData$.parse(data),
     )
       .mapErr((error) =>
-        DomainFailure.validation(input, error).context('Creating Vendor'),
+        DomainFailure.validation(data, error).context('Resolving Vendor'),
       )
-      .map((value) => {
-        const now = new Date();
-        return {
-          id: Id.generate(),
-          vendorDomain: VendorDomain.from(value.vendorDomain),
-          website: Url.from(value.website),
-          name: value.name,
-          currency: value.currency,
-          createdAt: now,
-          updatedAt: now,
-        };
-      });
+      .map((value) => ({
+        ...vendor,
+        _tag: 'resolved' as const,
+        name: value.name,
+        website: data.website,
+        currency: data.currency,
+        updatedAt: new Date(),
+      }));
+  }
+
+  export function isProvisional(vendor: Vendor): vendor is ProvisionalVendor {
+    return vendor._tag === 'provisional';
+  }
+
+  export function isResolved(vendor: Vendor): vendor is ResolvedVendor {
+    return vendor._tag === 'resolved';
   }
 
   export function from(plain: Plain<Vendor>): Vendor {
-    return {
+    const base = {
       id: plain.id as Id,
       vendorDomain: plain.vendorDomain as VendorDomain,
       website: plain.website as Url,
-      name: plain.name,
-      currency: plain.currency,
       createdAt: new Date(plain.createdAt),
       updatedAt: new Date(plain.updatedAt),
     };
+
+    return match(plain)
+      .with({ _tag: 'provisional' }, () => ({
+        ...base,
+        _tag: 'provisional' as const,
+      }))
+      .with({ _tag: 'resolved' }, (p) => ({
+        ...base,
+        _tag: 'resolved' as const,
+        name: p.name,
+        currency: p.currency,
+      }))
+      .exhaustive();
   }
 
   export function plain(vendor: Vendor): Plain<Vendor> {
-    return {
+    const base = {
       id: vendor.id,
       vendorDomain: vendor.vendorDomain,
       website: vendor.website,
-      name: vendor.name,
-      currency: vendor.currency,
       createdAt: vendor.createdAt.toISOString(),
       updatedAt: vendor.updatedAt.toISOString(),
     };
+
+    return match(vendor)
+      .with({ _tag: 'provisional' }, () => ({
+        ...base,
+        _tag: 'provisional' as const,
+      }))
+      .with({ _tag: 'resolved' }, (v) => ({
+        ...base,
+        _tag: 'resolved' as const,
+        name: v.name,
+        currency: v.currency,
+      }))
+      .exhaustive();
   }
 }

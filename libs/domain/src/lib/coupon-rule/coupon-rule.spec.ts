@@ -2,13 +2,14 @@ import { Id } from '../id/id.js';
 import { VendorDomain } from '../vendor-domain/vendor-domain.js';
 import { Url } from '../url/url.js';
 import type { Currency } from '../currency/currency.js';
-import type { Vendor } from '../vendor/vendor.js';
+import type { ResolvedVendor } from '../vendor/vendor.js';
 import { Money } from '../money/money.js';
 import { Coupon } from '../coupon/coupon.js';
 import { CouponRule } from './coupon-rule.js';
 
-function vendor(currency: Currency = 'USD'): Vendor {
+function vendor(currency: Currency = 'USD'): ResolvedVendor {
   return {
+    _tag: 'resolved',
     id: Id.generate(),
     vendorDomain: VendorDomain.from('amazon.com'),
     website: Url.from('https://amazon.com'),

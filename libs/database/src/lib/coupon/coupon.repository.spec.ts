@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Id } from '@wish-list/domain';
-import type { Vendor } from '@wish-list/domain';
+import type { ResolvedVendor } from '@wish-list/domain';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import type { TestingModule } from '@nestjs/testing';
 import { createTestDatabase } from '../testing/test-db.js';
@@ -22,7 +22,7 @@ describe('CouponRepository', () => {
   let moduleRef: TestingModule;
   let repository: CouponRepository;
   let userId: Id;
-  let vendor: Vendor;
+  let vendor: ResolvedVendor;
 
   beforeEach(async () => {
     testDb = await createTestDatabase();

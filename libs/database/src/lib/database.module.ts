@@ -15,7 +15,7 @@ import { DATABASE_CLIENT } from './client/client.token.js';
 import { userMapperProvider } from './user/user.mapper.js';
 import { wishlistMapperProvider } from './wishlist/wishlist.mapper.js';
 import { categoryMapperProvider } from './category/category.mapper.js';
-import { vendorMapperProvider } from './vendor/vendor.mapper.js';
+import { VendorDatabaseDomainMapper } from './vendor/vendor.mapper.js';
 import { reservationMapperProvider } from './reservation/reservation.mapper.js';
 import { trackedItemMapperProvider } from './tracked-item/tracked-item.mapper.js';
 import { CouponDatabaseDomainMapper } from './coupon/coupon.mapper.js';
@@ -38,7 +38,7 @@ export const { ConfigurableModuleClass, MODULE_OPTIONS_TOKEN } =
     userMapperProvider,
     wishlistMapperProvider,
     categoryMapperProvider,
-    vendorMapperProvider,
+    VendorDatabaseDomainMapper,
     reservationMapperProvider,
     trackedItemMapperProvider,
     CouponDatabaseDomainMapper,
