@@ -16,6 +16,11 @@
       "import": "./src/renderers.ts",
       "default": "./src/renderers.ts"
     },
+    "./service": {
+      "types": "./src/service.ts",
+      "import": "./src/service.ts",
+      "default": "./src/service.ts"
+    },
     "./package.json": "./package.json"
   },
   "nx": {
