@@ -9,6 +9,7 @@ import { CouponRuleRepository } from '../coupon-rule/coupon-rule.repository.js';
 import { ReservationRepository } from '../reservation/reservation.repository.js';
 import { TrackedItemRepository } from '../tracked-item/tracked-item.repository.js';
 import { PriceHistoryRepository } from '../price-history/price-history.repository.js';
+import { ExtractionRepository } from '../extraction/extraction.repository.js';
 
 @Injectable()
 export class Repositories {
@@ -23,5 +24,6 @@ export class Repositories {
     public readonly reservations: ReservationRepository,
     public readonly trackedItems: TrackedItemRepository,
     public readonly priceHistory: PriceHistoryRepository,
+    public readonly extractions: ExtractionRepository,
   ) {}
 }

@@ -2,6 +2,9 @@ import { randomUUID } from 'node:crypto';
 import type {
   Category,
   Currency,
+  Extraction,
+  ExtractionReason,
+  ExtractionSource,
   FixedCoupon,
   FreeUser,
   Money,
@@ -18,6 +21,7 @@ import {
   Category as CategoryEntity,
   Coupon as CouponEntity,
   CouponRule as CouponRuleEntity,
+  Extraction as ExtractionEntity,
   PriceHistory as PriceHistoryEntity,
   Reservation as ReservationEntity,
   TrackedItem as TrackedItemEntity,
@@ -201,5 +205,48 @@ export function makePriceHistory(
   return PriceHistoryEntity.create({
     item,
     price: overrides.price ?? money(),
+  });
+}
+
+export function makeSucceededExtraction(
+  vendor: Id,
+  overrides: Partial<{
+    url: Url;
+    source: ExtractionSource;
+    data: Extraction.SucceededInput['data'];
+    vendorData: Extraction.SucceededInput['vendorData'];
+  }> = {},
+): Extraction {
+  const id = randomUUID();
+  return ExtractionEntity.succeeded({
+    url:
+      overrides.url ??
+      UrlEntity.from(`https://vendor-${id}.example.com/p/${id}`),
+    vendor,
+    source: overrides.source ?? 'json-ld',
+    data: overrides.data ?? {
+      name: 'Test Product',
+      price: money(),
+      image: UrlEntity.from(`https://vendor-${id}.example.com/image.png`),
+    },
+    vendorData: overrides.vendorData ?? {
+      name: 'Test Vendor',
+      website: UrlEntity.from(`https://vendor-${id}.example.com`),
+      currency: 'USD',
+    },
+  });
+}
+
+export function makeFailedExtraction(
+  vendor: Id,
+  overrides: Partial<{ url: Url; reason: ExtractionReason }> = {},
+): Extraction {
+  const id = randomUUID();
+  return ExtractionEntity.failed({
+    url:
+      overrides.url ??
+      UrlEntity.from(`https://vendor-${id}.example.com/p/${id}`),
+    vendor,
+    reason: overrides.reason ?? 'blocked',
   });
 }

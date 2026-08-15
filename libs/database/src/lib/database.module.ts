@@ -9,6 +9,7 @@ import { CouponRuleRepository } from './coupon-rule/coupon-rule.repository.js';
 import { ReservationRepository } from './reservation/reservation.repository.js';
 import { TrackedItemRepository } from './tracked-item/tracked-item.repository.js';
 import { PriceHistoryRepository } from './price-history/price-history.repository.js';
+import { ExtractionRepository } from './extraction/extraction.repository.js';
 import { Repositories } from './repository/repositories.js';
 import { clientProvider } from './client/client.provider.js';
 import { DATABASE_CLIENT } from './client/client.token.js';
@@ -22,6 +23,7 @@ import { CouponDatabaseDomainMapper } from './coupon/coupon.mapper.js';
 import { CouponRuleDatabaseDomainMapper } from './coupon-rule/coupon-rule.mapper.js';
 import { ItemDatabaseDomainMapper } from './item/item.mapper.js';
 import { PriceHistoryDatabaseDomainMapper } from './price-history/price-history.mapper.js';
+import { ExtractionDatabaseDomainMapper } from './extraction/extraction.mapper.js';
 
 export { DATABASE_CLIENT };
 
@@ -45,6 +47,7 @@ export const { ConfigurableModuleClass, MODULE_OPTIONS_TOKEN } =
     CouponRuleDatabaseDomainMapper,
     ItemDatabaseDomainMapper,
     PriceHistoryDatabaseDomainMapper,
+    ExtractionDatabaseDomainMapper,
     UserRepository,
     WishlistRepository,
     CategoryRepository,
@@ -55,6 +58,7 @@ export const { ConfigurableModuleClass, MODULE_OPTIONS_TOKEN } =
     ReservationRepository,
     TrackedItemRepository,
     PriceHistoryRepository,
+    ExtractionRepository,
     Repositories,
   ],
   exports: [
@@ -69,6 +73,7 @@ export const { ConfigurableModuleClass, MODULE_OPTIONS_TOKEN } =
     ReservationRepository,
     TrackedItemRepository,
     PriceHistoryRepository,
+    ExtractionRepository,
     Repositories,
   ],
 })

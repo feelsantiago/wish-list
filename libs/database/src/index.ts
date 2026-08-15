@@ -8,6 +8,7 @@ export { couponRules } from './lib/coupon-rule/coupon-rule.schema.js';
 export { reservations } from './lib/reservation/reservation.schema.js';
 export { trackedItems } from './lib/tracked-item/tracked-item.schema.js';
 export { priceHistory } from './lib/price-history/price-history.schema.js';
+export { extractions } from './lib/extraction/extraction.schema.js';
 export { DatabaseFailure } from './lib/database-failure/database-failure.js';
 export type { DatabaseFailureType } from './lib/database-failure/database-failure.js';
 export { DatabaseError } from './lib/database-failure/database-error.js';
@@ -33,6 +34,7 @@ export { CouponRuleRepository } from './lib/coupon-rule/coupon-rule.repository.j
 export { ReservationRepository } from './lib/reservation/reservation.repository.js';
 export { TrackedItemRepository } from './lib/tracked-item/tracked-item.repository.js';
 export { PriceHistoryRepository } from './lib/price-history/price-history.repository.js';
+export { ExtractionRepository } from './lib/extraction/extraction.repository.js';
 export { Repositories } from './lib/repository/repositories.js';
 export { createDatabaseClient } from './lib/client/client.js';
 export { DATABASE_CLIENT } from './lib/client/client.token.js';

@@ -22,6 +22,13 @@
       "when": 1786818589580,
       "tag": "0002_misty_maria_hill",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1786822974356,
+      "tag": "0003_bitter_scream",
+      "breakpoints": true
     }
   ]
 }
