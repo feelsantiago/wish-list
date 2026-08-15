@@ -34,6 +34,13 @@ _Avoid_: don't confuse with Extraction — this is the Item's own state, not the
 **Extraction**:
 A single recorded attempt to read a product's details from a URL. Every attempt is kept, whether it succeeded or failed, so the system can tell what a page said at a given moment, how often a retailer has refused, and whether a recent enough reading already exists to reuse instead of fetching again. Global rather than per-User — one attempt serves whoever asks next. Distinct from Price History: an Extraction belongs to a URL and records an attempt, a Price History entry belongs to a Tracked Item and records a price.
 
+**Structured Data**:
+Product details a page publishes about itself in a machine-readable web standard (schema.org JSON-LD, OpenGraph meta tags), readable without an LLM. Generic across retailers — never per-Vendor rules. A page's Structured Data is **complete** only when it supplies every field an Extraction needs (name, price, currency, image, vendor name); anything less is discarded in favour of the next reading, since a partially filled Item is worse than an LLM-read one.
+_Avoid_: Metadata (too broad), Scraping (that's the whole act of reading a page)
+
+**Extraction Source**:
+Which reading produced a succeeded Extraction — the page's own Structured Data (JSON-LD or OpenGraph) or the LLM. Recorded so the system can tell how much of its traffic avoids the LLM, and which retailers depend on it.
+
 **Extraction Key**:
 The identity under which Extractions for the same product page are grouped. Two URLs that differ only in tracking or referral decoration share one Extraction Key; URLs that select genuinely different products — a different size or colour — do not.
 
