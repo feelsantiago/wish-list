@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { Failure } from '@wish-list/common-error';
 import { AsyncResult, Result, err, ok } from '@wish-list/common-result';
 import type { Url } from '@wish-list/domain';
+import { P, match } from 'ts-pattern';
 import { ExtractionFailure } from '../extraction-failure.js';
 import type { PageFetcher } from './page-fetcher.js';
 
@@ -32,26 +33,25 @@ export class HttpPageFetcher implements PageFetcher {
         async function* (
           this: HttpPageFetcher,
         ): AsyncGenerator<
-          Result<never, Failure<'fetch-failed' | 'timeout'>>,
+          Result<never, Failure<'fetch-failed' | 'blocked' | 'timeout'>>,
           Result<string, Failure<'fetch-failed' | 'blocked' | 'timeout'>>
         > {
           const response = yield* this._fetch(url);
 
-          if (response.status === 403 || response.status === 429) {
-            return err(
-              ExtractionFailure.blocked(
-                `Blocked with status ${response.status}`,
-              ),
-            );
-          }
-
-          if (response.status < 200 || response.status >= 300) {
-            return err(
-              ExtractionFailure.fetchFailed(
-                `Fetch failed with status ${response.status}`,
-              ),
-            );
-          }
+          yield* match(response.status)
+            .with(403, 429, (status) =>
+              err(ExtractionFailure.blocked(`Blocked with status ${status}`)),
+            )
+            .with(
+              P.when((status) => status < 200 || status >= 300),
+              (status) =>
+                err(
+                  ExtractionFailure.fetchFailed(
+                    `Fetch failed with status ${status}`,
+                  ),
+                ),
+            )
+            .otherwise(() => ok(undefined));
 
           const lower = response.data.toLowerCase();
 
