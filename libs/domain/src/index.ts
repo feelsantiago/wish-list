@@ -39,3 +39,11 @@ export type {
 export { CouponRule } from './lib/coupon-rule/coupon-rule.js';
 export { TrackedItem } from './lib/tracked-item/tracked-item.js';
 export { PriceHistory } from './lib/price-history/price-history.js';
+export { ExtractionKey } from './lib/extraction/extraction-key.js';
+export { Extraction } from './lib/extraction/extraction.js';
+export type {
+  ExtractionSource,
+  ExtractionReason,
+  SucceededExtraction,
+  FailedExtraction,
+} from './lib/extraction/extraction.js';
