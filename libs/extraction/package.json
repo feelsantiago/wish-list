@@ -25,6 +25,7 @@
     "@nestjs/common": "^11.1.28",
     "@wish-list/common-error": "*",
     "@wish-list/common-result": "*",
+    "@wish-list/common-utils": "*",
     "@wish-list/database": "*",
     "@wish-list/domain": "*",
     "ai": "^5.0.0",

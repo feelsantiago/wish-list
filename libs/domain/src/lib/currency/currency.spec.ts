@@ -1,3 +1,4 @@
+import { Failure } from '@wish-list/common-error';
 import { Currency } from './currency.js';
 
 describe('Currency.$', () => {
@@ -11,6 +12,28 @@ describe('Currency.$', () => {
 
   it('rejects values outside the union', () => {
     expect(Currency.$.safeParse('EUR').success).toBe(false);
+  });
+});
+
+describe('Currency.create', () => {
+  it('returns the currency for a supported code', () => {
+    const result = Currency.create('USD');
+    expect(result.isOk()).toBe(true);
+    if (result.isErr()) return;
+    expect(result.value).toBe('USD');
+  });
+
+  it('rejects an unsupported code', () => {
+    const result = Currency.create('EUR');
+    expect(result.isErr()).toBe(true);
+    if (result.isOk()) return;
+    expect(result.error.name).toBe('validation');
+    expect(result.error.message).toBe('Creating Currency');
+
+    const source = result.error.source;
+    expect(source).toBeInstanceOf(Failure);
+    if (!(source instanceof Failure)) return;
+    expect(source.metadata['input']).toBe('EUR');
   });
 });
 

@@ -10,6 +10,22 @@ describe('UrlMetadata.host', () => {
   });
 });
 
+describe('UrlMetadata.origin', () => {
+  it('drops the path, query and hash', () => {
+    expect(
+      UrlMetadata.from(
+        'https://acme.example/dp/123?tag=aff-20#reviews',
+      ).origin(),
+    ).toBe('https://acme.example');
+  });
+
+  it('keeps a non-default port', () => {
+    expect(UrlMetadata.from('http://localhost:3000/products').origin()).toBe(
+      'http://localhost:3000',
+    );
+  });
+});
+
 describe('UrlMetadata.path', () => {
   it('strips a trailing slash', () => {
     expect(UrlMetadata.from('https://amazon.com/dp/123/').path()).toBe(

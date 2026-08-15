@@ -32,6 +32,10 @@ export class UrlMetadata {
     return this.parsed.hostname.toLowerCase();
   }
 
+  public origin(): string {
+    return this.parsed.origin;
+  }
+
   public path(): string {
     return this.parsed.pathname.replace(/\/$/, '') || '/';
   }
