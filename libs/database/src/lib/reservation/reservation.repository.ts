@@ -44,7 +44,9 @@ export class ReservationRepository
     return find(this.options, id);
   }
 
-  public insert(entity: Reservation): AsyncResult<Reservation, DatabaseFailure> {
+  public insert(
+    entity: Reservation,
+  ): AsyncResult<Reservation, DatabaseFailure> {
     return insert(this.options, entity);
   }
 

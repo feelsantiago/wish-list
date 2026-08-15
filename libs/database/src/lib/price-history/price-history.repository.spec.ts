@@ -78,13 +78,20 @@ describe('PriceHistoryRepository', () => {
   });
 
   it('findByItem returns multiple price entries for the same item', async () => {
-    const first = makePriceHistory(itemId, { price: { amount: 10, currency: 'USD' } });
-    const second = makePriceHistory(itemId, { price: { amount: 8, currency: 'USD' } });
+    const first = makePriceHistory(itemId, {
+      price: { amount: 10, currency: 'USD' },
+    });
+    const second = makePriceHistory(itemId, {
+      price: { amount: 8, currency: 'USD' },
+    });
     await repository.insert(first).unwrapOr(first);
     await repository.insert(second).unwrapOr(second);
 
     await repository.findByItem(itemId).match({
-      ok: (found) => expect(found.map((p) => p.id).sort()).toEqual([first.id, second.id].sort()),
+      ok: (found) =>
+        expect(found.map((p) => p.id).sort()).toEqual(
+          [first.id, second.id].sort(),
+        ),
       err: () => {
         throw new Error('expected ok');
       },

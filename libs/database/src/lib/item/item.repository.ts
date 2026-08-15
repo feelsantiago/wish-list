@@ -53,9 +53,9 @@ export class ItemRepository
         this.options.db
           .select()
           .from(this.options.table)
-          .where(eq(this.options.table.wishlist, wishlist)) as unknown as Promise<
-          ItemRow[]
-        >,
+          .where(
+            eq(this.options.table.wishlist, wishlist),
+          ) as unknown as Promise<ItemRow[]>,
       (error) => DatabaseError.from(error).failure(),
     ).andThen((rows) => this.options.mapper.domain(rows));
   }

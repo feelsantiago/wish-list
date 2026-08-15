@@ -38,7 +38,9 @@ export class PriceHistoryRepository
     return find(this.options, id);
   }
 
-  public insert(entity: PriceHistory): AsyncResult<PriceHistory, DatabaseFailure> {
+  public insert(
+    entity: PriceHistory,
+  ): AsyncResult<PriceHistory, DatabaseFailure> {
     return insert(this.options, entity);
   }
 

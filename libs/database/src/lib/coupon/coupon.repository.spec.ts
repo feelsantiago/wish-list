@@ -95,7 +95,10 @@ describe('CouponRepository', () => {
     await repository.insert(second).unwrapOr(second);
 
     await repository.findByUser(userId).match({
-      ok: (found) => expect(found.map((c) => c.id).sort()).toEqual([first.id, second.id].sort()),
+      ok: (found) =>
+        expect(found.map((c) => c.id).sort()).toEqual(
+          [first.id, second.id].sort(),
+        ),
       err: () => {
         throw new Error('expected ok');
       },

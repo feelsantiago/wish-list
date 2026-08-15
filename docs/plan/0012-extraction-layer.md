@@ -65,8 +65,8 @@ until it exists. The Item slice is the next iteration.
     allowed to import wholesale, so the rule was never lint-enforceable. Replacing it
     with "no service→service edges" makes the dependency graph a DAG by construction
     and avoids `forwardRef` cycles (`item/service` ↔ `wishlist/service`) on day one.
-    Convention on top: a feature's service owns *writes* to its own entities; other
-    features may *read* any repository.
+    Convention on top: a feature's service owns _writes_ to its own entities; other
+    features may _read_ any repository.
 
 11. **Extraction is all-or-nothing.** `Item.ExtractionData` requires `price: Money`,
     so a page yielding name+image but no price is a failed extraction, not a partial
@@ -94,7 +94,7 @@ until it exists. The Item slice is the next iteration.
     outbound blast radius. `'unsupported-currency'` is permanent — never re-attempted.
 
 16. **`PageFetcher` and `Llm` are ports with injection tokens.** ADR-0016 rejected port
-    abstractions for *repositories* on the grounds that nothing needed swapping; both of
+    abstractions for _repositories_ on the grounds that nothing needed swapping; both of
     these have a concrete, near-term swap (plain `fetch` → reader API when retailers
     block; AI SDK → any other client), which is exactly ADR-0016's stated trigger. The
     JSON-LD/OpenGraph parsers stay pure functions — nothing to swap, no port.
@@ -106,7 +106,7 @@ until it exists. The Item slice is the next iteration.
     to the lib; the public surface still returns domain types.
 
 18. **Structured data is tried before the LLM.** JSON-LD `schema.org/Product`, then
-    OpenGraph, then the LLM path. ADR-0001 rules out *per-vendor* parsers; these are
+    OpenGraph, then the LLM path. ADR-0001 rules out _per-vendor_ parsers; these are
     generic web standards with the same "works on any site, no per-vendor maintenance"
     property, so this complements ADR-0001 rather than contradicting it. It is also the
     single largest lever on both latency and spend.
@@ -134,7 +134,7 @@ until it exists. The Item slice is the next iteration.
   `ServiceFailure` will follow.
 - `Currency = 'USD' | 'BRL'`, a closed union. `Money = { amount: number; currency: Currency }`.
 - `Vendor` today is a flat interface `{ id, vendorDomain, website, name, currency,
-  createdAt, updatedAt }` with a single `Vendor.create` requiring all fields.
+createdAt, updatedAt }` with a single `Vendor.create` requiring all fields.
 - `VendorDomain` validates a **hostname** via `magic-regexp`. It does **not** compute a
   registrable domain — `www.amazon.com` and `amazon.com` are distinct values today, and
   `amazon.com.br` cannot be reduced to eTLD+1 without a public-suffix list. `CONTEXT.md`
@@ -169,7 +169,7 @@ Mechanical rename across `libs/database`, independent of every other phase.
 
 - `DatabaseFailureType`: `'notFound'` → `'not-found'`.
 - `DatabaseFailure.notFound` factory body: `Failure.create('not-found', …)`. The
-  *function* name stays `notFound` (it's a TS identifier, camelCase is correct there);
+  _function_ name stays `notFound` (it's a TS identifier, camelCase is correct there);
   only the failure's runtime name string changes.
 - `vendor.repository.ts` inline `Failure.create('notFound', 'Entity not found', …)` →
   `'not-found'`. Better: replace it with `DatabaseFailure.notFound`-style construction
@@ -186,19 +186,24 @@ New file `libs/common/error/src/lib/service-failure.ts`, new entrypoint
 
 ```ts
 export type ServiceFailureType =
-  | 'not-found'      // requested entity does not exist
-  | 'invalid'        // input failed domain validation
-  | 'forbidden'      // actor is not permitted (ownership)
-  | 'plan-required'  // gated behind a Plan the actor lacks (ADR-0012)
-  | 'conflict'       // operation contradicts current state
-  | 'unexpected';    // infrastructure failure
+  | 'not-found' // requested entity does not exist
+  | 'invalid' // input failed domain validation
+  | 'forbidden' // actor is not permitted (ownership)
+  | 'plan-required' // gated behind a Plan the actor lacks (ADR-0012)
+  | 'conflict' // operation contradicts current state
+  | 'unexpected'; // infrastructure failure
 
-export type ServiceFailure<T extends string = never> = Failure<ServiceFailureType | T>;
+export type ServiceFailure<T extends string = never> = Failure<
+  ServiceFailureType | T
+>;
 
 export namespace ServiceFailure {
   export function notFound(id: string): Failure<'not-found'>;
   export function invalid(source: Failure): Failure<'invalid'>;
-  export function forbidden(actor: string, resource: string): Failure<'forbidden'>;
+  export function forbidden(
+    actor: string,
+    resource: string,
+  ): Failure<'forbidden'>;
   export function planRequired(feature: string): Failure<'plan-required'>;
   export function conflict(reason: string): Failure<'conflict'>;
   export function unexpected(source: Error): Failure<'unexpected'>;
@@ -219,7 +224,9 @@ Notes:
 ```ts
 export type ExtractionFailureType = 'persist-failed' | 'misconfigured';
 export type ExtractionFailure = ServiceFailure<ExtractionFailureType>;
-export namespace ExtractionFailure { /* only its own factories */ }
+export namespace ExtractionFailure {
+  /* only its own factories */
+}
 ```
 
 Tests: name/metadata/`source`-chain assertions mirroring `failure.spec.ts`.
@@ -231,10 +238,18 @@ Replaces the `Repository` base class across all 10 existing repositories.
 **Capability interfaces** — `libs/database/src/lib/repository/capability.ts`:
 
 ```ts
-export interface Readable<TEntity>   { find(id: Id): AsyncResult<TEntity, DatabaseFailure>; }
-export interface Insertable<TEntity> { insert(entity: TEntity): AsyncResult<TEntity, DatabaseFailure>; }
-export interface Updatable<TEntity>  { update(entity: TEntity): AsyncResult<TEntity, DatabaseFailure>; }
-export interface Deletable<TEntity>  { delete(id: Id): AsyncResult<void, DatabaseFailure>; }
+export interface Readable<TEntity> {
+  find(id: Id): AsyncResult<TEntity, DatabaseFailure>;
+}
+export interface Insertable<TEntity> {
+  insert(entity: TEntity): AsyncResult<TEntity, DatabaseFailure>;
+}
+export interface Updatable<TEntity> {
+  update(entity: TEntity): AsyncResult<TEntity, DatabaseFailure>;
+}
+export interface Deletable<TEntity> {
+  delete(id: Id): AsyncResult<void, DatabaseFailure>;
+}
 ```
 
 **Shared implementations as free functions** — `libs/database/src/lib/repository/operation.ts`:
@@ -261,7 +276,9 @@ with how `libs/domain` models behaviour (namespaces over plain functions, ADR-00
 
 ```ts
 @Injectable()
-export class ItemRepository implements Readable<Item>, Insertable<Item>, Updatable<Item> {
+export class ItemRepository
+  implements Readable<Item>, Insertable<Item>, Updatable<Item>
+{
   private readonly options: RepositoryOptions<Item, ItemRow, typeof items>;
 
   public constructor(
@@ -271,22 +288,30 @@ export class ItemRepository implements Readable<Item>, Insertable<Item>, Updatab
     this.options = { db, table: items, mapper };
   }
 
-  public find(id: Id) { return find(this.options, id); }
-  public insert(entity: Item) { return insert(this.options, entity); }
-  public update(entity: Item) { return update(this.options, entity); }
+  public find(id: Id) {
+    return find(this.options, id);
+  }
+  public insert(entity: Item) {
+    return insert(this.options, entity);
+  }
+  public update(entity: Item) {
+    return update(this.options, entity);
+  }
 
-  public findByWishlist(wishlist: Id) { /* own query, uses this.options */ }
+  public findByWishlist(wishlist: Id) {
+    /* own query, uses this.options */
+  }
 }
 ```
 
 Capability assignment:
 
-| Repository | Readable | Insertable | Updatable | Deletable |
-|---|:-:|:-:|:-:|:-:|
-| User, Wishlist, Category, Vendor, Item, Coupon, CouponRule, TrackedItem | ✓ | ✓ | ✓ | |
-| PriceHistory | ✓ | ✓ | | |
-| Reservation | ✓ | ✓ | | ✓ |
-| Extraction (Phase 5) | ✓ | ✓ | | |
+| Repository                                                              | Readable | Insertable | Updatable | Deletable |
+| ----------------------------------------------------------------------- | :------: | :--------: | :-------: | :-------: |
+| User, Wishlist, Category, Vendor, Item, Coupon, CouponRule, TrackedItem |    ✓     |     ✓      |     ✓     |           |
+| PriceHistory                                                            |    ✓     |     ✓      |           |           |
+| Reservation                                                             |    ✓     |     ✓      |           |     ✓     |
+| Extraction (Phase 5)                                                    |    ✓     |     ✓      |           |           |
 
 `PriceHistory` losing `update` is the correctness fix. `Reservation` gets `Deletable`
 per ADR-0015 (cancel = match token, then delete) — note this is the case a linear
@@ -315,7 +340,9 @@ interface BaseVendor {
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
-export interface ProvisionalVendor extends BaseVendor { readonly _tag: 'provisional'; }
+export interface ProvisionalVendor extends BaseVendor {
+  readonly _tag: 'provisional';
+}
 export interface ResolvedVendor extends BaseVendor {
   readonly _tag: 'resolved';
   readonly name: string;
@@ -329,8 +356,14 @@ export namespace Vendor {
     readonly website: Url;
     readonly currency: Currency;
   }
-  export function provisional(input: { vendorDomain: VendorDomain; website: Url }): ProvisionalVendor;
-  export function resolve(vendor: Vendor, data: Vendor.ExtractionData): Result<ResolvedVendor, DomainFailure>;
+  export function provisional(input: {
+    vendorDomain: VendorDomain;
+    website: Url;
+  }): ProvisionalVendor;
+  export function resolve(
+    vendor: Vendor,
+    data: Vendor.ExtractionData,
+  ): Result<ResolvedVendor, DomainFailure>;
   export function isProvisional(v: Vendor): v is ProvisionalVendor;
   export function isResolved(v: Vendor): v is ResolvedVendor;
   // from/plain rewritten as ts-pattern matches over _tag, per Item's shape
@@ -359,21 +392,25 @@ mutating function in the namespace).
 export type ExtractionKey = Brand<string, 'ExtractionKey'>;
 export type ExtractionSource = 'json-ld' | 'opengraph' | 'llm';
 export type ExtractionReason =
-  | 'fetch-failed' | 'blocked' | 'timeout'
-  | 'no-data' | 'unsupported-currency' | 'llm-failed';
+  | 'fetch-failed'
+  | 'blocked'
+  | 'timeout'
+  | 'no-data'
+  | 'unsupported-currency'
+  | 'llm-failed';
 
 interface BaseExtraction {
   readonly id: Id;
   readonly key: ExtractionKey;
   readonly url: Url;
-  readonly vendor: Id;          // always present — provisional or resolved
+  readonly vendor: Id; // always present — provisional or resolved
   readonly createdAt: Date;
 }
 export interface SucceededExtraction extends BaseExtraction {
   readonly _tag: 'succeeded';
   readonly source: ExtractionSource;
   readonly data: Item.ExtractionData;
-  readonly vendorData: Vendor.ExtractionData;   // snapshot; vendors row gets overwritten
+  readonly vendorData: Vendor.ExtractionData; // snapshot; vendors row gets overwritten
 }
 export interface FailedExtraction extends BaseExtraction {
   readonly _tag: 'failed';
@@ -394,7 +431,7 @@ produce the same key or reuse rate collapses. Proposed rules, open to revision:
 5. strip a trailing `/` from the path
 6. force `https`
 
-Deliberately *not* done: stripping all query params. Many retailers encode the actual
+Deliberately _not_ done: stripping all query params. Many retailers encode the actual
 variant (size, colour, SKU) in the query, and collapsing those would return the wrong
 product's price. Conservative stripping with a named denylist is the safer default; the
 denylist can grow as real URLs are observed.
@@ -452,12 +489,17 @@ project references to `tsconfig.lib.json`.
 
 ```ts
 export interface PageFetcher {
-  fetch(url: Url): AsyncResult<string, Failure<'fetch-failed' | 'blocked' | 'timeout'>>;
+  fetch(
+    url: Url,
+  ): AsyncResult<string, Failure<'fetch-failed' | 'blocked' | 'timeout'>>;
 }
 export const PAGE_FETCHER = Symbol('PAGE_FETCHER');
 
 export interface Llm {
-  generate<T>(schema: z.ZodType<T>, prompt: string): AsyncResult<T, Failure<'llm-failed'>>;
+  generate<T>(
+    schema: z.ZodType<T>,
+    prompt: string,
+  ): AsyncResult<T, Failure<'llm-failed'>>;
 }
 export const LLM = Symbol('LLM');
 ```
@@ -492,7 +534,7 @@ Test against captured HTML fixtures from a handful of real retailers, committed 
 const extraction$ = z.object({
   name: z.string(),
   price: z.number(),
-  currency: z.string(),     // NOT Currency.$ — the page may legitimately say GBP
+  currency: z.string(), // NOT Currency.$ — the page may legitimately say GBP
   image: z.string(),
   vendorName: z.string(),
 });
@@ -511,8 +553,8 @@ const extraction$ = z.object({
 ```ts
 @Injectable()
 export class Extractor {
-  extract(url: Url): AsyncResult<Extraction, ExtractionFailure>;   // reuse if fresh
-  refresh(url: Url): AsyncResult<Extraction, ExtractionFailure>;   // always fetch
+  extract(url: Url): AsyncResult<Extraction, ExtractionFailure>; // reuse if fresh
+  refresh(url: Url): AsyncResult<Extraction, ExtractionFailure>; // always fetch
 }
 ```
 
@@ -553,10 +595,10 @@ persisted windows cannot.
 
 ```ts
 export interface ExtractionModuleOptions {
-  readonly freshness: number;       // reuse succeeded rows newer than this — default 24h
-  readonly failureWindow: number;   // reuse failed rows newer than this — default 5min
-  readonly budget: number;          // inline deadline — default 3000ms
-  readonly markdownCap: number;     // bytes handed to the LLM — default 40_000
+  readonly freshness: number; // reuse succeeded rows newer than this — default 24h
+  readonly failureWindow: number; // reuse failed rows newer than this — default 5min
+  readonly budget: number; // inline deadline — default 3000ms
+  readonly markdownCap: number; // bytes handed to the LLM — default 40_000
   readonly llm: { readonly apiKey: string; readonly model: string };
 }
 ```
@@ -581,14 +623,14 @@ its own implementation). Not the parsers, not the mapper.
 
 Written ahead of the code, since they have no dependency on it:
 
-| # | Title | Governs phase |
-|---|---|---|
-| 0020 | `ServiceFailure` as an extensible service-layer failure vocabulary | 0, 1 |
-| 0021 | Repository capabilities via interfaces and composition, not inheritance | 2 |
-| 0022 | `Vendor` provisional and resolved states | 3 |
-| 0023 | Extraction as an append-only audited record, and failed extraction as an outcome | 4, 5, 9 |
-| 0024 | Ports for `PageFetcher` and `Llm`, and the scope of ADR-0016 | 6, 8 |
-| 0025 | Extraction owns the Vendor lifecycle; services never import services | 6, 9 |
+| #    | Title                                                                            | Governs phase |
+| ---- | -------------------------------------------------------------------------------- | ------------- |
+| 0020 | `ServiceFailure` as an extensible service-layer failure vocabulary               | 0, 1          |
+| 0021 | Repository capabilities via interfaces and composition, not inheritance          | 2             |
+| 0022 | `Vendor` provisional and resolved states                                         | 3             |
+| 0023 | Extraction as an append-only audited record, and failed extraction as an outcome | 4, 5, 9       |
+| 0024 | Ports for `PageFetcher` and `Llm`, and the scope of ADR-0016                     | 6, 8          |
+| 0025 | Extraction owns the Vendor lifecycle; services never import services             | 6, 9          |
 
 **ADR-0004** amended: controllers moved to `apps/api`; the cross-feature rule replaced
 with "services never import services" plus a write-ownership convention; `vendor`

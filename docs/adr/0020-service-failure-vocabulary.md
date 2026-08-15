@@ -9,14 +9,23 @@ and every service lib unions its own names onto the shared base:
 
 ```ts
 export type ServiceFailureType =
-  | 'not-found' | 'invalid' | 'forbidden' | 'plan-required' | 'conflict' | 'unexpected';
+  | 'not-found'
+  | 'invalid'
+  | 'forbidden'
+  | 'plan-required'
+  | 'conflict'
+  | 'unexpected';
 
-export type ServiceFailure<T extends string = never> = Failure<ServiceFailureType | T>;
+export type ServiceFailure<T extends string = never> = Failure<
+  ServiceFailureType | T
+>;
 ```
 
 ```ts
 // libs/extraction
-export type ExtractionFailure = ServiceFailure<'persist-failed' | 'misconfigured'>;
+export type ExtractionFailure = ServiceFailure<
+  'persist-failed' | 'misconfigured'
+>;
 ```
 
 The vocabulary is deliberately **API-agnostic**. It contains no HTTP concepts, no status

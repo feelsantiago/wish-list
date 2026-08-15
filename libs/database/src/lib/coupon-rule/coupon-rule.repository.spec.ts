@@ -72,7 +72,10 @@ describe('CouponRuleRepository', () => {
     await repository.insert(second).unwrapOr(second);
 
     await repository.findByCoupon(couponId).match({
-      ok: (found) => expect(found.map((r) => r.id).sort()).toEqual([first.id, second.id].sort()),
+      ok: (found) =>
+        expect(found.map((r) => r.id).sort()).toEqual(
+          [first.id, second.id].sort(),
+        ),
       err: () => {
         throw new Error('expected ok');
       },

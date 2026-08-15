@@ -39,4 +39,3 @@ export { DATABASE_CLIENT } from './lib/client/client.token.js';
 export { DatabaseModule } from './lib/database.module.js';
 export type { DatabaseModuleOptions } from './lib/database.module.js';
 export { Database } from './lib/transaction/transaction.js';
-

@@ -26,7 +26,11 @@ import { coupons } from './coupon.schema.js';
 export class CouponRepository
   implements Readable<Coupon>, Insertable<Coupon>, Updatable<Coupon>
 {
-  private readonly options: RepositoryOptions<Coupon, CouponRow, typeof coupons>;
+  private readonly options: RepositoryOptions<
+    Coupon,
+    CouponRow,
+    typeof coupons
+  >;
 
   public constructor(
     @Inject(DATABASE_CLIENT) db: LibSQLDatabase,

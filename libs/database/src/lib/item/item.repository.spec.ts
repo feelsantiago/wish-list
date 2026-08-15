@@ -6,7 +6,12 @@ import type { TestingModule } from '@nestjs/testing';
 import { createTestDatabase } from '../testing/test-db.js';
 import type { TestDatabase } from '../testing/test-db.js';
 import { createTestingModule } from '../testing/testing-module.js';
-import { makeCategory, makeUser, makeVendor, makeWishlist } from '../testing/fixtures.js';
+import {
+  makeCategory,
+  makeUser,
+  makeVendor,
+  makeWishlist,
+} from '../testing/fixtures.js';
 import { UserRepository } from '../user/user.repository.js';
 import { WishlistRepository } from '../wishlist/wishlist.repository.js';
 import { VendorRepository } from '../vendor/vendor.repository.js';
@@ -119,7 +124,10 @@ describe('ItemRepository', () => {
     await repository.insert(second).unwrapOr(second);
 
     await repository.findByWishlist(wishlistId).match({
-      ok: (found) => expect(found.map((i) => i.id).sort()).toEqual([first.id, second.id].sort()),
+      ok: (found) =>
+        expect(found.map((i) => i.id).sort()).toEqual(
+          [first.id, second.id].sort(),
+        ),
       err: () => {
         throw new Error('expected ok');
       },

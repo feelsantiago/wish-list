@@ -85,7 +85,9 @@ export namespace Extraction {
     return extraction._tag === 'succeeded';
   }
 
-  export function isFailed(extraction: Extraction): extraction is FailedExtraction {
+  export function isFailed(
+    extraction: Extraction,
+  ): extraction is FailedExtraction {
     return extraction._tag === 'failed';
   }
 

@@ -108,7 +108,10 @@ describe('CouponRule.qualifies', () => {
       discount: { type: 'percentage', percentage: 10 },
     });
     if (expiredResult.isErr()) throw new Error('unreachable');
-    const expired = { ...expiredResult.value, expiresAt: new Date(Date.now() - 1000) };
+    const expired = {
+      ...expiredResult.value,
+      expiresAt: new Date(Date.now() - 1000),
+    };
     expect(CouponRule.qualifies(rule(), expired, money(100))).toBe(false);
   });
 

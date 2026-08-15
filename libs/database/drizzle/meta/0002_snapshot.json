@@ -53,17 +53,12 @@
       "indexes": {
         "categories_user_idx": {
           "name": "categories_user_idx",
-          "columns": [
-            "user"
-          ],
+          "columns": ["user"],
           "isUnique": false
         },
         "categories_user_name_idx": {
           "name": "categories_user_name_idx",
-          "columns": [
-            "user",
-            "name"
-          ],
+          "columns": ["user", "name"],
           "isUnique": true
         }
       },
@@ -72,12 +67,8 @@
           "name": "categories_user_users_id_fk",
           "tableFrom": "categories",
           "tableTo": "users",
-          "columnsFrom": [
-            "user"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -135,9 +126,7 @@
       "indexes": {
         "coupon_rules_coupon_idx": {
           "name": "coupon_rules_coupon_idx",
-          "columns": [
-            "coupon"
-          ],
+          "columns": ["coupon"],
           "isUnique": false
         }
       },
@@ -146,12 +135,8 @@
           "name": "coupon_rules_coupon_coupons_id_fk",
           "tableFrom": "coupon_rules",
           "tableTo": "coupons",
-          "columnsFrom": [
-            "coupon"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["coupon"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -244,25 +229,17 @@
       "indexes": {
         "coupons_user_idx": {
           "name": "coupons_user_idx",
-          "columns": [
-            "user"
-          ],
+          "columns": ["user"],
           "isUnique": false
         },
         "coupons_vendor_idx": {
           "name": "coupons_vendor_idx",
-          "columns": [
-            "vendor"
-          ],
+          "columns": ["vendor"],
           "isUnique": false
         },
         "coupons_user_vendor_code_idx": {
           "name": "coupons_user_vendor_code_idx",
-          "columns": [
-            "user",
-            "vendor",
-            "code"
-          ],
+          "columns": ["user", "vendor", "code"],
           "isUnique": true
         }
       },
@@ -271,12 +248,8 @@
           "name": "coupons_user_users_id_fk",
           "tableFrom": "coupons",
           "tableTo": "users",
-          "columnsFrom": [
-            "user"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -284,12 +257,8 @@
           "name": "coupons_vendor_vendors_id_fk",
           "tableFrom": "coupons",
           "tableTo": "vendors",
-          "columnsFrom": [
-            "vendor"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["vendor"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -403,23 +372,17 @@
       "indexes": {
         "items_wishlist_idx": {
           "name": "items_wishlist_idx",
-          "columns": [
-            "wishlist"
-          ],
+          "columns": ["wishlist"],
           "isUnique": false
         },
         "items_category_idx": {
           "name": "items_category_idx",
-          "columns": [
-            "category"
-          ],
+          "columns": ["category"],
           "isUnique": false
         },
         "items_vendor_idx": {
           "name": "items_vendor_idx",
-          "columns": [
-            "vendor"
-          ],
+          "columns": ["vendor"],
           "isUnique": false
         }
       },
@@ -428,12 +391,8 @@
           "name": "items_wishlist_wishlists_id_fk",
           "tableFrom": "items",
           "tableTo": "wishlists",
-          "columnsFrom": [
-            "wishlist"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["wishlist"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -441,12 +400,8 @@
           "name": "items_vendor_vendors_id_fk",
           "tableFrom": "items",
           "tableTo": "vendors",
-          "columnsFrom": [
-            "vendor"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["vendor"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -454,12 +409,8 @@
           "name": "items_category_categories_id_fk",
           "tableFrom": "items",
           "tableTo": "categories",
-          "columnsFrom": [
-            "category"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -510,9 +461,7 @@
       "indexes": {
         "price_history_item_idx": {
           "name": "price_history_item_idx",
-          "columns": [
-            "item"
-          ],
+          "columns": ["item"],
           "isUnique": false
         }
       },
@@ -521,12 +470,8 @@
           "name": "price_history_item_items_id_fk",
           "tableFrom": "price_history",
           "tableTo": "items",
-          "columnsFrom": [
-            "item"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -577,9 +522,7 @@
       "indexes": {
         "reservations_item_idx": {
           "name": "reservations_item_idx",
-          "columns": [
-            "item"
-          ],
+          "columns": ["item"],
           "isUnique": true
         }
       },
@@ -588,12 +531,8 @@
           "name": "reservations_item_items_id_fk",
           "tableFrom": "reservations",
           "tableTo": "items",
-          "columnsFrom": [
-            "item"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -644,9 +583,7 @@
       "indexes": {
         "tracked_items_item_idx": {
           "name": "tracked_items_item_idx",
-          "columns": [
-            "item"
-          ],
+          "columns": ["item"],
           "isUnique": true
         }
       },
@@ -655,12 +592,8 @@
           "name": "tracked_items_item_items_id_fk",
           "tableFrom": "tracked_items",
           "tableTo": "items",
-          "columnsFrom": [
-            "item"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -746,17 +679,12 @@
       "indexes": {
         "users_email_idx": {
           "name": "users_email_idx",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         },
         "users_provider_provider_id_idx": {
           "name": "users_provider_provider_id_idx",
-          "columns": [
-            "provider",
-            "provider_id"
-          ],
+          "columns": ["provider", "provider_id"],
           "isUnique": true
         }
       },
@@ -828,9 +756,7 @@
       "indexes": {
         "vendors_vendor_domain_idx": {
           "name": "vendors_vendor_domain_idx",
-          "columns": [
-            "vendor_domain"
-          ],
+          "columns": ["vendor_domain"],
           "isUnique": true
         }
       },
@@ -902,16 +828,12 @@
       "indexes": {
         "wishlists_user_idx": {
           "name": "wishlists_user_idx",
-          "columns": [
-            "user"
-          ],
+          "columns": ["user"],
           "isUnique": false
         },
         "wishlists_slug_idx": {
           "name": "wishlists_slug_idx",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -920,12 +842,8 @@
           "name": "wishlists_user_users_id_fk",
           "tableFrom": "wishlists",
           "tableTo": "users",
-          "columnsFrom": [
-            "user"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

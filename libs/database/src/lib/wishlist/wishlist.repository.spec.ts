@@ -70,7 +70,10 @@ describe('WishlistRepository', () => {
     await repository.insert(second).unwrapOr(second);
 
     await repository.findByUser(userId).match({
-      ok: (found) => expect(found.map((w) => w.id).sort()).toEqual([first.id, second.id].sort()),
+      ok: (found) =>
+        expect(found.map((w) => w.id).sort()).toEqual(
+          [first.id, second.id].sort(),
+        ),
       err: () => {
         throw new Error('expected ok');
       },

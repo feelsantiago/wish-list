@@ -56,11 +56,15 @@ export interface MakeVendorOverrides {
   readonly currency?: Currency;
 }
 
-export function makeVendor(overrides: MakeVendorOverrides = {}): ResolvedVendor {
+export function makeVendor(
+  overrides: MakeVendorOverrides = {},
+): ResolvedVendor {
   const id = randomUUID();
   const vendorDomain =
-    overrides.vendorDomain ?? VendorDomainEntity.from(`vendor-${id}.example.com`);
-  const website = overrides.website ?? UrlEntity.from(`https://vendor-${id}.example.com`);
+    overrides.vendorDomain ??
+    VendorDomainEntity.from(`vendor-${id}.example.com`);
+  const website =
+    overrides.website ?? UrlEntity.from(`https://vendor-${id}.example.com`);
   const provisional = VendorEntity.provisional({ vendorDomain, website });
 
   return unwrap(

@@ -8,17 +8,31 @@ append-only by design. We replace the base class with capability interfaces plus
 functions:
 
 ```ts
-export interface Readable<TEntity>   { find(id: Id): AsyncResult<TEntity, DatabaseFailure>; }
-export interface Insertable<TEntity> { insert(e: TEntity): AsyncResult<TEntity, DatabaseFailure>; }
-export interface Updatable<TEntity>  { update(e: TEntity): AsyncResult<TEntity, DatabaseFailure>; }
-export interface Deletable<TEntity>  { delete(id: Id): AsyncResult<void, DatabaseFailure>; }
+export interface Readable<TEntity> {
+  find(id: Id): AsyncResult<TEntity, DatabaseFailure>;
+}
+export interface Insertable<TEntity> {
+  insert(e: TEntity): AsyncResult<TEntity, DatabaseFailure>;
+}
+export interface Updatable<TEntity> {
+  update(e: TEntity): AsyncResult<TEntity, DatabaseFailure>;
+}
+export interface Deletable<TEntity> {
+  delete(id: Id): AsyncResult<void, DatabaseFailure>;
+}
 ```
 
 ```ts
 @Injectable()
-export class ExtractionRepository implements Readable<Extraction>, Insertable<Extraction> {
-  public find(id: Id) { return find(this.options, id); }
-  public insert(e: Extraction) { return insert(this.options, e); }
+export class ExtractionRepository
+  implements Readable<Extraction>, Insertable<Extraction>
+{
+  public find(id: Id) {
+    return find(this.options, id);
+  }
+  public insert(e: Extraction) {
+    return insert(this.options, e);
+  }
 }
 ```
 
@@ -49,7 +63,7 @@ looking for "can this be mutated?" will actually look.
 ## Consequences
 
 - Shared implementations are free functions taking `RepositoryOptions<TEntity, TRow,
-  TTable>` (`{ db, table, mapper }`), not helper classes. This avoids each repository
+TTable>` (`{ db, table, mapper }`), not helper classes. This avoids each repository
   holding one to three helper instances that each duplicate a reference to the same
   `db`/`table`/`mapper`, and it matches how `libs/domain` already models behaviour —
   namespaces over plain functions, not class hierarchies (ADR-0007).
@@ -57,7 +71,7 @@ looking for "can this be mutated?" will actually look.
   the alternative to writing `public insert(e) { return insert(this.options, e); }` is a
   base class that silently grants capabilities nobody asked for.
 - `PriceHistoryRepository` loses `update`. That is a correctness fix, not a cosmetic one
-   — nothing should have been able to rewrite an append-only price log.
+  — nothing should have been able to rewrite an append-only price log.
 - `ReservationRepository` gains `Deletable`, the capability that motivated abandoning the
   inheritance ladder.
 - ADR-0016 (concrete repositories, no port abstraction) is unaffected. These interfaces

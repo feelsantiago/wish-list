@@ -48,7 +48,11 @@ export function insert<
 ): AsyncResult<TEntity, DatabaseFailure> {
   const row = options.mapper.database(entity);
   return AsyncResult.fromThrowable(
-    () => options.db.insert(options.table).values(row).then(() => entity),
+    () =>
+      options.db
+        .insert(options.table)
+        .values(row)
+        .then(() => entity),
     (error) => DatabaseError.from(error).failure(),
   );
 }

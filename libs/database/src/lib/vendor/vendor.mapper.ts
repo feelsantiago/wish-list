@@ -11,7 +11,10 @@ import { vendors } from './vendor.schema.js';
 export type VendorRow = typeof vendors.$inferSelect;
 
 @Injectable()
-export class VendorDatabaseDomainMapper implements DomainMapper<Vendor, VendorRow> {
+export class VendorDatabaseDomainMapper implements DomainMapper<
+  Vendor,
+  VendorRow
+> {
   private readonly delegate: DatabaseDomainMapper<Vendor, VendorRow> =
     DatabaseDomainMapper.create(
       (vendor: Vendor) => this.toRow(vendor),

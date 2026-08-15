@@ -14,7 +14,9 @@ We resolve it by making `Vendor` a discriminated union on `_tag`, the same shape
 established for `Item`:
 
 ```ts
-interface ProvisionalVendor extends BaseVendor { _tag: 'provisional'; }
+interface ProvisionalVendor extends BaseVendor {
+  _tag: 'provisional';
+}
 interface ResolvedVendor extends BaseVendor {
   _tag: 'resolved';
   name: string;
@@ -23,7 +25,7 @@ interface ResolvedVendor extends BaseVendor {
 ```
 
 A `ProvisionalVendor` is constructible from a URL alone. Extraction promotes it in place
-via `Vendor.resolve(vendor, data)` the first time *any* Item on that registrable domain
+via `Vendor.resolve(vendor, data)` the first time _any_ Item on that registrable domain
 extracts successfully, so a domain never accumulates duplicate Vendor rows.
 
 `VendorDomain` additionally gains `fromUrl()`, backed by a public-suffix list (`tldts`),

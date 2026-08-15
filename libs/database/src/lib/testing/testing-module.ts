@@ -24,7 +24,9 @@ import { ReservationRepository } from '../reservation/reservation.repository.js'
 import { TrackedItemRepository } from '../tracked-item/tracked-item.repository.js';
 import { PriceHistoryRepository } from '../price-history/price-history.repository.js';
 
-export function createTestingModule(db: LibSQLDatabase): Promise<TestingModule> {
+export function createTestingModule(
+  db: LibSQLDatabase,
+): Promise<TestingModule> {
   return Test.createTestingModule({
     providers: [
       { provide: DATABASE_CLIENT, useValue: db },

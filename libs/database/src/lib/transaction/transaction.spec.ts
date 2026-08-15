@@ -19,7 +19,9 @@ function fakeDb(
 describe('Database.transaction', () => {
   it('resolves Ok with the callback result on success', async () => {
     const db = fakeDb((fn) => Promise.resolve(fn(undefined as never)));
-    const value = await Database.transaction(db, () => Promise.resolve(42)).unwrapOr(0);
+    const value = await Database.transaction(db, () =>
+      Promise.resolve(42),
+    ).unwrapOr(0);
     expect(value).toBe(42);
   });
 
@@ -31,9 +33,9 @@ describe('Database.transaction', () => {
       error.code = 'SQLITE_CONSTRAINT_UNIQUE';
       throw error;
     });
-    const name = await Database.transaction(db, () => Promise.resolve(undefined)).match(
-      { ok: () => 'ok', err: (failure) => failure.name },
-    );
+    const name = await Database.transaction(db, () =>
+      Promise.resolve(undefined),
+    ).match({ ok: () => 'ok', err: (failure) => failure.name });
     expect(name).toBe('constraint');
   });
 
@@ -41,9 +43,9 @@ describe('Database.transaction', () => {
     const db = fakeDb(() => {
       throw new Error('disk I/O error');
     });
-    const name = await Database.transaction(db, () => Promise.resolve(undefined)).match(
-      { ok: () => 'ok', err: (failure) => failure.name },
-    );
+    const name = await Database.transaction(db, () =>
+      Promise.resolve(undefined),
+    ).match({ ok: () => 'ok', err: (failure) => failure.name });
     expect(name).toBe('query');
   });
 });
@@ -72,11 +74,16 @@ describe('Database.transaction (real db)', () => {
 
     expect(name).toBe('constraint');
 
-    await moduleRef.get(UserRepository).find(first.id).match({
-      ok: () => {
-        throw new Error('expected notFound: first insert should have rolled back');
-      },
-      err: (failure) => expect(failure.name).toBe('not-found'),
-    });
+    await moduleRef
+      .get(UserRepository)
+      .find(first.id)
+      .match({
+        ok: () => {
+          throw new Error(
+            'expected notFound: first insert should have rolled back',
+          );
+        },
+        err: (failure) => expect(failure.name).toBe('not-found'),
+      });
   });
 });

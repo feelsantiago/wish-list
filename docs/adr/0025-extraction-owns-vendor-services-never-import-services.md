@@ -42,7 +42,7 @@ writes another feature's entity.
   per-feature database libs; what got built is a single horizontal `libs/database` that
   `service` is explicitly allowed to import wholesale. `@nx/enforce-module-boundaries`
   sees one lib with one tag and cannot distinguish `ItemRepository` from
-  `WishlistRepository`. The replacement rule — no service→service edges — *is*
+  `WishlistRepository`. The replacement rule — no service→service edges — _is_
   mechanically enforceable, because service libs are separate Nx projects with separate
   tags.
 - Write ownership is a review-time convention, not a lint rule. Accepted: the property

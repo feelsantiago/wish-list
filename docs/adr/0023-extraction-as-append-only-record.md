@@ -33,13 +33,13 @@ construct an Item at all (ADR-0022), and an `Err` branch cannot deliver one.
   a retry queue cannot implement backoff without an attempt history. Rejected.
 - **Reuse the `items` table as the extraction cache** — look up any already-extracted Item
   with the same URL and copy its metadata. Zero new storage, persistent, already indexed.
-  Rejected outright: `Item.correct()` means `items` records *user-edited* values, not what
+  Rejected outright: `Item.correct()` means `items` records _user-edited_ values, not what
   the page said, so reuse would propagate one user's manual correction into another user's
   Item. `items` is not a faithful record of any extraction.
 - **Put every failure in the `Err` branch.** One failure type, conventional
   Result-handling. But then `item/service` must inspect `failure.name` to work out whether
   it still has a usable Vendor — precisely the lower-layer leak ADR-0018 exists to prevent
-   — or call a separate Vendor-provisioning step first, resurrecting the `vendor/service`
+  — or call a separate Vendor-provisioning step first, resurrecting the `vendor/service`
   lib that ADR-0025 eliminates. Rejected.
 - **Append-only records with the outcome split (chosen).**
 
@@ -66,7 +66,7 @@ construct an Item at all (ADR-0022), and an `Err` branch cannot deliver one.
   Item.
 - `ExtractionKey` normalization is the load-bearing detail:
   `amazon.com/dp/B0XYZ?tag=aff-20` and `amazon.com/dp/B0XYZ` must produce one key or the
-  reuse rate collapses. Normalization strips a *named denylist* of tracking parameters
+  reuse rate collapses. Normalization strips a _named denylist_ of tracking parameters
   rather than all query parameters, because many retailers encode the actual product
   variant (size, colour, SKU) in the query and collapsing those would serve the wrong
   product's price.

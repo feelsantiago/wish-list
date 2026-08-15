@@ -27,7 +27,11 @@ import { vendors } from './vendor.schema.js';
 export class VendorRepository
   implements Readable<Vendor>, Insertable<Vendor>, Updatable<Vendor>
 {
-  private readonly options: RepositoryOptions<Vendor, VendorRow, typeof vendors>;
+  private readonly options: RepositoryOptions<
+    Vendor,
+    VendorRow,
+    typeof vendors
+  >;
 
   public constructor(
     @Inject(DATABASE_CLIENT) db: LibSQLDatabase,

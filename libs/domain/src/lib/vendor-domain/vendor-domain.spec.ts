@@ -48,7 +48,9 @@ describe('VendorDomain.from', () => {
 
 describe('VendorDomain.fromUrl', () => {
   it('reduces a subdomain to the registrable domain', () => {
-    const result = VendorDomain.fromUrl(Url.from('https://www.amazon.com/dp/123'));
+    const result = VendorDomain.fromUrl(
+      Url.from('https://www.amazon.com/dp/123'),
+    );
     expect(result.isOk()).toBe(true);
     if (result.isErr()) return;
     expect(result.value).toBe('amazon.com');

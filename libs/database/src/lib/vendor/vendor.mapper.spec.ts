@@ -115,7 +115,10 @@ describe('VendorDatabaseDomainMapper', () => {
       const result = mapper.domain(rows);
       result.match({
         ok: (entities) =>
-          expect(entities.map((e) => e._tag)).toEqual(['provisional', 'resolved']),
+          expect(entities.map((e) => e._tag)).toEqual([
+            'provisional',
+            'resolved',
+          ]),
         err: () => {
           throw new Error('expected ok');
         },

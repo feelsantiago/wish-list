@@ -1,7 +1,8 @@
 import { Failure } from '@wish-list/common-error';
 import type { DomainFailure, Id } from '@wish-list/domain';
 
-export type DatabaseFailureType = 'not-found' | 'constraint' | 'query' | 'mapping';
+export type DatabaseFailureType =
+  'not-found' | 'constraint' | 'query' | 'mapping';
 export type DatabaseFailure = Failure<DatabaseFailureType>;
 
 export namespace DatabaseFailure {

@@ -24,7 +24,10 @@ import { trackedItems } from './tracked-item.schema.js';
 
 @Injectable()
 export class TrackedItemRepository
-  implements Readable<TrackedItem>, Insertable<TrackedItem>, Updatable<TrackedItem>
+  implements
+    Readable<TrackedItem>,
+    Insertable<TrackedItem>,
+    Updatable<TrackedItem>
 {
   private readonly options: RepositoryOptions<
     TrackedItem,
@@ -44,11 +47,15 @@ export class TrackedItemRepository
     return find(this.options, id);
   }
 
-  public insert(entity: TrackedItem): AsyncResult<TrackedItem, DatabaseFailure> {
+  public insert(
+    entity: TrackedItem,
+  ): AsyncResult<TrackedItem, DatabaseFailure> {
     return insert(this.options, entity);
   }
 
-  public update(entity: TrackedItem): AsyncResult<TrackedItem, DatabaseFailure> {
+  public update(
+    entity: TrackedItem,
+  ): AsyncResult<TrackedItem, DatabaseFailure> {
     return update(this.options, entity);
   }
 

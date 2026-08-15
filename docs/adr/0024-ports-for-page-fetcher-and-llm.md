@@ -7,7 +7,7 @@ JSON-LD and OpenGraph parsers get no port; they are pure functions with nothing 
 
 This is a deliberate deviation from ADR-0016 ("concrete repositories, no port
 abstraction"), and the two are consistent once ADR-0016 is read as scoped to
-*repositories*. Its stated rejection was "nothing in this codebase needs a second
+_repositories_. Its stated rejection was "nothing in this codebase needs a second
 implementation of any repository", and its stated trigger for revisiting was "a genuine
 need to swap". Both ports here meet that trigger concretely, not speculatively:
 
@@ -28,7 +28,7 @@ Repositories remain concrete. Service libs import `ItemRepository`, not `Readabl
   orchestrator, and testing `Extractor` would require intercepting global `fetch` and
   live LLM calls. Rejected.
 - **Port only the LLM, not the fetcher.** The LLM is the obvious swap candidate. But the
-  fetcher is the component most likely to need replacing *first* — it is what breaks when
+  fetcher is the component most likely to need replacing _first_ — it is what breaks when
   a retailer deploys bot protection, which is a matter of when, not if. Rejected.
 - **Port everything, including the structured-data parsers.** Uniform, but JSON-LD and
   OpenGraph are fixed public specifications; there is no second implementation to swap to,
