@@ -11,11 +11,16 @@ export { priceHistory } from './lib/price-history/price-history.schema.js';
 export { DatabaseFailure } from './lib/database-failure/database-failure.js';
 export type { DatabaseFailureType } from './lib/database-failure/database-failure.js';
 export { DatabaseError } from './lib/database-failure/database-error.js';
-export { Repository } from './lib/repository/repository.js';
+export type {
+  Readable,
+  Insertable,
+  Updatable,
+  Deletable,
+} from './lib/repository/capability.js';
 export type {
   RepositoryTable,
   RepositoryOptions,
-} from './lib/repository/repository.js';
+} from './lib/repository/operation.js';
 export { DatabaseDomainMapper } from './lib/mapper/database-domain-mapper.js';
 export type { DomainMapper } from './lib/mapper/domain-mapper.js';
 export { UserRepository } from './lib/user/user.repository.js';

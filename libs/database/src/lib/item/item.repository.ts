@@ -4,8 +4,17 @@ import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Item } from '@wish-list/domain';
 import type { Id } from '@wish-list/domain';
 import { AsyncResult } from '@wish-list/common-result';
-import { Repository } from '../repository/repository.js';
-import type { DomainMapper } from '../mapper/domain-mapper.js';
+import type {
+  Readable,
+  Insertable,
+  Updatable,
+} from '../repository/capability.js';
+import {
+  find,
+  insert,
+  update,
+  type RepositoryOptions,
+} from '../repository/operation.js';
 import { ItemDatabaseDomainMapper } from './item.mapper.js';
 import type { ItemRow } from './item.mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
@@ -14,31 +23,40 @@ import { DATABASE_CLIENT } from '../client/client.token.js';
 import { items } from './item.schema.js';
 
 @Injectable()
-export class ItemRepository extends Repository<Item, ItemRow, typeof items> {
+export class ItemRepository
+  implements Readable<Item>, Insertable<Item>, Updatable<Item>
+{
+  private readonly options: RepositoryOptions<Item, ItemRow, typeof items>;
+
   public constructor(
     @Inject(DATABASE_CLIENT) db: LibSQLDatabase,
-    private readonly _mapper: ItemDatabaseDomainMapper,
+    mapper: ItemDatabaseDomainMapper,
   ) {
-    super({
-      db,
-      table: items,
-    });
+    this.options = { db, table: items, mapper };
   }
 
-  protected mapper(): DomainMapper<Item, ItemRow> {
-    return this._mapper;
+  public find(id: Id): AsyncResult<Item, DatabaseFailure> {
+    return find(this.options, id);
+  }
+
+  public insert(entity: Item): AsyncResult<Item, DatabaseFailure> {
+    return insert(this.options, entity);
+  }
+
+  public update(entity: Item): AsyncResult<Item, DatabaseFailure> {
+    return update(this.options, entity);
   }
 
   public findByWishlist(wishlist: Id): AsyncResult<Item[], DatabaseFailure> {
     return AsyncResult.fromThrowable(
       () =>
-        this.db
+        this.options.db
           .select()
-          .from(this.table)
-          .where(eq(this.table.wishlist, wishlist)) as unknown as Promise<
+          .from(this.options.table)
+          .where(eq(this.options.table.wishlist, wishlist)) as unknown as Promise<
           ItemRow[]
         >,
       (error) => DatabaseError.from(error).failure(),
-    ).andThen((rows) => this.mapper().domain(rows));
+    ).andThen((rows) => this.options.mapper.domain(rows));
   }
 }

@@ -4,7 +4,17 @@ import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { TrackedItem } from '@wish-list/domain';
 import type { Plain, Id } from '@wish-list/domain';
 import { AsyncResult } from '@wish-list/common-result';
-import { Repository } from '../repository/repository.js';
+import type {
+  Readable,
+  Insertable,
+  Updatable,
+} from '../repository/capability.js';
+import {
+  find,
+  insert,
+  update,
+  type RepositoryOptions,
+} from '../repository/operation.js';
 import { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
 import { DatabaseError } from '../database-failure/database-error.js';
@@ -13,39 +23,45 @@ import { TRACKED_ITEM_MAPPER } from './tracked-item.mapper.js';
 import { trackedItems } from './tracked-item.schema.js';
 
 @Injectable()
-export class TrackedItemRepository extends Repository<
-  TrackedItem,
-  Plain<TrackedItem>,
-  typeof trackedItems
-> {
+export class TrackedItemRepository
+  implements Readable<TrackedItem>, Insertable<TrackedItem>, Updatable<TrackedItem>
+{
+  private readonly options: RepositoryOptions<
+    TrackedItem,
+    Plain<TrackedItem>,
+    typeof trackedItems
+  >;
+
   public constructor(
     @Inject(DATABASE_CLIENT) db: LibSQLDatabase,
     @Inject(TRACKED_ITEM_MAPPER)
-    private readonly _mapper: DatabaseDomainMapper<
-      TrackedItem,
-      Plain<TrackedItem>
-    >,
+    mapper: DatabaseDomainMapper<TrackedItem, Plain<TrackedItem>>,
   ) {
-    super({
-      db,
-      table: trackedItems,
-    });
+    this.options = { db, table: trackedItems, mapper };
   }
 
-  protected mapper(): DatabaseDomainMapper<TrackedItem, Plain<TrackedItem>> {
-    return this._mapper;
+  public find(id: Id): AsyncResult<TrackedItem, DatabaseFailure> {
+    return find(this.options, id);
+  }
+
+  public insert(entity: TrackedItem): AsyncResult<TrackedItem, DatabaseFailure> {
+    return insert(this.options, entity);
+  }
+
+  public update(entity: TrackedItem): AsyncResult<TrackedItem, DatabaseFailure> {
+    return update(this.options, entity);
   }
 
   public findByItem(item: Id): AsyncResult<TrackedItem[], DatabaseFailure> {
     return AsyncResult.fromThrowable(
       () =>
-        this.db
+        this.options.db
           .select()
-          .from(this.table)
-          .where(eq(this.table.item, item)) as unknown as Promise<
+          .from(this.options.table)
+          .where(eq(this.options.table.item, item)) as unknown as Promise<
           Plain<TrackedItem>[]
         >,
       (error) => DatabaseError.from(error).failure(),
-    ).andThen((rows) => this.mapper().domain(rows));
+    ).andThen((rows) => this.options.mapper.domain(rows));
   }
 }

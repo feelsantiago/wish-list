@@ -90,6 +90,25 @@ describe('ReservationRepository', () => {
     });
   });
 
+  it('delete removes the reservation, so a later find returns "notFound"', async () => {
+    const reservation = makeReservation(itemId);
+    await repository.insert(reservation).unwrapOr(reservation);
+
+    await repository.delete(reservation.id).match({
+      ok: () => undefined,
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+
+    await repository.find(reservation.id).match({
+      ok: () => {
+        throw new Error('expected err');
+      },
+      err: (failure) => expect(failure.name).toBe('not-found'),
+    });
+  });
+
   it('findByItem returns every reservation for that item', async () => {
     const reservation = makeReservation(itemId);
     await repository.insert(reservation).unwrapOr(reservation);
