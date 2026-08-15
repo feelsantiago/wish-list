@@ -1,3 +1,7 @@
+import { Injectable } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { isAxiosError } from 'axios';
+import { firstValueFrom } from 'rxjs';
 import { Failure } from '@wish-list/common-error';
 import { AsyncResult } from '@wish-list/common-result';
 import type { Url } from '@wish-list/domain';
@@ -8,19 +12,16 @@ const USER_AGENT =
 
 const CAPTCHA_MARKERS = ['captcha', 'are you a human', 'access denied'];
 
+const TIMEOUT_MS = 3000;
+
 class BlockedError extends Error {}
 
-export interface HttpPageFetcherOptions {
-  readonly timeout: number;
-}
-
-const DEFAULT_OPTIONS: HttpPageFetcherOptions = { timeout: 3000 };
-
+@Injectable()
 export class HttpPageFetcher implements PageFetcher {
-  private readonly options: HttpPageFetcherOptions;
+  private readonly http: HttpService;
 
-  public constructor(options: Partial<HttpPageFetcherOptions> = {}) {
-    this.options = { ...DEFAULT_OPTIONS, ...options };
+  public constructor(http: HttpService) {
+    this.http = http;
   }
 
   public fetch(
@@ -33,34 +34,31 @@ export class HttpPageFetcher implements PageFetcher {
   }
 
   private async _fetch(url: Url): Promise<string> {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.options.timeout);
-
-    try {
-      const response = await fetch(url, {
-        signal: controller.signal,
+    const response = await firstValueFrom(
+      this.http.get<string>(url, {
+        timeout: TIMEOUT_MS,
+        responseType: 'text',
         headers: { 'User-Agent': USER_AGENT },
-      });
+        validateStatus: () => true,
+      }),
+    );
 
-      if (response.status === 403 || response.status === 429) {
-        throw new BlockedError(`Blocked with status ${response.status}`);
-      }
-
-      if (!response.ok) {
-        throw new Error(`Fetch failed with status ${response.status}`);
-      }
-
-      const body = await response.text();
-      const lower = body.toLowerCase();
-
-      if (CAPTCHA_MARKERS.some((marker) => lower.includes(marker))) {
-        throw new BlockedError('Blocked by captcha challenge');
-      }
-
-      return body;
-    } finally {
-      clearTimeout(timer);
+    if (response.status === 403 || response.status === 429) {
+      throw new BlockedError(`Blocked with status ${response.status}`);
     }
+
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(`Fetch failed with status ${response.status}`);
+    }
+
+    const body = response.data;
+    const lower = body.toLowerCase();
+
+    if (CAPTCHA_MARKERS.some((marker) => lower.includes(marker))) {
+      throw new BlockedError('Blocked by captcha challenge');
+    }
+
+    return body;
   }
 
   private _toFailure(
@@ -71,7 +69,7 @@ export class HttpPageFetcher implements PageFetcher {
       return Failure.from(error, {}, 'blocked');
     }
 
-    if (error instanceof DOMException && error.name === 'AbortError') {
+    if (isAxiosError(error) && error.code === 'ECONNABORTED') {
       return Failure.create('timeout', `Timed out fetching ${url}`);
     }
 

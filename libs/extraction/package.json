@@ -20,18 +20,20 @@
     ]
   },
   "dependencies": {
-    "@wish-list/domain": "*",
-    "@wish-list/database": "*",
-    "@wish-list/common-result": "*",
-    "@wish-list/common-error": "*",
+    "@ai-sdk/anthropic": "^2.0.0",
+    "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "^11.1.28",
-    "zod": "^3.25.76",
-    "ts-pattern": "^5.9.0",
-    "tldts": "^7.4.10",
+    "@wish-list/common-error": "*",
+    "@wish-list/common-result": "*",
+    "@wish-list/database": "*",
+    "@wish-list/domain": "*",
+    "ai": "^5.0.0",
+    "axios": "^1.16.0",
     "cheerio": "^1.2.0",
     "node-html-markdown": "^1.3.0",
-    "ai": "^5.0.0",
-    "@ai-sdk/anthropic": "^2.0.0",
-    "tslib": "^2.3.0"
+    "tldts": "^7.4.10",
+    "ts-pattern": "^5.9.0",
+    "tslib": "^2.3.0",
+    "zod": "^3.25.76"
   }
 }
