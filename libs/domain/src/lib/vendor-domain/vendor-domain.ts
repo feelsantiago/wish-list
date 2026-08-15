@@ -9,7 +9,7 @@ import {
   digit,
 } from 'magic-regexp';
 import { getDomain } from 'tldts';
-import { Result } from '@wish-list/common-result';
+import { Option, Result } from '@wish-list/common-result';
 import type { Brand } from '../brand/brand.js';
 import type { Url } from '../url/url.js';
 import { DomainFailure } from '../domain-failure/domain-failure.js';
@@ -48,16 +48,12 @@ export namespace VendorDomain {
   }
 
   export function fromUrl(url: Url): Result<VendorDomain, DomainFailure> {
-    const domain = getDomain(url);
-
-    if (domain === null) {
-      return Result.err(
+    return Option.from(getDomain(url))
+      .map((domain) => from(domain))
+      .okOrElse(() =>
         DomainFailure.validation(url, [
           { field: 'url', message: 'Could not resolve a registrable domain' },
         ]).context('Creating VendorDomain from URL'),
       );
-    }
-
-    return Result.ok(from(domain));
   }
 }
