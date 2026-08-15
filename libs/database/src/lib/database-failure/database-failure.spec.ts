@@ -8,7 +8,7 @@ describe('DatabaseFailure.notFound', () => {
     const id = Id.generate();
     const f = DatabaseFailure.notFound(id);
     expect(f).toBeInstanceOf(Failure);
-    expect(f.name).toBe('notFound');
+    expect(f.name).toBe('not-found');
     expect(f.source).toBeUndefined();
     expect(f.metadata).toEqual({ id });
   });

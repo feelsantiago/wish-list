@@ -46,7 +46,7 @@ describe('CategoryRepository', () => {
       ok: () => {
         throw new Error('expected err');
       },
-      err: (failure) => expect(failure.name).toBe('notFound'),
+      err: (failure) => expect(failure.name).toBe('not-found'),
     });
   });
 

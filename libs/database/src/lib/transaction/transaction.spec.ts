@@ -76,7 +76,7 @@ describe('Database.transaction (real db)', () => {
       ok: () => {
         throw new Error('expected notFound: first insert should have rolled back');
       },
-      err: (failure) => expect(failure.name).toBe('notFound'),
+      err: (failure) => expect(failure.name).toBe('not-found'),
     });
   });
 });

@@ -48,7 +48,7 @@ export class VendorRepository extends Repository<
     ).andThen((row) =>
       this.mapper().domain(
         row,
-        Failure.create('notFound', 'Entity not found', {
+        Failure.create('not-found', 'Entity not found', {
           vendorDomain: domain,
         }),
       ),

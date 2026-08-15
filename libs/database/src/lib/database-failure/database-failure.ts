@@ -1,12 +1,12 @@
 import { Failure } from '@wish-list/common-error';
 import type { DomainFailure, Id } from '@wish-list/domain';
 
-export type DatabaseFailureType = 'notFound' | 'constraint' | 'query' | 'mapping';
+export type DatabaseFailureType = 'not-found' | 'constraint' | 'query' | 'mapping';
 export type DatabaseFailure = Failure<DatabaseFailureType>;
 
 export namespace DatabaseFailure {
-  export function notFound(id: Id): Failure<'notFound'> {
-    return Failure.create('notFound', 'Entity not found', { id });
+  export function notFound(id: Id): Failure<'not-found'> {
+    return Failure.create('not-found', 'Entity not found', { id });
   }
 
   export function constraint(source: Error): Failure<'constraint'> {
