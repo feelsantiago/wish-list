@@ -1,4 +1,4 @@
-import type { UrlParamsFilter } from '@wish-list/common-utils';
+import type { UrlParamsFilter } from './url-params-filter.js';
 
 const TRACKING_PARAM_NAMES = new Set([
   'tag',

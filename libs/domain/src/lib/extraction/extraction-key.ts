@@ -1,7 +1,10 @@
-import { SortByNameAscending, UrlMetadata } from '@wish-list/common-utils';
+import {
+  NonTrackingParams,
+  SortByNameAscending,
+  UrlMetadata,
+} from '@wish-list/common-utils';
 import type { Brand } from '../brand/brand.js';
 import type { Url } from '../url/url.js';
-import { NonTrackingParams } from './non-tracking-params.js';
 
 export type ExtractionKey = Brand<string, 'ExtractionKey'>;
 

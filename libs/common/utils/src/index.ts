@@ -1,4 +1,5 @@
 export { UrlMetadata } from './lib/url-metadata.js';
+export { NonTrackingParams } from './lib/non-tracking-params.js';
 export type { UrlMetadataOptions } from './lib/url-metadata.js';
 export type { UrlParamsFilter } from './lib/url-params-filter.js';
 export { UnFilteredParams } from './lib/url-params-filter.js';
