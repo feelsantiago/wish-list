@@ -471,7 +471,7 @@ libs/extraction/
   src/index.ts
   src/lib/
     extraction.module.ts
-    extraction-failure/extraction-failure.ts
+    extraction-failure.ts
     fetcher/{page-fetcher.ts,http.page-fetcher.ts}
     llm/{llm.ts,vercel-ai.llm.ts,prompt.ts}
     structured/{json-ld.ts,opengraph.ts,markdown.ts}

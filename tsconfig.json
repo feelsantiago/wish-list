@@ -17,6 +17,9 @@
     },
     {
       "path": "./libs/common/utils"
+    },
+    {
+      "path": "./libs/extraction"
     }
   ]
 }
