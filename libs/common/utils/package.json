@@ -1,5 +1,5 @@
 {
-  "name": "@wish-list/domain",
+  "name": "@wish-list/common-utils",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -14,17 +14,15 @@
     "./package.json": "./package.json"
   },
   "nx": {
-    "name": "domain",
+    "name": "common-utils",
     "tags": [
-      "type:domain"
+      "scope:common",
+      "type:util"
     ]
   },
   "dependencies": {
-    "@wish-list/common-error": "*",
     "@wish-list/common-result": "*",
-    "@wish-list/common-utils": "*",
-    "magic-regexp": "^0.11.0",
-    "tslib": "^2.3.0",
-    "zod": "^3.25.76"
+    "tldts": "^7.4.10",
+    "tslib": "^2.3.0"
   }
 }

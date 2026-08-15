@@ -8,8 +8,8 @@ import {
   letter,
   digit,
 } from 'magic-regexp';
-import { getDomain } from 'tldts';
-import { Option, Result } from '@wish-list/common-result';
+import { Result } from '@wish-list/common-result';
+import { UrlMetadata } from '@wish-list/common-utils';
 import type { Brand } from '../brand/brand.js';
 import type { Url } from '../url/url.js';
 import { DomainFailure } from '../domain-failure/domain-failure.js';
@@ -36,9 +36,7 @@ export namespace VendorDomain {
   export function create(input: string): Result<VendorDomain, DomainFailure> {
     return Result.fromThrowable<string, ZodError>(() => $.parse(input))
       .mapErr((error) =>
-        DomainFailure.validation(input, error).context(
-          'Creating VendorDomain',
-        ),
+        DomainFailure.validation(input, error).context('Creating VendorDomain'),
       )
       .map((value) => from(value));
   }
@@ -48,7 +46,8 @@ export namespace VendorDomain {
   }
 
   export function fromUrl(url: Url): Result<VendorDomain, DomainFailure> {
-    return Option.from(getDomain(url))
+    return UrlMetadata.from(url)
+      .domain()
       .map((domain) => from(domain))
       .okOrElse(() =>
         DomainFailure.validation(url, [

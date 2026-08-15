@@ -1,25 +1,7 @@
+import { SortByNameAscending, UrlMetadata } from '@wish-list/common-utils';
 import type { Brand } from '../brand/brand.js';
 import type { Url } from '../url/url.js';
-
-const TRACKING_PARAM_NAMES = new Set([
-  'tag',
-  'ref',
-  'gclid',
-  'fbclid',
-  '_encoding',
-  'psc',
-  'th',
-]);
-
-const TRACKING_PARAM_PREFIXES = ['utm_', 'ref_', 'mc_'];
-
-function isTrackingParam(name: string): boolean {
-  const lower = name.toLowerCase();
-  return (
-    TRACKING_PARAM_NAMES.has(lower) ||
-    TRACKING_PARAM_PREFIXES.some((prefix) => lower.startsWith(prefix))
-  );
-}
+import { NonTrackingParams } from './non-tracking-params.js';
 
 export type ExtractionKey = Brand<string, 'ExtractionKey'>;
 
@@ -29,14 +11,13 @@ export namespace ExtractionKey {
   }
 
   export function fromUrl(url: Url): ExtractionKey {
-    const parsed = new URL(url);
-    const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
-    const path = parsed.pathname.replace(/\/$/, '') || '/';
-
-    const params = Array.from(parsed.searchParams.entries())
-      .filter(([name]) => !isTrackingParam(name))
-      .sort(([a], [b]) => a.localeCompare(b));
-    const query = params.length > 0 ? `?${new URLSearchParams(params).toString()}` : '';
+    const data = UrlMetadata.from(url, {
+      filter: new NonTrackingParams(),
+      sort: new SortByNameAscending(),
+    });
+    const host = data.host().replace(/^www\./, '');
+    const path = data.path();
+    const query = data.query();
 
     return from(`https://${host}${path}${query}`);
   }
