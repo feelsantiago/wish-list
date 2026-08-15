@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { isAxiosError } from 'axios';
+import type { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
 import { Failure } from '@wish-list/common-error';
-import { AsyncResult } from '@wish-list/common-result';
+import { AsyncResult, Result, err, ok } from '@wish-list/common-result';
 import type { Url } from '@wish-list/domain';
+import { ExtractionFailure } from '../extraction-failure.js';
 import type { PageFetcher } from './page-fetcher.js';
 
 const USER_AGENT =
@@ -13,8 +14,6 @@ const USER_AGENT =
 const CAPTCHA_MARKERS = ['captcha', 'are you a human', 'access denied'];
 
 const TIMEOUT_MS = 3000;
-
-class BlockedError extends Error {}
 
 @Injectable()
 export class HttpPageFetcher implements PageFetcher {
@@ -27,54 +26,61 @@ export class HttpPageFetcher implements PageFetcher {
   public fetch(
     url: Url,
   ): AsyncResult<string, Failure<'fetch-failed' | 'blocked' | 'timeout'>> {
-    return AsyncResult.fromThrowable(
-      () => this._fetch(url),
-      (error) => this._toFailure(error, url),
+    return new AsyncResult(
+      Result.safeTry(
+        this,
+        async function* (
+          this: HttpPageFetcher,
+        ): AsyncGenerator<
+          Result<never, Failure<'fetch-failed' | 'timeout'>>,
+          Result<string, Failure<'fetch-failed' | 'blocked' | 'timeout'>>
+        > {
+          const response = yield* this._fetch(url);
+
+          if (response.status === 403 || response.status === 429) {
+            return err(
+              ExtractionFailure.blocked(
+                `Blocked with status ${response.status}`,
+              ),
+            );
+          }
+
+          if (response.status < 200 || response.status >= 300) {
+            return err(
+              ExtractionFailure.fetchFailed(
+                `Fetch failed with status ${response.status}`,
+              ),
+            );
+          }
+
+          const lower = response.data.toLowerCase();
+
+          if (CAPTCHA_MARKERS.some((marker) => lower.includes(marker))) {
+            return err(
+              ExtractionFailure.blocked('Blocked by captcha challenge'),
+            );
+          }
+
+          return ok(response.data);
+        },
+      ),
     );
   }
 
-  private async _fetch(url: Url): Promise<string> {
-    const response = await firstValueFrom(
-      this.http.get<string>(url, {
-        timeout: TIMEOUT_MS,
-        responseType: 'text',
-        headers: { 'User-Agent': USER_AGENT },
-        validateStatus: () => true,
-      }),
-    );
-
-    if (response.status === 403 || response.status === 429) {
-      throw new BlockedError(`Blocked with status ${response.status}`);
-    }
-
-    if (response.status < 200 || response.status >= 300) {
-      throw new Error(`Fetch failed with status ${response.status}`);
-    }
-
-    const body = response.data;
-    const lower = body.toLowerCase();
-
-    if (CAPTCHA_MARKERS.some((marker) => lower.includes(marker))) {
-      throw new BlockedError('Blocked by captcha challenge');
-    }
-
-    return body;
-  }
-
-  private _toFailure(
-    error: unknown,
+  private _fetch(
     url: Url,
-  ): Failure<'fetch-failed' | 'blocked' | 'timeout'> {
-    if (error instanceof BlockedError) {
-      return Failure.from(error, {}, 'blocked');
-    }
-
-    if (isAxiosError(error) && error.code === 'ECONNABORTED') {
-      return Failure.create('timeout', `Timed out fetching ${url}`);
-    }
-
-    const cause = error instanceof Error ? error : new Error(String(error));
-
-    return Failure.from(cause, {}, 'fetch-failed');
+  ): AsyncResult<AxiosResponse<string>, Failure<'fetch-failed' | 'timeout'>> {
+    return AsyncResult.fromThrowable(
+      () =>
+        firstValueFrom(
+          this.http.get<string>(url, {
+            timeout: TIMEOUT_MS,
+            responseType: 'text',
+            headers: { 'User-Agent': USER_AGENT },
+            validateStatus: () => true,
+          }),
+        ),
+      (error) => ExtractionFailure.fromFetchError(error, url),
+    );
   }
 }

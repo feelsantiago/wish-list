@@ -3,6 +3,14 @@ import { Result } from './result.js';
 export class AsyncResult<T, E> {
   public constructor(private readonly promise: Promise<Result<T, E>>) {}
 
+  public async *[Symbol.asyncIterator](): AsyncGenerator<
+    Result<never, E>,
+    T
+  > {
+    const result = await this.promise;
+    return yield* result;
+  }
+
   public map<U>(fn: (value: T) => U): AsyncResult<U, E> {
     return new AsyncResult(this.promise.then((r) => r.map(fn)));
   }
