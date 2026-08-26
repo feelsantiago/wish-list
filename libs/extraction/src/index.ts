@@ -1,4 +1,5 @@
 export { ExtractionModule } from './lib/extraction.module.js';
+export type { ExtractionModuleOptions } from './lib/extraction.options.js';
 export { ExtractionFailure } from './lib/extraction-failure.js';
 export type { ExtractionFailureType } from './lib/extraction-failure.js';
 export type { PageFetcher } from './lib/fetcher/page-fetcher.js';
