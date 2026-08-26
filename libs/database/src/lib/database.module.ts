@@ -1,4 +1,5 @@
-import { ConfigurableModuleBuilder, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { ConfigurableModuleClass } from './database.options.js';
 import { UserRepository } from './user/user.repository.js';
 import { WishlistRepository } from './wishlist/wishlist.repository.js';
 import { CategoryRepository } from './category/category.repository.js';
@@ -26,13 +27,6 @@ import { PriceHistoryDatabaseDomainMapper } from './price-history/price-history.
 import { ExtractionDatabaseDomainMapper } from './extraction/extraction.mapper.js';
 
 export { DATABASE_CLIENT };
-
-export interface DatabaseModuleOptions {
-  url: string;
-}
-
-export const { ConfigurableModuleClass, MODULE_OPTIONS_TOKEN } =
-  new ConfigurableModuleBuilder<DatabaseModuleOptions>().build();
 
 @Module({
   providers: [

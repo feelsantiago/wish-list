@@ -39,5 +39,5 @@ export { Repositories } from './lib/repository/repositories.js';
 export { createDatabaseClient } from './lib/client/client.js';
 export { DATABASE_CLIENT } from './lib/client/client.token.js';
 export { DatabaseModule } from './lib/database.module.js';
-export type { DatabaseModuleOptions } from './lib/database.module.js';
+export type { DatabaseModuleOptions } from './lib/database.options.js';
 export { Database } from './lib/transaction/transaction.js';
