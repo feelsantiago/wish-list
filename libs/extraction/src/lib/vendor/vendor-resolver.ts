@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { AsyncResult, Result, ok } from '@wish-list/common-result';
+import { AsyncResult, Result } from '@wish-list/common-result';
 import { UrlMetadata } from '@wish-list/common-utils';
 import { Url, Vendor, VendorDomain } from '@wish-list/domain';
 import type { ResolvedVendor } from '@wish-list/domain';
 import { VendorRepository } from '@wish-list/database';
+import { match } from 'ts-pattern';
 import { ExtractionFailure } from '../extraction-failure.js';
 
 @Injectable()
@@ -12,33 +13,15 @@ export class VendorResolver {
 
   /** Existing Vendor for the URL's registrable domain, or a freshly inserted provisional one. */
   public ensure(url: Url): AsyncResult<Vendor, ExtractionFailure> {
-    return new AsyncResult(
-      Result.safeTry(
-        this,
-        async function* (
-          this: VendorResolver,
-        ): AsyncGenerator<
-          Result<never, ExtractionFailure>,
-          Result<Vendor, ExtractionFailure>
-        > {
-          const domain = yield* VendorDomain.fromUrl(url).mapErr((error) =>
-            ExtractionFailure.persistFailed(error),
-          );
-
-          const found = await this.vendors
-            .findByVendorDomain(domain)
-            .toPromise();
-
-          if (found.isOk()) {
-            return ok(found.value);
-          }
-
-          if (found.error.name !== 'not-found') {
-            return Result.err(ExtractionFailure.persistFailed(found.error));
-          }
-
-          return ok(yield* this.provision(domain, url));
-        },
+    return AsyncResult.fromResult(
+      VendorDomain.fromUrl(url).mapErr((error): ExtractionFailure =>
+        ExtractionFailure.persistFailed(error),
+      ),
+    ).andThen((domain) =>
+      this.vendors.findByVendorDomain(domain).orElse((error) =>
+        match(error.name)
+          .with('not-found', () => this.provision(domain, url))
+          .otherwise(() => Result.err(ExtractionFailure.persistFailed(error))),
       ),
     );
   }
@@ -48,27 +31,19 @@ export class VendorResolver {
     vendor: Vendor,
     data: Vendor.ExtractionData,
   ): AsyncResult<ResolvedVendor, ExtractionFailure> {
-    return new AsyncResult(
-      Result.safeTry(
-        this,
-        async function* (
-          this: VendorResolver,
-        ): AsyncGenerator<
-          Result<never, ExtractionFailure>,
-          Result<ResolvedVendor, ExtractionFailure>
-        > {
-          const resolved = yield* Vendor.resolve(vendor, data).mapErr((error) =>
-            ExtractionFailure.persistFailed(error),
-          );
-
-          const updated = yield* this.vendors
-            .update(resolved)
-            .mapErr((error) => ExtractionFailure.persistFailed(error));
-
-          return ok(updated as ResolvedVendor);
-        },
+    return AsyncResult.fromResult(
+      Vendor.resolve(vendor, data).mapErr((error): ExtractionFailure =>
+        ExtractionFailure.persistFailed(error),
       ),
-    );
+    )
+      .andThen((resolved) =>
+        this.vendors
+          .update(resolved)
+          .mapErr((error): ExtractionFailure =>
+            ExtractionFailure.persistFailed(error),
+          ),
+      )
+      .map((updated) => updated as ResolvedVendor);
   }
 
   /** Lost the race: someone else inserted this domain first. Re-find once. */
@@ -79,32 +54,14 @@ export class VendorResolver {
     const website = Url.from(UrlMetadata.from(url).origin());
     const provisional = Vendor.provisional({ vendorDomain: domain, website });
 
-    return new AsyncResult(
-      Result.safeTry(
-        this,
-        async function* (
-          this: VendorResolver,
-        ): AsyncGenerator<
-          Result<never, ExtractionFailure>,
-          Result<Vendor, ExtractionFailure>
-        > {
-          const inserted = await this.vendors.insert(provisional).toPromise();
-
-          if (inserted.isOk()) {
-            return ok(inserted.value);
-          }
-
-          if (inserted.error.name !== 'constraint') {
-            return Result.err(ExtractionFailure.persistFailed(inserted.error));
-          }
-
-          return ok(
-            yield* this.vendors
-              .findByVendorDomain(domain)
-              .mapErr((error) => ExtractionFailure.persistFailed(error)),
-          );
-        },
-      ),
+    return this.vendors.insert(provisional).orElse((error) =>
+      match(error.name)
+        .with('constraint', () =>
+          this.vendors
+            .findByVendorDomain(domain)
+            .mapErr((error) => ExtractionFailure.persistFailed(error)),
+        )
+        .otherwise(() => Result.err(ExtractionFailure.persistFailed(error))),
     );
   }
 }
