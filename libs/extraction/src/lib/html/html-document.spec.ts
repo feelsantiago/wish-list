@@ -68,4 +68,77 @@ describe('HtmlDocument', () => {
       expect(doc.scripts('application/ld+json')).toEqual([]);
     });
   });
+
+  describe('pruned', () => {
+    it('drops noise nodes', () => {
+      const doc = HtmlDocument.parse(`<html><body>
+        <nav>Shoes</nav>
+        <header>Acme</header>
+        <aside>Newsletter</aside>
+        <form><button>Add to cart</button></form>
+        <svg><title>Logo</title></svg>
+        <iframe src="https://ads.example"></iframe>
+        <noscript>Enable JavaScript</noscript>
+        <script>tracker()</script>
+        <style>.price { color: red }</style>
+        <main>Trail Runner 3</main>
+      </body></html>`);
+
+      const pruned = doc.pruned();
+
+      for (const noise of [
+        'Shoes',
+        'Acme',
+        'Newsletter',
+        'Add to cart',
+        'Logo',
+        'ads.example',
+        'Enable JavaScript',
+        'tracker()',
+        'color: red',
+      ]) {
+        expect(pruned).not.toContain(noise);
+      }
+      expect(pruned).toContain('Trail Runner 3');
+    });
+
+    it('drops comment nodes at any depth', () => {
+      const doc = HtmlDocument.parse(
+        '<html><body><!-- top --><main><!-- nested -->Kept</main></body></html>',
+      );
+
+      const pruned = doc.pruned();
+
+      expect(pruned).not.toContain('top');
+      expect(pruned).not.toContain('nested');
+      expect(pruned).toContain('Kept');
+    });
+
+    it('keeps head meta tags and main content', () => {
+      const doc = HtmlDocument.parse(
+        `<html><head><meta property="og:title" content="Trail Runner 3" /></head>
+         <body><main><h1>Trail Runner 3</h1><p>$129.99</p></main></body></html>`,
+      );
+
+      const pruned = doc.pruned();
+
+      expect(pruned).toContain('og:title');
+      expect(pruned).toContain('$129.99');
+    });
+
+    it('leaves the document it was parsed from unmutated', () => {
+      const doc = HtmlDocument.parse(
+        `<html><head>
+          <meta property="og:title" content="Trail Runner 3" />
+          <script type="application/ld+json">{"a":1}</script>
+        </head><body><nav>Shoes</nav></body></html>`,
+      );
+
+      doc.pruned();
+
+      expect(doc.meta('og:title')).toEqual(Option.some('Trail Runner 3'));
+      expect(doc.scripts('application/ld+json')).toEqual(['{"a":1}']);
+      expect(doc.pruned()).not.toContain('Shoes');
+    });
+  });
 });
