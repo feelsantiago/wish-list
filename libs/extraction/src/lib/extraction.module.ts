@@ -11,6 +11,7 @@ import { VercelAiLlm } from './llm/vercel-ai.llm.js';
 import { LlmProductReader } from './llm/llm-product-reader.js';
 import { PageProductReader } from './reading/page-product-reader.js';
 import { VendorResolver } from './vendor/vendor-resolver.js';
+import { Extractor } from './extractor.js';
 
 @Module({
   imports: [HttpModule],
@@ -20,6 +21,7 @@ import { VendorResolver } from './vendor/vendor-resolver.js';
     LlmProductReader,
     PageProductReader,
     VendorResolver,
+    Extractor,
     {
       provide: StructuredParsers,
       useFactory: () =>
