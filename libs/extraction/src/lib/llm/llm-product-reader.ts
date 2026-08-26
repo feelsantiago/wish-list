@@ -6,9 +6,7 @@ import { MarkdownPage } from '../markdown/markdown-page.js';
 import type { ProductReading } from '../reading/product-reading.js';
 import { MODULE_OPTIONS_TOKEN } from '../extraction.options.js';
 import type { ExtractionModuleOptions } from '../extraction.options.js';
-import { LLM } from './llm.js';
-import type { Llm } from './llm.js';
-import { llmProduct$ } from './llm-product.schemas.js';
+import { LLM, Llm } from './llm.js';
 import { productPrompt } from './prompt.js';
 
 @Injectable()
@@ -34,6 +32,6 @@ export class LlmProductReader {
   ): AsyncResult<ProductReading, Failure<'llm-failed'>> {
     const page = MarkdownPage.from(doc, this.markdownCap);
 
-    return this.llm.generate(llmProduct$, productPrompt(page));
+    return this.llm.generate(Llm.product$, productPrompt(page));
   }
 }
