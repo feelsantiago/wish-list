@@ -9,6 +9,7 @@ import { OpenGraphStructuredParser } from './structured/opengraph.structured-par
 import { LLM } from './llm/llm.js';
 import { VercelAiLlm } from './llm/vercel-ai.llm.js';
 import { LlmProductReader } from './llm/llm-product-reader.js';
+import { PageProductReader } from './reading/page-product-reader.js';
 
 @Module({
   imports: [HttpModule],
@@ -16,6 +17,7 @@ import { LlmProductReader } from './llm/llm-product-reader.js';
     { provide: PAGE_FETCHER, useClass: HttpPageFetcher },
     { provide: LLM, useClass: VercelAiLlm },
     LlmProductReader,
+    PageProductReader,
     {
       provide: StructuredParsers,
       useFactory: () =>
