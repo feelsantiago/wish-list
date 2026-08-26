@@ -11,6 +11,11 @@
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./testing": {
+      "types": "./src/lib/testing/index.ts",
+      "import": "./src/lib/testing/index.ts",
+      "default": "./src/lib/testing/index.ts"
+    },
     "./package.json": "./package.json"
   },
   "nx": {

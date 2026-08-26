@@ -10,6 +10,7 @@ import { LLM } from './llm/llm.js';
 import { VercelAiLlm } from './llm/vercel-ai.llm.js';
 import { LlmProductReader } from './llm/llm-product-reader.js';
 import { PageProductReader } from './reading/page-product-reader.js';
+import { VendorResolver } from './vendor/vendor-resolver.js';
 
 @Module({
   imports: [HttpModule],
@@ -18,6 +19,7 @@ import { PageProductReader } from './reading/page-product-reader.js';
     { provide: LLM, useClass: VercelAiLlm },
     LlmProductReader,
     PageProductReader,
+    VendorResolver,
     {
       provide: StructuredParsers,
       useFactory: () =>

@@ -36,5 +36,10 @@
     "ts-pattern": "^5.9.0",
     "tslib": "^2.3.0",
     "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@libsql/client": "^0.17.4",
+    "@nestjs/testing": "^11.1.28",
+    "drizzle-orm": "^0.45.2"
   }
 }

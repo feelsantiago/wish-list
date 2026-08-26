@@ -14,7 +14,9 @@ export type ExtractionFailureType =
 export type ExtractionFailure = ServiceFailure<ExtractionFailureType>;
 
 export namespace ExtractionFailure {
-  export function persistFailed(source: Failure): Failure<'persist-failed'> {
+  export function persistFailed(
+    source: Failure<string>,
+  ): Failure<'persist-failed'> {
     return Failure.from(source, {}, 'persist-failed');
   }
 
