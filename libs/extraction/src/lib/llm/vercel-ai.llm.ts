@@ -14,12 +14,14 @@ import type { Llm } from './llm.js';
 export class VercelAiLlm implements Llm {
   private readonly anthropic: AnthropicProvider;
   private readonly model: string;
+  private readonly budget: number;
 
   public constructor(
     @Inject(MODULE_OPTIONS_TOKEN) options: ExtractionModuleOptions,
   ) {
     this.anthropic = createAnthropic({ apiKey: options.llm.apiKey });
     this.model = options.llm.model;
+    this.budget = options.budget;
   }
 
   /** No logic beyond the call and its failure translation, by design. */
@@ -33,6 +35,7 @@ export class VercelAiLlm implements Llm {
           model: this.anthropic(this.model),
           schema,
           prompt,
+          abortSignal: AbortSignal.timeout(this.budget),
         });
 
         return object;

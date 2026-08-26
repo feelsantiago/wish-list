@@ -3,11 +3,13 @@ import { ConfigurableModuleBuilder } from '@nestjs/common';
 export interface ExtractionModuleOptions {
   /** Markdown handed to the LLM is cut to this many bytes. Default 40_000. */
   readonly markdownCap: number;
+  /** Whole-pipeline deadline, and the self-bound each adapter reads. Default 3000ms. */
+  readonly budget: number;
   readonly llm: {
     readonly apiKey: string;
     readonly model: string;
   };
-  // Phase 9 adds: freshness, failureWindow, budget
+  // Plan 0016 adds: freshness, failureWindow
 }
 
 /**

@@ -10,6 +10,7 @@ const generate = vi.mocked(generateObject);
 
 const OPTIONS: ExtractionModuleOptions = {
   markdownCap: 40_000,
+  budget: 3000,
   llm: { apiKey: 'test-key', model: 'claude-haiku-4-5' },
 };
 
@@ -42,10 +43,12 @@ describe('VercelAiLlm', () => {
       model: { modelId: string };
       schema: unknown;
       prompt: string;
+      abortSignal: AbortSignal;
     };
     expect(call.model.modelId).toBe('claude-haiku-4-5');
     expect(call.schema).toBe(schema$);
     expect(call.prompt).toBe('extract this');
+    expect(call.abortSignal).toBeInstanceOf(AbortSignal);
   });
 
   it('translates a thrown Error into an llm-failed failure', async () => {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import type { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
@@ -7,6 +7,8 @@ import { AsyncResult, Result, err, ok } from '@wish-list/common-result';
 import type { Url } from '@wish-list/domain';
 import { P, match } from 'ts-pattern';
 import { ExtractionFailure } from '../extraction-failure.js';
+import { MODULE_OPTIONS_TOKEN } from '../extraction.options.js';
+import type { ExtractionModuleOptions } from '../extraction.options.js';
 import type { PageFetcher } from './page-fetcher.js';
 
 const USER_AGENT =
@@ -14,14 +16,17 @@ const USER_AGENT =
 
 const CAPTCHA_MARKERS = ['captcha', 'are you a human', 'access denied'];
 
-const TIMEOUT_MS = 3000;
-
 @Injectable()
 export class HttpPageFetcher implements PageFetcher {
   private readonly http: HttpService;
+  private readonly timeout: number;
 
-  public constructor(http: HttpService) {
+  public constructor(
+    http: HttpService,
+    @Inject(MODULE_OPTIONS_TOKEN) options: ExtractionModuleOptions,
+  ) {
     this.http = http;
+    this.timeout = options.budget;
   }
 
   public fetch(
@@ -74,7 +79,7 @@ export class HttpPageFetcher implements PageFetcher {
       () =>
         firstValueFrom(
           this.http.get<string>(url, {
-            timeout: TIMEOUT_MS,
+            timeout: this.timeout,
             responseType: 'text',
             headers: { 'User-Agent': USER_AGENT },
             validateStatus: () => true,

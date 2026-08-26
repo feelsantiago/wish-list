@@ -8,7 +8,11 @@ import type { Llm } from './llm.js';
 import { LlmProductReader } from './llm-product-reader.js';
 
 function options(markdownCap: number): ExtractionModuleOptions {
-  return { markdownCap, llm: { apiKey: 'test-key', model: 'test-model' } };
+  return {
+    markdownCap,
+    budget: 3000,
+    llm: { apiKey: 'test-key', model: 'test-model' },
+  };
 }
 
 function replying(reply: unknown): { llm: Llm; prompts: string[] } {

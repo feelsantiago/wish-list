@@ -72,6 +72,7 @@ function llmReplying(reply: unknown): { reader: LlmProductReader } {
   };
   const options: ExtractionModuleOptions = {
     markdownCap: 40_000,
+    budget: 3000,
     llm: { apiKey: 'test-key', model: 'test-model' },
   };
 
@@ -96,6 +97,7 @@ describe('PageProductReader', () => {
     const llm: Llm = { generate };
     const options: ExtractionModuleOptions = {
       markdownCap: 40_000,
+      budget: 3000,
       llm: { apiKey: 'test-key', model: 'test-model' },
     };
 
