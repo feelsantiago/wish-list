@@ -13,19 +13,11 @@ import type { ExtractedProduct, ReadingFailure } from './extracted-product.js';
 
 @Injectable()
 export class PageProductReader {
-  private readonly fetcher: PageFetcher;
-  private readonly parsers: StructuredParsers;
-  private readonly llm: LlmProductReader;
-
   public constructor(
-    @Inject(PAGE_FETCHER) fetcher: PageFetcher,
-    parsers: StructuredParsers,
-    llm: LlmProductReader,
-  ) {
-    this.fetcher = fetcher;
-    this.parsers = parsers;
-    this.llm = llm;
-  }
+    @Inject(PAGE_FETCHER) private readonly fetcher: PageFetcher,
+    private readonly parsers: StructuredParsers,
+    private readonly llm: LlmProductReader,
+  ) {}
 
   public read(url: Url): AsyncResult<ExtractedProduct, ReadingFailure> {
     return new AsyncResult(

@@ -15,14 +15,12 @@ function wrap<TRow, TEntity>(
 export class DatabaseDomainMapper<TEntity, TRow>
   implements DomainMapper<TEntity, TRow>
 {
-  private readonly toRowFn: (entity: TEntity) => TRow;
   private readonly fromRowFn: (row: TRow) => Result<TEntity, DatabaseFailure>;
 
   private constructor(
-    toRowFn: (entity: TEntity) => TRow,
+    private readonly toRowFn: (entity: TEntity) => TRow,
     fromRowFn: (row: TRow) => TEntity,
   ) {
-    this.toRowFn = toRowFn;
     this.fromRowFn = wrap(fromRowFn);
   }
 

@@ -18,14 +18,12 @@ const CAPTCHA_MARKERS = ['captcha', 'are you a human', 'access denied'];
 
 @Injectable()
 export class HttpPageFetcher implements PageFetcher {
-  private readonly http: HttpService;
   private readonly timeout: number;
 
   public constructor(
-    http: HttpService,
+    private readonly http: HttpService,
     @Inject(MODULE_OPTIONS_TOKEN) options: ExtractionModuleOptions,
   ) {
-    this.http = http;
     this.timeout = options.budget;
   }
 

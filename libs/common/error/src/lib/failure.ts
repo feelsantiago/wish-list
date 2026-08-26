@@ -1,22 +1,13 @@
 import { match, P } from 'ts-pattern';
 
 export class Failure<T extends string = 'Failure'> extends Error {
-  public override readonly name: T;
-  public override readonly message: string;
-  public readonly source: Failure | Error | undefined;
-  public readonly metadata: Record<string, unknown>;
-
   private constructor(
-    name: T,
-    message: string,
-    source: Failure | Error | undefined,
-    metadata: Record<string, unknown>,
+    public override readonly name: T,
+    public override readonly message: string,
+    public readonly source: Failure | Error | undefined,
+    public readonly metadata: Record<string, unknown>,
   ) {
     super(message);
-    this.name = name;
-    this.message = message;
-    this.source = source;
-    this.metadata = metadata;
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, Failure.from);
     }

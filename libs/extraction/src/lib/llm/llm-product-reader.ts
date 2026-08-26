@@ -11,14 +11,12 @@ import { productPrompt } from './prompt.js';
 
 @Injectable()
 export class LlmProductReader {
-  private readonly llm: Llm;
   private readonly markdownCap: number;
 
   public constructor(
-    @Inject(LLM) llm: Llm,
+    @Inject(LLM) private readonly llm: Llm,
     @Inject(MODULE_OPTIONS_TOKEN) options: ExtractionModuleOptions,
   ) {
-    this.llm = llm;
     this.markdownCap = options.markdownCap;
   }
 

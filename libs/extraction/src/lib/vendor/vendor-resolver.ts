@@ -8,11 +8,7 @@ import { ExtractionFailure } from '../extraction-failure.js';
 
 @Injectable()
 export class VendorResolver {
-  private readonly vendors: VendorRepository;
-
-  public constructor(vendors: VendorRepository) {
-    this.vendors = vendors;
-  }
+  public constructor(private readonly vendors: VendorRepository) {}
 
   /** Existing Vendor for the URL's registrable domain, or a freshly inserted provisional one. */
   public ensure(url: Url): AsyncResult<Vendor, ExtractionFailure> {
