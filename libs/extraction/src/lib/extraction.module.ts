@@ -6,11 +6,16 @@ import { HttpPageFetcher } from './fetcher/http.page-fetcher.js';
 import { StructuredParsers } from './structured/structured-parsers.js';
 import { JsonLdStructuredParser } from './structured/json-ld.structured-parser.js';
 import { OpenGraphStructuredParser } from './structured/opengraph.structured-parser.js';
+import { LLM } from './llm/llm.js';
+import { VercelAiLlm } from './llm/vercel-ai.llm.js';
+import { LlmProductReader } from './llm/llm-product-reader.js';
 
 @Module({
   imports: [HttpModule],
   providers: [
     { provide: PAGE_FETCHER, useClass: HttpPageFetcher },
+    { provide: LLM, useClass: VercelAiLlm },
+    LlmProductReader,
     {
       provide: StructuredParsers,
       useFactory: () =>
