@@ -154,6 +154,56 @@ describe('AsyncResult', () => {
       expect(result.isErr()).toBe(true);
     });
 
+    it('orElse chains with sync Result on Err', async () => {
+      const result = await AsyncResult.fromResult<number, string>(
+        Result.err('fail'),
+      )
+        .orElse((e) => Result.ok(e.length))
+        .toPromise();
+      expect(result).toEqual(Result.ok(4));
+    });
+
+    it('orElse chains with AsyncResult on Err', async () => {
+      const result = await AsyncResult.fromResult<number, string>(
+        Result.err('fail'),
+      )
+        .orElse((e) => AsyncResult.fromResult(Result.ok(e.length)))
+        .toPromise();
+      expect(result).toEqual(Result.ok(4));
+    });
+
+    it('orElse chains with a raw Promise<Result> on Err', async () => {
+      const result = await AsyncResult.fromResult<number, string>(
+        Result.err('fail'),
+      )
+        .orElse((e) => Promise.resolve(Result.ok(e.length)))
+        .toPromise();
+      expect(result).toEqual(Result.ok(4));
+    });
+
+    it('orElse can return another Err', async () => {
+      const result = await AsyncResult.fromResult<number, string>(
+        Result.err('fail'),
+      )
+        .orElse((e) => Result.err(`wrapped: ${e}`))
+        .toPromise();
+      expect(result).toEqual(Result.err('wrapped: fail'));
+    });
+
+    it('orElse is a no-op on Ok', async () => {
+      const spy = vi.fn();
+      const result = await AsyncResult.fromResult<number, string>(
+        Result.ok(10),
+      )
+        .orElse((e) => {
+          spy(e);
+          return Result.ok(0);
+        })
+        .toPromise();
+      expect(spy).not.toHaveBeenCalled();
+      expect(result).toEqual(Result.ok(10));
+    });
+
     it('match dispatches to ok branch', async () => {
       const output = await AsyncResult.fromResult(Result.ok(7)).match({
         ok: (v) => `value: ${v}`,

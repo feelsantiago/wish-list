@@ -21,6 +21,7 @@
     ]
   },
   "dependencies": {
+    "@wish-list/common-error": "*",
     "@wish-list/common-result": "*",
     "tldts": "^7.4.10",
     "tslib": "^2.3.0"

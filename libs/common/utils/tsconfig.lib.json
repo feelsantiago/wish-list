@@ -12,6 +12,9 @@
   "references": [
     {
       "path": "../result/tsconfig.lib.json"
+    },
+    {
+      "path": "../error/tsconfig.lib.json"
     }
   ],
   "exclude": [

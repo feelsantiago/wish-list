@@ -1,12 +1,10 @@
+import { Option } from './option.js';
 import { Result } from './result.js';
 
 export class AsyncResult<T, E> {
   public constructor(private readonly promise: Promise<Result<T, E>>) {}
 
-  public async *[Symbol.asyncIterator](): AsyncGenerator<
-    Result<never, E>,
-    T
-  > {
+  public async *[Symbol.asyncIterator](): AsyncGenerator<Result<never, E>, T> {
     const result = await this.promise;
     return yield* result;
   }
@@ -31,6 +29,18 @@ export class AsyncResult<T, E> {
     );
   }
 
+  public orElse<F>(
+    fn: (error: E) => Result<T, F> | AsyncResult<T, F> | Promise<Result<T, F>>,
+  ): AsyncResult<T, F> {
+    return new AsyncResult(
+      this.promise.then((result) => {
+        if (result.isOk()) return result as unknown as Result<T, F>;
+        const next = fn(result.error);
+        return next instanceof AsyncResult ? next.toPromise() : next;
+      }),
+    );
+  }
+
   public match<U>(cases: {
     ok: (value: T) => U;
     err: (error: E) => U;
@@ -38,8 +48,20 @@ export class AsyncResult<T, E> {
     return this.promise.then((r) => r.match(cases));
   }
 
-  public unwrapOr(defaultValue: T): Promise<T> {
+  public async unwrapOr(defaultValue: T): Promise<T> {
     return this.promise.then((r) => r.unwrapOr(defaultValue));
+  }
+
+  public async unwrapOrElse(fn: (error: E) => T): Promise<T> {
+    return this.promise.then((r) => r.unwrapOrElse(fn));
+  }
+
+  public async ok(): Promise<Option<T>> {
+    return this.promise.then((r) => r.ok());
+  }
+
+  public async err(): Promise<Option<E>> {
+    return this.promise.then((r) => r.err());
   }
 
   public inspect(fn: (value: T) => void): AsyncResult<T, E> {

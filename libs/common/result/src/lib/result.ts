@@ -25,6 +25,10 @@ export class Ok<T, E = never> {
     return fn(this.value);
   }
 
+  public orElse<F>(_fn: (error: E) => Result<T, F>): Result<T, F> {
+    return this as unknown as Ok<T, F>;
+  }
+
   public match<U>(cases: { ok: (value: T) => U; err: (error: E) => U }): U {
     return cases.ok(this.value);
   }
@@ -83,6 +87,10 @@ export class Err<T = never, E = unknown> {
 
   public andThen<U>(_fn: (value: T) => Result<U, E>): Result<U, E> {
     return this as unknown as Err<U, E>;
+  }
+
+  public orElse<F>(fn: (error: E) => Result<T, F>): Result<T, F> {
+    return fn(this.error);
   }
 
   public match<U>(cases: { ok: (value: T) => U; err: (error: E) => U }): U {

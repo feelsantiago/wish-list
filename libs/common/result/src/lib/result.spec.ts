@@ -40,6 +40,17 @@ describe('Ok', () => {
     expect(result).toEqual(new Ok('10'));
   });
 
+  it('orElse is a no-op', () => {
+    const spy = vi.fn();
+    const result: Result<number, string> = new Ok(10);
+    const chained = result.orElse((e) => {
+      spy(e);
+      return Result.ok(0);
+    });
+    expect(spy).not.toHaveBeenCalled();
+    expect(chained).toEqual(new Ok(10));
+  });
+
   it('match calls the ok branch', () => {
     const result: Result<number, string> = new Ok(7);
     const output = result.match({
@@ -123,6 +134,20 @@ describe('Err', () => {
     const result: Result<number, string> = new Err('fail');
     const chained = result.andThen((v) => Result.ok(v * 2));
     expect(chained.isErr()).toBe(true);
+  });
+
+  it('orElse chains to the recovery result', () => {
+    const result = new Err<number, string>('fail').orElse((e) =>
+      Result.ok(e.length),
+    );
+    expect(result).toEqual(new Ok(4));
+  });
+
+  it('orElse can return another Err', () => {
+    const result = new Err<number, string>('fail').orElse((e) =>
+      Result.err(`wrapped: ${e}`),
+    );
+    expect(result).toEqual(new Err('wrapped: fail'));
   });
 
   it('match calls the err branch', () => {
