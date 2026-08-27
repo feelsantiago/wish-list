@@ -90,6 +90,7 @@ Enforced by convention + review, see [`CLAUDE.md`](./CLAUDE.md):
 - No `if`/`else`/ternary branching on a value's type or shape — prefer `ts-pattern`.
 - No bare `null`/`undefined` — use `Option` from `@wish-list/common-result`.
 - No top-level helper functions in files exporting a class — put them as `private` methods.
+- No loose `Failure.create`/`Failure.from` calls or repeated inline `Failure<'a' | 'b'>` unions — each failure type gets its own file exporting a type alias plus a same-named namespace of factory functions (e.g. `ReadingFailure.noStructuredData()`).
 
 ## Requirements
 

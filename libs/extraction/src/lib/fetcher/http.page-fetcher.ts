@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import type { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
-import { Failure } from '@wish-list/common-error';
 import { AsyncResult, Result, err, ok } from '@wish-list/common-result';
 import type { Url } from '@wish-list/domain';
 import { P, match } from 'ts-pattern';
@@ -10,6 +9,7 @@ import { ExtractionFailure } from '../extraction-failure.js';
 import { MODULE_OPTIONS_TOKEN } from '../extraction.options.js';
 import type { ExtractionModuleOptions } from '../extraction.options.js';
 import type { PageFetcher } from './page-fetcher.js';
+import type { PageFetcherFailure } from './page-fetcher-failure.js';
 
 const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
@@ -27,17 +27,15 @@ export class HttpPageFetcher implements PageFetcher {
     this.timeout = options.budget;
   }
 
-  public fetch(
-    url: Url,
-  ): AsyncResult<string, Failure<'fetch-failed' | 'blocked' | 'timeout'>> {
+  public fetch(url: Url): AsyncResult<string, PageFetcherFailure> {
     return new AsyncResult(
       Result.safeTry(
         this,
         async function* (
           this: HttpPageFetcher,
         ): AsyncGenerator<
-          Result<never, Failure<'fetch-failed' | 'blocked' | 'timeout'>>,
-          Result<string, Failure<'fetch-failed' | 'blocked' | 'timeout'>>
+          Result<never, PageFetcherFailure>,
+          Result<string, PageFetcherFailure>
         > {
           const response = yield* this._fetch(url);
 
@@ -72,7 +70,7 @@ export class HttpPageFetcher implements PageFetcher {
 
   private _fetch(
     url: Url,
-  ): AsyncResult<AxiosResponse<string>, Failure<'fetch-failed' | 'timeout'>> {
+  ): AsyncResult<AxiosResponse<string>, PageFetcherFailure> {
     return AsyncResult.fromThrowable(
       () =>
         firstValueFrom(

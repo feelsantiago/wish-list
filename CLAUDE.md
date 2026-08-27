@@ -29,3 +29,4 @@
 - Prefer `ts-pattern`'s `match(...).with(...)` over `if`/`else` chains or ternaries that branch on a value's type or shape (e.g. `typeof x === ...`, `Array.isArray(x)`, `x === undefined`).
 - No bare `null`/`undefined` for absent values. Use `Option` from `@wish-list/common-result` (`Option.from`, `.map`, `.okOr`/`.okOrElse`, etc.) instead.
 - No top-level helper functions in files exporting a class. Class is top-level structure — put helpers as `private` methods on class instead.
+- No loose `Failure.create`/`Failure.from` calls scattered in reader/service files, and no inline `Failure<'a' | 'b'>` unions repeated across files. Each failure type gets its own file (e.g. `reading-failure.ts`, `page-fetcher-failure.ts`) exporting a type alias plus a same-named namespace of factory functions (e.g. `ReadingFailure.noStructuredData()`), following the existing `ExtractionFailure` pattern. Consumers import the type/namespace, never call `Failure.create` directly.

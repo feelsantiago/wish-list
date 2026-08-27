@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { AsyncResult, Result, ok } from '@wish-list/common-result';
-import { Failure } from '@wish-list/common-error';
 import type { ExtractionSource, Url } from '@wish-list/domain';
 import { PAGE_FETCHER } from '../fetcher/page-fetcher.js';
 import type { PageFetcher } from '../fetcher/page-fetcher.js';
@@ -9,7 +8,8 @@ import { StructuredParsers } from '../structured/structured-parsers.js';
 import { LlmProductReader } from '../llm/llm-product-reader.js';
 import { ProductReading } from './product-reading.js';
 import { CompleteProductReading } from './complete-product-reading.js';
-import type { ExtractedProduct, ReadingFailure } from './extracted-product.js';
+import type { ExtractedProduct } from './extracted-product.js';
+import { ReadingFailure } from './reading-failure.js';
 
 interface FoundReading {
   readonly source: ExtractionSource;
@@ -65,12 +65,7 @@ export class PageProductReader {
       }
     }
 
-    return Result.err(
-      Failure.create(
-        'no-data',
-        'No structured parser produced a complete reading',
-      ),
-    );
+    return Result.err(ReadingFailure.noStructuredData());
   }
 
   private ai(doc: HtmlDocument): AsyncResult<FoundReading, ReadingFailure> {
@@ -85,11 +80,7 @@ export class PageProductReader {
         > {
           const reading = yield* this.llm.read(doc);
           const complete = yield* ProductReading.complete(reading).okOrElse(
-            () =>
-              Failure.create(
-                'no-data',
-                'LLM reply did not complete the reading',
-              ),
+            ReadingFailure.noLlmData,
           );
 
           return ok({ source: 'llm', reading: complete });
