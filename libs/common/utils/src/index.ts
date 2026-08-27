@@ -6,3 +6,4 @@ export { UnFilteredParams } from './lib/url-params-filter.js';
 export type { UrlParamsSort } from './lib/url-params-sort.js';
 export { UnsortedParams, SortByNameAscending } from './lib/url-params-sort.js';
 export { WithTimeout } from './lib/with-timeout.js';
+export { InFlightCache } from './lib/in-flight-cache.js';

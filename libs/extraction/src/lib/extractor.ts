@@ -1,5 +1,5 @@
-import { AsyncResult, err, Result } from '@wish-list/common-result';
-import { WithTimeout } from '@wish-list/common-utils';
+import { AsyncResult, err, ok, Result } from '@wish-list/common-result';
+import { InFlightCache, WithTimeout } from '@wish-list/common-utils';
 import { Extraction, ExtractionKey, TimeWindow } from '@wish-list/domain';
 import type { Url } from '@wish-list/domain';
 import { ExtractionRepository } from '@wish-list/database';
@@ -13,9 +13,9 @@ import { VendorResolver } from './vendor/vendor-resolver.js';
 
 @Injectable()
 export class Extractor {
-  private readonly inFlight = new Map<
+  private readonly inFlight = new InFlightCache<
     ExtractionKey,
-    Promise<Result<Extraction, ExtractionFailure>>
+    Result<Extraction, ExtractionFailure>
   >();
 
   public constructor(
@@ -29,6 +29,13 @@ export class Extractor {
   public extract(url: Url): AsyncResult<Extraction, ExtractionFailure> {
     const key = ExtractionKey.fromUrl(url);
     return this.lookup(key, url);
+  }
+
+  public refresh(url: Url): AsyncResult<Extraction, ExtractionFailure> {
+    const key = ExtractionKey.fromUrl(url);
+    return new AsyncResult(
+      this.inFlight.execute({ key, job: () => this.run(url) }),
+    );
   }
 
   private lookup(
@@ -56,26 +63,20 @@ export class Extractor {
     });
   }
 
-  public refresh(url: Url): AsyncResult<Extraction, ExtractionFailure> {
-    const key = ExtractionKey.fromUrl(url);
-    const pending = this.inFlight.get(key) ?? this.startRefresh(key, url);
-    this.inFlight.set(key, pending);
-
-    return new AsyncResult(pending);
-  }
-
   private reuse(
     latest: Extraction,
     url: Url,
   ): AsyncResult<Extraction, ExtractionFailure> {
+    const options = Result.safeTry(this, function* () {
+      const freshness = yield* TimeWindow.create(this.options.freshness);
+      const failure = yield* TimeWindow.create(this.options.failureWindow);
+
+      return ok({ freshness, failure });
+    }).mapErr((error) => ExtractionFailure.misconfigured(error));
+
     return new AsyncResult(
       Result.safeTry(this, async function* () {
-        const freshness = yield* TimeWindow.create(
-          this.options.freshness,
-        ).mapErr((error) => ExtractionFailure.misconfigured(error));
-        const failureWindow = yield* TimeWindow.create(
-          this.options.failureWindow,
-        ).mapErr((error) => ExtractionFailure.misconfigured(error));
+        const { freshness, failure } = yield* options;
 
         return match(latest)
           .with(
@@ -88,7 +89,7 @@ export class Extractor {
           )
           .with(
             { _tag: 'failed' },
-            (extraction) => Extraction.before(extraction, failureWindow),
+            (extraction) => Extraction.before(extraction, failure),
             () => this.reused(latest),
           )
           .otherwise(() => this.refresh(url))
@@ -105,11 +106,8 @@ export class Extractor {
     );
   }
 
-  private startRefresh(
-    key: ExtractionKey,
-    url: Url,
-  ): Promise<Result<Extraction, ExtractionFailure>> {
-    const run = Result.safeTry(
+  private run(url: Url): Promise<Result<Extraction, ExtractionFailure>> {
+    return Result.safeTry(
       this,
       async function* (
         this: Extractor,
@@ -147,8 +145,6 @@ export class Extractor {
         return this.record(succeeded).toPromise();
       },
     );
-
-    return run.finally(() => this.inFlight.delete(key));
   }
 
   private record(
