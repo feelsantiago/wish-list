@@ -56,3 +56,5 @@ Thumbs.db
 .nx/migrate-runs
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
+# transient implementation plans
+docs/plan

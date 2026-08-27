@@ -35,7 +35,7 @@ Full glossary lives in [`CONTEXT.md`](./CONTEXT.md). Short version:
   - In-flight de-dup so concurrent requests for the same URL share one fetch (`InFlightCache`)
   - Page fetch + LLM budget bounded by a shared timeout
 
-**Not yet built (see `docs/plan`, `docs/adr` for design):**
+**Not yet built (see `docs/adr` for design):**
 - `apps/api` — NestJS HTTP API (controllers live here per ADR-0025, not in service libs)
 - `apps/web` — Angular frontend
 - Per-feature `service`/`data`/`ui` libs (`wishlist`, `item`, `category`, `coupon`, `sharing`, `tracking`, `account`) — scaffolded on demand, not up front (ADR-0004)
@@ -61,7 +61,6 @@ apps/            (not created yet — apps/api, apps/web to come)
 docs/
   adr/           architecture decisions, numbered, immutable once accepted
   prd/           product requirements per entity/slice
-  plan/          implementation plans (design → commit sequence) per slice
 ```
 
 Dependency direction (enforced by `@nx/enforce-module-boundaries` tags, not just convention):
@@ -161,4 +160,3 @@ Vitest everywhere (`@nx/vitest`), including NestJS modules via `@nestjs/testing`
 - [`CONTEXT.md`](./CONTEXT.md) — domain glossary, the source of truth for terminology
 - [`docs/adr/`](./docs/adr) — architecture decisions (numbered, sequential, read in order for history)
 - [`docs/prd/`](./docs/prd) — product requirements per entity/slice
-- [`docs/plan/`](./docs/plan) — implementation plans per slice (design → commit-by-commit sequence)
