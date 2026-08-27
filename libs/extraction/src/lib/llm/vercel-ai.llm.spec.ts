@@ -12,6 +12,8 @@ const OPTIONS: ExtractionModuleOptions = {
   markdownCap: 40_000,
   budget: 3000,
   llm: { apiKey: 'test-key', model: 'claude-haiku-4-5' },
+  freshness: 24 * 60 * 60 * 1000,
+  failureWindow: 5 * 60 * 1000,
 };
 
 const schema$ = z.object({ name: z.string() });

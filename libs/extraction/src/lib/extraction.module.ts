@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
+import { DatabaseModule } from '@wish-list/database';
 import { ConfigurableModuleClass } from './extraction.options.js';
 import { PAGE_FETCHER } from './fetcher/page-fetcher.js';
 import { HttpPageFetcher } from './fetcher/http.page-fetcher.js';
@@ -14,7 +15,7 @@ import { VendorResolver } from './vendor/vendor-resolver.js';
 import { Extractor } from './extractor.js';
 
 @Module({
-  imports: [HttpModule],
+  imports: [HttpModule, DatabaseModule],
   providers: [
     { provide: PAGE_FETCHER, useClass: HttpPageFetcher },
     { provide: LLM, useClass: VercelAiLlm },
@@ -31,6 +32,6 @@ import { Extractor } from './extractor.js';
         ]),
     },
   ],
-  exports: [PAGE_FETCHER],
+  exports: [Extractor],
 })
 export class ExtractionModule extends ConfigurableModuleClass {}

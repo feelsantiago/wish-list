@@ -12,6 +12,8 @@ function options(markdownCap: number): ExtractionModuleOptions {
     markdownCap,
     budget: 3000,
     llm: { apiKey: 'test-key', model: 'test-model' },
+    freshness: 24 * 60 * 60 * 1000,
+    failureWindow: 5 * 60 * 1000,
   };
 }
 

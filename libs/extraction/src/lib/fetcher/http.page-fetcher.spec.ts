@@ -10,6 +10,8 @@ const OPTIONS: ExtractionModuleOptions = {
   markdownCap: 40_000,
   budget: 3000,
   llm: { apiKey: 'test-key', model: 'test-model' },
+  freshness: 24 * 60 * 60 * 1000,
+  failureWindow: 5 * 60 * 1000,
 };
 
 function stubHttp(response: { status: number; data: string }) {

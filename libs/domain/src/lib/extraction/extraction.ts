@@ -2,6 +2,7 @@ import { match } from 'ts-pattern';
 import type { Plain } from '../plain/plain.js';
 import { Id } from '../id/id.js';
 import { Url } from '../url/url.js';
+import { TimeWindow } from '../time-window/time-window.js';
 import type { Item } from '../item/item.js';
 import type { Vendor } from '../vendor/vendor.js';
 import { ExtractionKey } from './extraction-key.js';
@@ -147,5 +148,10 @@ export namespace Extraction {
         reason: e.reason,
       }))
       .exhaustive();
+  }
+
+  export function before(extraction: Extraction, window: TimeWindow): boolean {
+    const age = Date.now() - extraction.createdAt.getTime();
+    return age < window;
   }
 }

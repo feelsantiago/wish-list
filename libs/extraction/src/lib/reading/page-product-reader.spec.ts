@@ -74,6 +74,8 @@ function llmReplying(reply: unknown): { reader: LlmProductReader } {
     markdownCap: 40_000,
     budget: 3000,
     llm: { apiKey: 'test-key', model: 'test-model' },
+    freshness: 24 * 60 * 60 * 1000,
+    failureWindow: 5 * 60 * 1000,
   };
 
   return { reader: new LlmProductReader(llm, options) };
@@ -99,6 +101,8 @@ describe('PageProductReader', () => {
       markdownCap: 40_000,
       budget: 3000,
       llm: { apiKey: 'test-key', model: 'test-model' },
+      freshness: 24 * 60 * 60 * 1000,
+      failureWindow: 5 * 60 * 1000,
     };
 
     const result = await reader(

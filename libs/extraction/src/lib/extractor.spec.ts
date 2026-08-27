@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import type { TestingModule } from '@nestjs/testing';
-import { Extraction, Url, Vendor } from '@wish-list/domain';
+import { Extraction, Id, Url, Vendor } from '@wish-list/domain';
+import type { ExtractionReason } from '@wish-list/domain';
 import { ExtractionRepository, VendorRepository } from '@wish-list/database';
 import type { DatabaseFailure } from '@wish-list/database';
 import {
@@ -30,6 +31,8 @@ const OPTIONS: ExtractionModuleOptions = {
   markdownCap: 40_000,
   budget: 200,
   llm: { apiKey: 'test-key', model: 'test-model' },
+  freshness: 24 * 60 * 60 * 1000,
+  failureWindow: 5 * 60 * 1000,
 };
 
 const JSON_LD_COMPLETE = `<html><head><script type="application/ld+json">
@@ -69,6 +72,53 @@ function fetcherDelayedBy(ms: number, html: string): PageFetcher {
   };
 }
 
+function fetcherCounting(html: string): PageFetcher & { calls: number } {
+  const fetcher = {
+    calls: 0,
+    fetch: () => {
+      fetcher.calls += 1;
+      return AsyncResult.fromResult(ok(html));
+    },
+  };
+  return fetcher;
+}
+
+function fixtureExtraction(base: Extraction, createdAt: Date): Extraction {
+  return { ...base, createdAt };
+}
+
+function succeededFixture(url: Url, createdAt: Date): Extraction {
+  return fixtureExtraction(
+    Extraction.succeeded({
+      url,
+      vendor: Id.generate(),
+      source: 'json-ld',
+      data: {
+        name: 'Trail Runner 3',
+        price: { amount: 129.99, currency: 'USD' },
+        image: Url.from('https://cdn.acme.example/trail-runner-3.jpg'),
+      },
+      vendorData: {
+        name: 'Acme Outfitters',
+        website: Url.from('https://acme.example'),
+        currency: 'USD',
+      },
+    }),
+    createdAt,
+  );
+}
+
+function failedFixture(
+  url: Url,
+  createdAt: Date,
+  reason: ExtractionReason = 'blocked',
+): Extraction {
+  return fixtureExtraction(
+    Extraction.failed({ url, vendor: Id.generate(), reason }),
+    createdAt,
+  );
+}
+
 describe('Extractor', () => {
   let testDb: TestDatabase;
   let moduleRef: TestingModule;
@@ -79,7 +129,10 @@ describe('Extractor', () => {
     fetcher: PageFetcher,
     options: {
       readonly llm?: Llm;
-      readonly extractionsOverride?: Pick<ExtractionRepository, 'insert'>;
+      readonly extractionsOverride?: Pick<
+        ExtractionRepository,
+        'insert' | 'findLatestByKey'
+      >;
     } = {},
   ): Promise<Extractor> {
     const builder = Test.createTestingModule({
@@ -198,10 +251,14 @@ describe('Extractor', () => {
 
   it('surfaces a repository insert failure as "persist-failed"', async () => {
     const url = Url.from('https://acme.example/p/trail-runner-3');
-    const failing: Pick<ExtractionRepository, 'insert'> = {
+    const failing: Pick<ExtractionRepository, 'insert' | 'findLatestByKey'> = {
       insert: () =>
         AsyncResult.fromResult(
           err(Failure.create('query', 'insert failed') as DatabaseFailure),
+        ),
+      findLatestByKey: () =>
+        AsyncResult.fromResult(
+          err(Failure.create('not-found', 'no record') as DatabaseFailure),
         ),
     };
     const extractor = await buildExtractor(fetcherReturning(JSON_LD_COMPLETE), {
@@ -213,5 +270,173 @@ describe('Extractor', () => {
       .match({ ok: () => undefined, err: (f) => f });
 
     expect(failure?.name).toBe('persist-failed');
+  });
+
+  describe('extract', () => {
+    const NOW = new Date('2024-01-01T00:00:00.000Z');
+    const url = Url.from('https://acme.example/p/trail-runner-3');
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(NOW);
+    });
+
+    function minutesAgo(minutes: number): Date {
+      return new Date(NOW.getTime() - minutes * 60 * 1000);
+    }
+
+    async function buildWithLookup(
+      lookup: () => ReturnType<ExtractionRepository['findLatestByKey']>,
+    ): Promise<{
+      extractor: Extractor;
+      fetcher: PageFetcher & { calls: number };
+      insert: ReturnType<typeof vi.fn>;
+    }> {
+      const fetcher = fetcherCounting(JSON_LD_COMPLETE);
+      const insert = vi.fn((extraction: Extraction) =>
+        AsyncResult.fromResult(ok(extraction)),
+      );
+      const extractor = await buildExtractor(fetcher, {
+        extractionsOverride: { insert, findLatestByKey: lookup },
+      });
+
+      return { extractor, fetcher, insert };
+    }
+
+    function buildWithLatest(latest: Extraction) {
+      return buildWithLookup(() => AsyncResult.fromResult(ok(latest)));
+    }
+
+    function buildWithLookupFailure(failure: DatabaseFailure) {
+      return buildWithLookup(() => AsyncResult.fromResult(err(failure)));
+    }
+
+    it('reuses a fresh succeeded record without calling refresh', async () => {
+      const fixture = succeededFixture(url, minutesAgo(60));
+      const { extractor, fetcher, insert } = await buildWithLatest(fixture);
+
+      const extraction = await extractor
+        .extract(url)
+        .unwrapOr(undefined as never);
+
+      expect(extraction.id).toBe(fixture.id);
+      expect(fetcher.calls).toBe(0);
+      expect(insert).not.toHaveBeenCalled();
+    });
+
+    it('refreshes a stale succeeded record', async () => {
+      const fixture = succeededFixture(url, minutesAgo(25 * 60));
+      const { extractor, fetcher } = await buildWithLatest(fixture);
+
+      const extraction = await extractor
+        .extract(url)
+        .unwrapOr(undefined as never);
+
+      expect(extraction.id).not.toBe(fixture.id);
+      expect(fetcher.calls).toBe(1);
+    });
+
+    it('reuses an "unsupported-currency" failure regardless of age', async () => {
+      const fixture = failedFixture(
+        url,
+        minutesAgo(1000 * 60),
+        'unsupported-currency',
+      );
+      const { extractor, fetcher } = await buildWithLatest(fixture);
+
+      const extraction = await extractor
+        .extract(url)
+        .unwrapOr(undefined as never);
+
+      expect(extraction.id).toBe(fixture.id);
+      expect(fetcher.calls).toBe(0);
+    });
+
+    it('reuses a fresh failed record (other reason)', async () => {
+      const fixture = failedFixture(url, minutesAgo(1), 'blocked');
+      const { extractor, fetcher } = await buildWithLatest(fixture);
+
+      const extraction = await extractor
+        .extract(url)
+        .unwrapOr(undefined as never);
+
+      expect(extraction.id).toBe(fixture.id);
+      expect(fetcher.calls).toBe(0);
+    });
+
+    it('refreshes a stale failed record (other reason)', async () => {
+      const fixture = failedFixture(url, minutesAgo(10), 'blocked');
+      const { extractor, fetcher } = await buildWithLatest(fixture);
+
+      const extraction = await extractor
+        .extract(url)
+        .unwrapOr(undefined as never);
+
+      expect(extraction.id).not.toBe(fixture.id);
+      expect(fetcher.calls).toBe(1);
+    });
+
+    it('refreshes when no record exists ("not-found")', async () => {
+      const notFound = Failure.create(
+        'not-found',
+        'no record',
+      ) as DatabaseFailure;
+      const { extractor, fetcher } = await buildWithLookupFailure(notFound);
+
+      const extraction = await extractor
+        .extract(url)
+        .unwrapOr(undefined as never);
+
+      expect(Extraction.isSucceeded(extraction)).toBe(true);
+      expect(fetcher.calls).toBe(1);
+    });
+
+    it('surfaces a lookup failure other than "not-found" as "persist-failed", never touching the network', async () => {
+      const queryFailure = Failure.create('query', 'boom') as DatabaseFailure;
+      const { extractor, fetcher, insert } =
+        await buildWithLookupFailure(queryFailure);
+
+      const failure = await extractor
+        .extract(url)
+        .match({ ok: () => undefined, err: (f) => f });
+
+      expect(failure?.name).toBe('persist-failed');
+      expect(fetcher.calls).toBe(0);
+      expect(insert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('refresh dedup', () => {
+    it('shares one refresh across concurrent callers for the same key', async () => {
+      const url = Url.from('https://acme.example/p/trail-runner-3');
+      const fetcher = fetcherCounting(JSON_LD_COMPLETE);
+      const extractor = await buildExtractor(fetcher);
+
+      const [first, second] = await Promise.all([
+        extractor.refresh(url).unwrapOr(undefined as never),
+        extractor.refresh(url).unwrapOr(undefined as never),
+      ]);
+
+      expect(fetcher.calls).toBe(1);
+      expect(first.id).toBe(second.id);
+
+      const third = await extractor.refresh(url).unwrapOr(undefined as never);
+      expect(fetcher.calls).toBe(2);
+      expect(third.id).not.toBe(first.id);
+    });
+
+    it('never shares an in-flight entry between different URLs', async () => {
+      const first = Url.from('https://acme.example/p/1');
+      const second = Url.from('https://acme.example/p/2');
+      const fetcher = fetcherCounting(JSON_LD_COMPLETE);
+      const extractor = await buildExtractor(fetcher);
+
+      await Promise.all([
+        extractor.refresh(first).unwrapOr(undefined as never),
+        extractor.refresh(second).unwrapOr(undefined as never),
+      ]);
+
+      expect(fetcher.calls).toBe(2);
+    });
   });
 });

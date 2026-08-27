@@ -9,7 +9,10 @@ export interface ExtractionModuleOptions {
     readonly apiKey: string;
     readonly model: string;
   };
-  // Plan 0016 adds: freshness, failureWindow
+  /** Reuse a succeeded record younger than this. Recommended default 24h. */
+  readonly freshness: number;
+  /** Reuse a failed record younger than this. Recommended default 5min. */
+  readonly failureWindow: number;
 }
 
 /**

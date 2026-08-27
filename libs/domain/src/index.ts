@@ -8,6 +8,7 @@ export { User } from './lib/user/user.js';
 export type { Plan, FreeUser, ProUser } from './lib/user/user.js';
 export { VendorDomain } from './lib/vendor-domain/vendor-domain.js';
 export { Url } from './lib/url/url.js';
+export { TimeWindow } from './lib/time-window/time-window.js';
 export { Currency } from './lib/currency/currency.js';
 export { Vendor } from './lib/vendor/vendor.js';
 export type { ProvisionalVendor, ResolvedVendor } from './lib/vendor/vendor.js';
