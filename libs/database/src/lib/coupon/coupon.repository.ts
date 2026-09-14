@@ -7,12 +7,14 @@ import { AsyncResult, type Option } from '@wish-list/common-result';
 import type {
   ScopedReadable,
   Insertable,
-  Updatable,
+  ScopedUpdatable,
+  ScopedDeletable,
 } from '../repository/capability.js';
 import {
   find,
   insert,
-  update,
+  updateScoped,
+  removeScoped,
   type RepositoryOptions,
 } from '../repository/operation.js';
 import type { QueryScope } from '../repository/query-scope.js';
@@ -28,7 +30,8 @@ export class CouponRepository
   implements
     ScopedReadable<Coupon, typeof coupons>,
     Insertable<Coupon>,
-    Updatable<Coupon>
+    ScopedUpdatable<Coupon, typeof coupons>,
+    ScopedDeletable<typeof coupons>
 {
   private readonly options: RepositoryOptions<
     Coupon,
@@ -54,8 +57,18 @@ export class CouponRepository
     return insert(this.options, entity);
   }
 
-  public update(entity: Coupon): AsyncResult<Coupon, DatabaseFailure> {
-    return update(this.options, entity);
+  public update(
+    entity: Coupon,
+    scope: QueryScope<typeof coupons>,
+  ): AsyncResult<Option<Coupon>, DatabaseFailure> {
+    return updateScoped(this.options, entity, scope);
+  }
+
+  public delete(
+    id: Id,
+    scope: QueryScope<typeof coupons>,
+  ): AsyncResult<Option<Id>, DatabaseFailure> {
+    return removeScoped(this.options, id, scope);
   }
 
   public findByUser(user: Id): AsyncResult<Coupon[], DatabaseFailure> {

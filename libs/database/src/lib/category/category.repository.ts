@@ -7,12 +7,14 @@ import { AsyncResult, type Option } from '@wish-list/common-result';
 import type {
   ScopedReadable,
   Insertable,
-  Updatable,
+  ScopedUpdatable,
+  ScopedDeletable,
 } from '../repository/capability.js';
 import {
   find,
   insert,
-  update,
+  updateScoped,
+  removeScoped,
   type RepositoryOptions,
 } from '../repository/operation.js';
 import type { QueryScope } from '../repository/query-scope.js';
@@ -28,7 +30,8 @@ export class CategoryRepository
   implements
     ScopedReadable<Category, typeof categories>,
     Insertable<Category>,
-    Updatable<Category>
+    ScopedUpdatable<Category, typeof categories>,
+    ScopedDeletable<typeof categories>
 {
   private readonly options: RepositoryOptions<
     Category,
@@ -55,8 +58,18 @@ export class CategoryRepository
     return insert(this.options, entity);
   }
 
-  public update(entity: Category): AsyncResult<Category, DatabaseFailure> {
-    return update(this.options, entity);
+  public update(
+    entity: Category,
+    scope: QueryScope<typeof categories>,
+  ): AsyncResult<Option<Category>, DatabaseFailure> {
+    return updateScoped(this.options, entity, scope);
+  }
+
+  public delete(
+    id: Id,
+    scope: QueryScope<typeof categories>,
+  ): AsyncResult<Option<Id>, DatabaseFailure> {
+    return removeScoped(this.options, id, scope);
   }
 
   public findByUser(user: Id): AsyncResult<Category[], DatabaseFailure> {

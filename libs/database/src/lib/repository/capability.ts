@@ -23,6 +23,20 @@ export interface Updatable<TEntity> {
   update(entity: TEntity): AsyncResult<TEntity, DatabaseFailure>;
 }
 
+export interface ScopedUpdatable<TEntity, TTable extends RepositoryTable> {
+  update(
+    entity: TEntity,
+    scope: QueryScope<TTable>,
+  ): AsyncResult<Option<TEntity>, DatabaseFailure>;
+}
+
 export interface Deletable {
   delete(id: Id): AsyncResult<void, DatabaseFailure>;
+}
+
+export interface ScopedDeletable<TTable extends RepositoryTable> {
+  delete(
+    id: Id,
+    scope: QueryScope<TTable>,
+  ): AsyncResult<Option<Id>, DatabaseFailure>;
 }

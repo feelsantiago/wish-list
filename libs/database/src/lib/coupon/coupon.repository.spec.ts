@@ -116,6 +116,103 @@ describe('CouponRepository', () => {
     });
   });
 
+  it('update applies the change when scoped to the owner', async () => {
+    const coupon = makeFixedCoupon(userId, vendor);
+    await repository.insert(coupon).unwrapOr(coupon);
+    const relabeled = { ...coupon, code: 'NEWCODE' };
+
+    await repository.update(relabeled, QueryScope.user(userId)).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(relabeled),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('update leaves the row unchanged when scoped to a different user', async () => {
+    const coupon = makeFixedCoupon(userId, vendor);
+    await repository.insert(coupon).unwrapOr(coupon);
+    const relabeled = { ...coupon, code: 'NEWCODE' };
+
+    const otherUser = makeUser();
+    await moduleRef.get(UserRepository).insert(otherUser).unwrapOr(otherUser);
+
+    await repository.update(relabeled, QueryScope.user(otherUser.id)).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+
+    await repository.find(coupon.id, QueryScope.all()).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(coupon),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('update returns None for a missing id', async () => {
+    const missing = { ...makeFixedCoupon(userId, vendor), id: Id.generate() };
+
+    await repository.update(missing, QueryScope.user(userId)).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('delete removes the row when scoped to the owner', async () => {
+    const coupon = makeFixedCoupon(userId, vendor);
+    await repository.insert(coupon).unwrapOr(coupon);
+
+    await repository.delete(coupon.id, QueryScope.user(userId)).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(coupon.id),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+
+    await repository.find(coupon.id, QueryScope.all()).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('delete leaves the row untouched when scoped to a different user', async () => {
+    const coupon = makeFixedCoupon(userId, vendor);
+    await repository.insert(coupon).unwrapOr(coupon);
+
+    const otherUser = makeUser();
+    await moduleRef.get(UserRepository).insert(otherUser).unwrapOr(otherUser);
+
+    await repository.delete(coupon.id, QueryScope.user(otherUser.id)).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+
+    await repository.find(coupon.id, QueryScope.all()).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(coupon),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('delete returns None for a missing id', async () => {
+    await repository.delete(Id.generate(), QueryScope.user(userId)).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
   it('findByUser returns every coupon owned by that user', async () => {
     const first = makeFixedCoupon(userId, vendor);
     const second = makePercentageCoupon(userId, vendor);

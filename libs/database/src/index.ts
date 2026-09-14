@@ -17,7 +17,9 @@ export type {
   ScopedReadable,
   Insertable,
   Updatable,
+  ScopedUpdatable,
   Deletable,
+  ScopedDeletable,
 } from './lib/repository/capability.js';
 export type {
   RepositoryTable,

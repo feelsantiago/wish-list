@@ -7,12 +7,14 @@ import { AsyncResult, type Option } from '@wish-list/common-result';
 import type {
   ScopedReadable,
   Insertable,
-  Updatable,
+  ScopedUpdatable,
+  ScopedDeletable,
 } from '../repository/capability.js';
 import {
   find,
   insert,
-  update,
+  updateScoped,
+  removeScoped,
   type RepositoryOptions,
 } from '../repository/operation.js';
 import type { QueryScope } from '../repository/query-scope.js';
@@ -28,7 +30,8 @@ export class WishlistRepository
   implements
     ScopedReadable<Wishlist, typeof wishlists>,
     Insertable<Wishlist>,
-    Updatable<Wishlist>
+    ScopedUpdatable<Wishlist, typeof wishlists>,
+    ScopedDeletable<typeof wishlists>
 {
   private readonly options: RepositoryOptions<
     Wishlist,
@@ -55,8 +58,18 @@ export class WishlistRepository
     return insert(this.options, entity);
   }
 
-  public update(entity: Wishlist): AsyncResult<Wishlist, DatabaseFailure> {
-    return update(this.options, entity);
+  public update(
+    entity: Wishlist,
+    scope: QueryScope<typeof wishlists>,
+  ): AsyncResult<Option<Wishlist>, DatabaseFailure> {
+    return updateScoped(this.options, entity, scope);
+  }
+
+  public delete(
+    id: Id,
+    scope: QueryScope<typeof wishlists>,
+  ): AsyncResult<Option<Id>, DatabaseFailure> {
+    return removeScoped(this.options, id, scope);
   }
 
   public findByUser(user: Id): AsyncResult<Wishlist[], DatabaseFailure> {

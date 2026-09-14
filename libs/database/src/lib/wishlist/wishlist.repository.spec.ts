@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { Id } from '@wish-list/domain';
+import { Id, Wishlist } from '@wish-list/domain';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import type { TestingModule } from '@nestjs/testing';
 import { createTestDatabase } from '../testing/test-db.js';
@@ -85,6 +85,107 @@ describe('WishlistRepository', () => {
 
     await repository.find(wishlist.id, QueryScope.all()).match({
       ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(wishlist),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('update applies the change when scoped to the owner', async () => {
+    const wishlist = makeWishlist(userId);
+    await repository.insert(wishlist).unwrapOr(wishlist);
+    const renamed = Wishlist.rename(wishlist, 'Renamed').unwrapOr(
+      undefined as never,
+    );
+
+    await repository.update(renamed, QueryScope.user(userId)).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(renamed),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('update leaves the row unchanged when scoped to a different user', async () => {
+    const wishlist = makeWishlist(userId);
+    await repository.insert(wishlist).unwrapOr(wishlist);
+    const renamed = Wishlist.rename(wishlist, 'Renamed').unwrapOr(
+      undefined as never,
+    );
+
+    const otherUser = makeUser();
+    await moduleRef.get(UserRepository).insert(otherUser).unwrapOr(otherUser);
+
+    await repository.update(renamed, QueryScope.user(otherUser.id)).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+
+    await repository.find(wishlist.id, QueryScope.all()).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(wishlist),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('update returns None for a missing id', async () => {
+    const missing = { ...makeWishlist(userId), id: Id.generate() };
+
+    await repository.update(missing, QueryScope.user(userId)).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('delete removes the row when scoped to the owner', async () => {
+    const wishlist = makeWishlist(userId);
+    await repository.insert(wishlist).unwrapOr(wishlist);
+
+    await repository.delete(wishlist.id, QueryScope.user(userId)).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(wishlist.id),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+
+    await repository.find(wishlist.id, QueryScope.all()).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('delete leaves the row untouched when scoped to a different user', async () => {
+    const wishlist = makeWishlist(userId);
+    await repository.insert(wishlist).unwrapOr(wishlist);
+
+    const otherUser = makeUser();
+    await moduleRef.get(UserRepository).insert(otherUser).unwrapOr(otherUser);
+
+    await repository.delete(wishlist.id, QueryScope.user(otherUser.id)).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+
+    await repository.find(wishlist.id, QueryScope.all()).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(wishlist),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('delete returns None for a missing id', async () => {
+    await repository.delete(Id.generate(), QueryScope.user(userId)).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
       err: () => {
         throw new Error('expected ok');
       },

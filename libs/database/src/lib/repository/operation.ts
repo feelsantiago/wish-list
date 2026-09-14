@@ -101,3 +101,52 @@ export function remove<
     (error) => DatabaseError.from(error).failure(),
   );
 }
+
+export function updateScoped<
+  TEntity,
+  TRow extends { readonly id: string },
+  TTable extends RepositoryTable,
+>(
+  options: RepositoryOptions<TEntity, TRow, TTable>,
+  entity: TEntity,
+  scope: QueryScope<TTable>,
+): AsyncResult<Option<TEntity>, DatabaseFailure> {
+  const row = options.mapper.database(entity);
+  return AsyncResult.fromThrowable(
+    () =>
+      options.db
+        .update(options.table)
+        .set(row)
+        .where(
+          and(eq(options.table.id, row.id), scope.condition(options.table)),
+        )
+        .returning()
+        .then((rows) => rows[0] as TRow | undefined),
+    (error) => DatabaseError.from(error).failure(),
+  ).andThen(
+    (updated): Result<Option<TEntity>, DatabaseFailure> =>
+      updated === undefined
+        ? ok(Option.none())
+        : options.mapper.domain(updated).map(Option.some),
+  );
+}
+
+export function removeScoped<
+  TEntity,
+  TRow extends { readonly id: string },
+  TTable extends RepositoryTable,
+>(
+  options: RepositoryOptions<TEntity, TRow, TTable>,
+  id: Id,
+  scope: QueryScope<TTable>,
+): AsyncResult<Option<Id>, DatabaseFailure> {
+  return AsyncResult.fromThrowable(
+    () =>
+      options.db
+        .delete(options.table)
+        .where(and(eq(options.table.id, id), scope.condition(options.table)))
+        .returning({ id: options.table.id })
+        .then((rows) => rows[0] as { readonly id: string } | undefined),
+    (error) => DatabaseError.from(error).failure(),
+  ).map((deleted) => Option.from(deleted?.id as Id | undefined));
+}

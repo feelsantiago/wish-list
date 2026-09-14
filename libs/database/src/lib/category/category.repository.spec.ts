@@ -91,6 +91,103 @@ describe('CategoryRepository', () => {
     });
   });
 
+  it('update applies the change when scoped to the owner', async () => {
+    const category = makeCategory(userId, { name: 'Books' });
+    await repository.insert(category).unwrapOr(category);
+    const renamed = { ...category, name: 'Literature' };
+
+    await repository.update(renamed, QueryScope.user(userId)).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(renamed),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('update leaves the row unchanged when scoped to a different user', async () => {
+    const category = makeCategory(userId, { name: 'Books' });
+    await repository.insert(category).unwrapOr(category);
+    const renamed = { ...category, name: 'Literature' };
+
+    const otherUser = makeUser();
+    await moduleRef.get(UserRepository).insert(otherUser).unwrapOr(otherUser);
+
+    await repository.update(renamed, QueryScope.user(otherUser.id)).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+
+    await repository.find(category.id, QueryScope.all()).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(category),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('update returns None for a missing id', async () => {
+    const missing = { ...makeCategory(userId, { name: 'Books' }), id: Id.generate() };
+
+    await repository.update(missing, QueryScope.user(userId)).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('delete removes the row when scoped to the owner', async () => {
+    const category = makeCategory(userId, { name: 'Books' });
+    await repository.insert(category).unwrapOr(category);
+
+    await repository.delete(category.id, QueryScope.user(userId)).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(category.id),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+
+    await repository.find(category.id, QueryScope.all()).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('delete leaves the row untouched when scoped to a different user', async () => {
+    const category = makeCategory(userId, { name: 'Books' });
+    await repository.insert(category).unwrapOr(category);
+
+    const otherUser = makeUser();
+    await moduleRef.get(UserRepository).insert(otherUser).unwrapOr(otherUser);
+
+    await repository.delete(category.id, QueryScope.user(otherUser.id)).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+
+    await repository.find(category.id, QueryScope.all()).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(category),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('delete returns None for a missing id', async () => {
+    await repository.delete(Id.generate(), QueryScope.user(userId)).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
   it('findByUser returns every category owned by that user', async () => {
     const first = makeCategory(userId, { name: 'Books' });
     const second = makeCategory(userId, { name: 'Games' });
