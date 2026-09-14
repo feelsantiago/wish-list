@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { match } from 'ts-pattern';
-import { AsyncResult, Result, err, ok } from '@wish-list/common-result';
+import { AsyncResult, Result, type Option } from '@wish-list/common-result';
 import { Extraction, Id, Item, Url } from '@wish-list/domain';
 import type { ExtractedItem, FailedExtractionItem } from '@wish-list/domain';
 import {
@@ -11,6 +11,7 @@ import {
 import type { DatabaseFailure } from '@wish-list/database';
 import { Extractor } from '@wish-list/extraction';
 import { ServiceFailure } from '@wish-list/common-error/service';
+import type { CreateItemInput } from './item.service.types.js';
 
 @Injectable()
 export class ItemService {
@@ -21,12 +22,7 @@ export class ItemService {
     private readonly extractor: Extractor,
   ) {}
 
-  public create(input: {
-    user: Id;
-    wishlist: Id;
-    category: Id;
-    url: string;
-  }): AsyncResult<Item, ServiceFailure> {
+  public create(input: CreateItemInput): AsyncResult<Item, ServiceFailure> {
     return new AsyncResult(
       Result.safeTry(this, async function* (this: ItemService) {
         const url = yield* Url.create(input.url).mapErr(ServiceFailure.invalid);
@@ -45,9 +41,8 @@ export class ItemService {
     wishlist: Id,
     user: Id,
   ): AsyncResult<void, ServiceFailure> {
-    return this.checkOwnership(
-      this.wishlists.find(wishlist),
-      user,
+    return this.checkExists(
+      this.wishlists.findForUser(user, wishlist),
       `wishlist:${wishlist}`,
     );
   }
@@ -56,29 +51,20 @@ export class ItemService {
     category: Id,
     user: Id,
   ): AsyncResult<void, ServiceFailure> {
-    return this.checkOwnership(
-      this.categories.find(category),
-      user,
+    return this.checkExists(
+      this.categories.findForUser(user, category),
       `category:${category}`,
     );
   }
 
-  private checkOwnership<T extends { readonly user: Id }>(
-    entity: AsyncResult<T, DatabaseFailure>,
-    user: Id,
+  private checkExists<T>(
+    entity: AsyncResult<Option<T>, DatabaseFailure>,
     resource: string,
   ): AsyncResult<void, ServiceFailure> {
     return entity
-      .mapErr((error): ServiceFailure =>
-        match(error.name)
-          .with('not-found', () => ServiceFailure.notFound(resource))
-          .otherwise(() => ServiceFailure.unexpected(error)),
-      )
-      .andThen((found) =>
-        found.user === user
-          ? ok(undefined)
-          : err(ServiceFailure.forbidden(user, resource)),
-      );
+      .mapErr((error): ServiceFailure => ServiceFailure.unexpected(error))
+      .andThen((found) => found.okOr(ServiceFailure.notFound(resource)))
+      .map(() => undefined);
   }
 
   private reconcile(

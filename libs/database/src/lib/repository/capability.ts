@@ -1,9 +1,13 @@
 import type { Id } from '@wish-list/domain';
-import type { AsyncResult } from '@wish-list/common-result';
+import type { AsyncResult, Option } from '@wish-list/common-result';
 import type { DatabaseFailure } from '../database-failure/database-failure.js';
 
 export interface Readable<TEntity> {
   find(id: Id): AsyncResult<TEntity, DatabaseFailure>;
+}
+
+export interface ReadableForUser<TEntity> {
+  findForUser(user: Id, id: Id): AsyncResult<Option<TEntity>, DatabaseFailure>;
 }
 
 export interface Insertable<TEntity> {

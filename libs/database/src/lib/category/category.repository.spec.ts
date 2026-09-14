@@ -63,6 +63,42 @@ describe('CategoryRepository', () => {
     });
   });
 
+  it('findForUser returns Some when the category belongs to that user', async () => {
+    const category = makeCategory(userId, { name: 'Books' });
+    await repository.insert(category).unwrapOr(category);
+
+    await repository.findForUser(userId, category.id).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(category),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('findForUser returns None for a missing id', async () => {
+    await repository.findForUser(userId, Id.generate()).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('findForUser returns None when the category belongs to a different user', async () => {
+    const category = makeCategory(userId, { name: 'Books' });
+    await repository.insert(category).unwrapOr(category);
+
+    const otherUser = makeUser();
+    await moduleRef.get(UserRepository).insert(otherUser).unwrapOr(otherUser);
+
+    await repository.findForUser(otherUser.id, category.id).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
   it('findByUser returns every category owned by that user', async () => {
     const first = makeCategory(userId, { name: 'Books' });
     const second = makeCategory(userId, { name: 'Games' });

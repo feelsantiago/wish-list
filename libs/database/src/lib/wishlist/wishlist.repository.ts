@@ -3,14 +3,16 @@ import { eq } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Wishlist } from '@wish-list/domain';
 import type { Plain, Id } from '@wish-list/domain';
-import { AsyncResult } from '@wish-list/common-result';
+import { AsyncResult, type Option } from '@wish-list/common-result';
 import type {
   Readable,
+  ReadableForUser,
   Insertable,
   Updatable,
 } from '../repository/capability.js';
 import {
   find,
+  findForUser,
   insert,
   update,
   type RepositoryOptions,
@@ -24,7 +26,11 @@ import { wishlists } from './wishlist.schema.js';
 
 @Injectable()
 export class WishlistRepository
-  implements Readable<Wishlist>, Insertable<Wishlist>, Updatable<Wishlist>
+  implements
+    Readable<Wishlist>,
+    ReadableForUser<Wishlist>,
+    Insertable<Wishlist>,
+    Updatable<Wishlist>
 {
   private readonly options: RepositoryOptions<
     Wishlist,
@@ -42,6 +48,13 @@ export class WishlistRepository
 
   public find(id: Id): AsyncResult<Wishlist, DatabaseFailure> {
     return find(this.options, id);
+  }
+
+  public findForUser(
+    user: Id,
+    id: Id,
+  ): AsyncResult<Option<Wishlist>, DatabaseFailure> {
+    return findForUser(this.options, user, id);
   }
 
   public insert(entity: Wishlist): AsyncResult<Wishlist, DatabaseFailure> {

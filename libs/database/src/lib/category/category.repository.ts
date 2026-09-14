@@ -3,14 +3,16 @@ import { eq } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Category } from '@wish-list/domain';
 import type { Plain, Id } from '@wish-list/domain';
-import { AsyncResult } from '@wish-list/common-result';
+import { AsyncResult, type Option } from '@wish-list/common-result';
 import type {
   Readable,
+  ReadableForUser,
   Insertable,
   Updatable,
 } from '../repository/capability.js';
 import {
   find,
+  findForUser,
   insert,
   update,
   type RepositoryOptions,
@@ -24,7 +26,11 @@ import { categories } from './category.schema.js';
 
 @Injectable()
 export class CategoryRepository
-  implements Readable<Category>, Insertable<Category>, Updatable<Category>
+  implements
+    Readable<Category>,
+    ReadableForUser<Category>,
+    Insertable<Category>,
+    Updatable<Category>
 {
   private readonly options: RepositoryOptions<
     Category,
@@ -42,6 +48,13 @@ export class CategoryRepository
 
   public find(id: Id): AsyncResult<Category, DatabaseFailure> {
     return find(this.options, id);
+  }
+
+  public findForUser(
+    user: Id,
+    id: Id,
+  ): AsyncResult<Option<Category>, DatabaseFailure> {
+    return findForUser(this.options, user, id);
   }
 
   public insert(entity: Category): AsyncResult<Category, DatabaseFailure> {
