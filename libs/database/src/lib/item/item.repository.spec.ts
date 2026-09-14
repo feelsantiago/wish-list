@@ -17,6 +17,7 @@ import { WishlistRepository } from '../wishlist/wishlist.repository.js';
 import { VendorRepository } from '../vendor/vendor.repository.js';
 import { CategoryRepository } from '../category/category.repository.js';
 import { ItemRepository } from './item.repository.js';
+import { ItemScope } from './item-scope.js';
 
 function money(): Money {
   const result = Money.create(19.99, 'USD');
@@ -117,13 +118,13 @@ describe('ItemRepository', () => {
     });
   });
 
-  it('findByWishlist returns every item on that wishlist', async () => {
+  it('all(ItemScope.wishlist(...)) returns every item on that wishlist', async () => {
     const first = pendingItem();
     const second = Item.failed(pendingItem(), 'timeout');
     await repository.insert(first).unwrapOr(first);
     await repository.insert(second).unwrapOr(second);
 
-    await repository.findByWishlist(wishlistId).match({
+    await repository.all(ItemScope.wishlist(wishlistId)).match({
       ok: (found) =>
         expect(found.map((i) => i.id).sort()).toEqual(
           [first.id, second.id].sort(),

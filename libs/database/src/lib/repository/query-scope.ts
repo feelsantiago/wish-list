@@ -6,18 +6,30 @@ import type { RepositoryTable } from './operation.js';
 
 export type UserOwnedTable = RepositoryTable & { readonly user: SQLiteColumn };
 
-export interface QueryScope<TTable extends RepositoryTable> {
-  // property syntax, NOT method shorthand — method shorthand is bivariant and
-  // silently destroys the gating described below
-  readonly condition: (table: TTable) => SQL | undefined;
-}
+export abstract class QueryScope<TTable extends RepositoryTable> {
+  public abstract condition(table: TTable): SQL | undefined;
 
-export namespace QueryScope {
-  export function all(): QueryScope<RepositoryTable> {
-    return { condition: () => undefined };
+  public static all(): QueryScope<RepositoryTable> {
+    return new AllScope();
   }
 
-  export function user(user: Id): QueryScope<UserOwnedTable> {
-    return { condition: (table) => eq(table.user, user) };
+  public static user(user: Id): QueryScope<UserOwnedTable> {
+    return new UserScope(user);
+  }
+}
+
+class AllScope extends QueryScope<RepositoryTable> {
+  public condition(): SQL | undefined {
+    return undefined;
+  }
+}
+
+class UserScope extends QueryScope<UserOwnedTable> {
+  public constructor(private readonly user: Id) {
+    super();
+  }
+
+  public condition(table: UserOwnedTable): SQL | undefined {
+    return eq(table.user, this.user);
   }
 }

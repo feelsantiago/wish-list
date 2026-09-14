@@ -7,6 +7,7 @@ import type { TestDatabase } from '../testing/test-db.js';
 import { createTestingModule } from '../testing/testing-module.js';
 import { makeVendor } from '../testing/fixtures.js';
 import { VendorRepository } from './vendor.repository.js';
+import { VendorScope } from './vendor-scope.js';
 
 describe('VendorRepository', () => {
   let testDb: TestDatabase;
@@ -57,23 +58,23 @@ describe('VendorRepository', () => {
     });
   });
 
-  it('findByVendorDomain returns None for an unknown domain', async () => {
+  it('all(VendorScope.domain(...)) returns empty for an unknown domain', async () => {
     await repository
-      .findByVendorDomain(VendorDomain.from('unknown.example.com'))
+      .all(VendorScope.domain(VendorDomain.from('unknown.example.com')))
       .match({
-        ok: (found) => expect(found.isNone()).toBe(true),
+        ok: (found) => expect(found).toEqual([]),
         err: () => {
           throw new Error('expected ok');
         },
       });
   });
 
-  it('findByVendorDomain finds the vendor by its domain', async () => {
+  it('all(VendorScope.domain(...)) finds the vendor by its domain', async () => {
     const vendor = makeVendor();
     await repository.insert(vendor).unwrapOr(vendor);
 
-    await repository.findByVendorDomain(vendor.vendorDomain).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(vendor),
+    await repository.all(VendorScope.domain(vendor.vendorDomain)).match({
+      ok: (found) => expect(found).toEqual([vendor]),
       err: () => {
         throw new Error('expected ok');
       },

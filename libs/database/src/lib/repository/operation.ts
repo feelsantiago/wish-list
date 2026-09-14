@@ -45,6 +45,24 @@ export function find<
   );
 }
 
+export function all<
+  TEntity,
+  TRow extends { readonly id: string },
+  TTable extends RepositoryTable,
+>(
+  options: RepositoryOptions<TEntity, TRow, TTable>,
+  scope: QueryScope<TTable>,
+): AsyncResult<TEntity[], DatabaseFailure> {
+  return AsyncResult.fromThrowable(
+    () =>
+      options.db
+        .select()
+        .from(options.table)
+        .where(scope.condition(options.table)) as unknown as Promise<TRow[]>,
+    (error) => DatabaseError.from(error).failure(),
+  ).andThen((rows) => options.mapper.domain(rows));
+}
+
 export function insert<
   TEntity,
   TRow extends { readonly id: string },

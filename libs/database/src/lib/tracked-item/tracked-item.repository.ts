@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { TrackedItem } from '@wish-list/domain';
 import type { Plain, Id } from '@wish-list/domain';
@@ -8,9 +7,11 @@ import type {
   Readable,
   Insertable,
   Updatable,
+  Listable,
 } from '../repository/capability.js';
 import {
   find,
+  all,
   insert,
   update,
   type RepositoryOptions,
@@ -18,7 +19,6 @@ import {
 import { QueryScope } from '../repository/query-scope.js';
 import { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
-import { DatabaseError } from '../database-failure/database-error.js';
 import { DATABASE_CLIENT } from '../client/client.token.js';
 import { TRACKED_ITEM_MAPPER } from './tracked-item.mapper.js';
 import { trackedItems } from './tracked-item.schema.js';
@@ -28,7 +28,8 @@ export class TrackedItemRepository
   implements
     Readable<TrackedItem>,
     Insertable<TrackedItem>,
-    Updatable<TrackedItem>
+    Updatable<TrackedItem>,
+    Listable<TrackedItem, typeof trackedItems>
 {
   private readonly options: RepositoryOptions<
     TrackedItem,
@@ -60,16 +61,9 @@ export class TrackedItemRepository
     return update(this.options, entity);
   }
 
-  public findByItem(item: Id): AsyncResult<TrackedItem[], DatabaseFailure> {
-    return AsyncResult.fromThrowable(
-      () =>
-        this.options.db
-          .select()
-          .from(this.options.table)
-          .where(eq(this.options.table.item, item)) as unknown as Promise<
-          Plain<TrackedItem>[]
-        >,
-      (error) => DatabaseError.from(error).failure(),
-    ).andThen((rows) => this.options.mapper.domain(rows));
+  public all(
+    scope: QueryScope<typeof trackedItems>,
+  ): AsyncResult<TrackedItem[], DatabaseFailure> {
+    return all(this.options, scope);
   }
 }

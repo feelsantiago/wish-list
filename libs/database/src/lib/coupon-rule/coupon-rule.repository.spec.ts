@@ -16,6 +16,7 @@ import { UserRepository } from '../user/user.repository.js';
 import { VendorRepository } from '../vendor/vendor.repository.js';
 import { CouponRepository } from '../coupon/coupon.repository.js';
 import { CouponRuleRepository } from './coupon-rule.repository.js';
+import { CouponRuleScope } from './coupon-rule-scope.js';
 
 describe('CouponRuleRepository', () => {
   let testDb: TestDatabase;
@@ -65,13 +66,13 @@ describe('CouponRuleRepository', () => {
     });
   });
 
-  it('findByCoupon returns multiple rules for the same coupon', async () => {
+  it('all(CouponRuleScope.coupon(...)) returns multiple rules for the same coupon', async () => {
     const first = makeCouponRule(couponId, vendor, { amount: 25 });
     const second = makeCouponRule(couponId, vendor, { amount: 50 });
     await repository.insert(first).unwrapOr(first);
     await repository.insert(second).unwrapOr(second);
 
-    await repository.findByCoupon(couponId).match({
+    await repository.all(CouponRuleScope.coupon(couponId)).match({
       ok: (found) =>
         expect(found.map((r) => r.id).sort()).toEqual(
           [first.id, second.id].sort(),

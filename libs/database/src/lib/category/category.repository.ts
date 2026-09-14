@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Category } from '@wish-list/domain';
 import type { Plain, Id } from '@wish-list/domain';
@@ -9,9 +8,11 @@ import type {
   Insertable,
   ScopedUpdatable,
   ScopedDeletable,
+  Listable,
 } from '../repository/capability.js';
 import {
   find,
+  all,
   insert,
   updateScoped,
   removeScoped,
@@ -20,7 +21,6 @@ import {
 import type { QueryScope } from '../repository/query-scope.js';
 import { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
-import { DatabaseError } from '../database-failure/database-error.js';
 import { DATABASE_CLIENT } from '../client/client.token.js';
 import { CATEGORY_MAPPER } from './category.mapper.js';
 import { categories } from './category.schema.js';
@@ -31,7 +31,8 @@ export class CategoryRepository
     ScopedReadable<Category, typeof categories>,
     Insertable<Category>,
     ScopedUpdatable<Category, typeof categories>,
-    ScopedDeletable<typeof categories>
+    ScopedDeletable<typeof categories>,
+    Listable<Category, typeof categories>
 {
   private readonly options: RepositoryOptions<
     Category,
@@ -72,16 +73,9 @@ export class CategoryRepository
     return removeScoped(this.options, id, scope);
   }
 
-  public findByUser(user: Id): AsyncResult<Category[], DatabaseFailure> {
-    return AsyncResult.fromThrowable(
-      () =>
-        this.options.db
-          .select()
-          .from(this.options.table)
-          .where(eq(this.options.table.user, user)) as unknown as Promise<
-          Plain<Category>[]
-        >,
-      (error) => DatabaseError.from(error).failure(),
-    ).andThen((rows) => this.options.mapper.domain(rows));
+  public all(
+    scope: QueryScope<typeof categories>,
+  ): AsyncResult<Category[], DatabaseFailure> {
+    return all(this.options, scope);
   }
 }

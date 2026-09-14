@@ -192,13 +192,13 @@ describe('WishlistRepository', () => {
     });
   });
 
-  it('findByUser returns every wishlist owned by that user', async () => {
+  it('all(QueryScope.user(...)) returns every wishlist owned by that user', async () => {
     const first = makeWishlist(userId);
     const second = makeWishlist(userId);
     await repository.insert(first).unwrapOr(first);
     await repository.insert(second).unwrapOr(second);
 
-    await repository.findByUser(userId).match({
+    await repository.all(QueryScope.user(userId)).match({
       ok: (found) =>
         expect(found.map((w) => w.id).sort()).toEqual(
           [first.id, second.id].sort(),

@@ -18,6 +18,7 @@ import { VendorRepository } from '../vendor/vendor.repository.js';
 import { CategoryRepository } from '../category/category.repository.js';
 import { ItemRepository } from '../item/item.repository.js';
 import { PriceHistoryRepository } from './price-history.repository.js';
+import { PriceHistoryScope } from './price-history-scope.js';
 
 describe('PriceHistoryRepository', () => {
   let testDb: TestDatabase;
@@ -77,7 +78,7 @@ describe('PriceHistoryRepository', () => {
     });
   });
 
-  it('findByItem returns multiple price entries for the same item', async () => {
+  it('all(PriceHistoryScope.item(...)) returns multiple price entries for the same item', async () => {
     const first = makePriceHistory(itemId, {
       price: { amount: 10, currency: 'USD' },
     });
@@ -87,7 +88,7 @@ describe('PriceHistoryRepository', () => {
     await repository.insert(first).unwrapOr(first);
     await repository.insert(second).unwrapOr(second);
 
-    await repository.findByItem(itemId).match({
+    await repository.all(PriceHistoryScope.item(itemId)).match({
       ok: (found) =>
         expect(found.map((p) => p.id).sort()).toEqual(
           [first.id, second.id].sort(),

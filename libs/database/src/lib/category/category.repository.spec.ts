@@ -188,13 +188,13 @@ describe('CategoryRepository', () => {
     });
   });
 
-  it('findByUser returns every category owned by that user', async () => {
+  it('all(QueryScope.user(...)) returns every category owned by that user', async () => {
     const first = makeCategory(userId, { name: 'Books' });
     const second = makeCategory(userId, { name: 'Games' });
     await repository.insert(first).unwrapOr(first);
     await repository.insert(second).unwrapOr(second);
 
-    await repository.findByUser(userId).match({
+    await repository.all(QueryScope.user(userId)).match({
       ok: (found) =>
         expect(found.map((c) => c.id).sort()).toEqual(
           [first.id, second.id].sort(),

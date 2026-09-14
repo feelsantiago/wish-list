@@ -20,6 +20,7 @@ export type {
   ScopedUpdatable,
   Deletable,
   ScopedDeletable,
+  Listable,
 } from './lib/repository/capability.js';
 export type {
   RepositoryTable,
@@ -33,12 +34,18 @@ export { UserRepository } from './lib/user/user.repository.js';
 export { WishlistRepository } from './lib/wishlist/wishlist.repository.js';
 export { CategoryRepository } from './lib/category/category.repository.js';
 export { VendorRepository } from './lib/vendor/vendor.repository.js';
+export { VendorScope } from './lib/vendor/vendor-scope.js';
 export { ItemRepository } from './lib/item/item.repository.js';
+export { ItemScope } from './lib/item/item-scope.js';
 export { CouponRepository } from './lib/coupon/coupon.repository.js';
 export { CouponRuleRepository } from './lib/coupon-rule/coupon-rule.repository.js';
+export { CouponRuleScope } from './lib/coupon-rule/coupon-rule-scope.js';
 export { ReservationRepository } from './lib/reservation/reservation.repository.js';
+export { ReservationScope } from './lib/reservation/reservation-scope.js';
 export { TrackedItemRepository } from './lib/tracked-item/tracked-item.repository.js';
+export { TrackedItemScope } from './lib/tracked-item/tracked-item-scope.js';
 export { PriceHistoryRepository } from './lib/price-history/price-history.repository.js';
+export { PriceHistoryScope } from './lib/price-history/price-history-scope.js';
 export { ExtractionRepository } from './lib/extraction/extraction.repository.js';
 export { Repositories } from './lib/repository/repositories.js';
 export { createDatabaseClient } from './lib/client/client.js';

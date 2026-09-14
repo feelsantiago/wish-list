@@ -18,6 +18,7 @@ import { VendorRepository } from '../vendor/vendor.repository.js';
 import { CategoryRepository } from '../category/category.repository.js';
 import { ItemRepository } from '../item/item.repository.js';
 import { ReservationRepository } from './reservation.repository.js';
+import { ReservationScope } from './reservation-scope.js';
 
 describe('ReservationRepository', () => {
   let testDb: TestDatabase;
@@ -110,11 +111,11 @@ describe('ReservationRepository', () => {
     });
   });
 
-  it('findByItem returns every reservation for that item', async () => {
+  it('all(ReservationScope.item(...)) returns every reservation for that item', async () => {
     const reservation = makeReservation(itemId);
     await repository.insert(reservation).unwrapOr(reservation);
 
-    await repository.findByItem(itemId).match({
+    await repository.all(ReservationScope.item(itemId)).match({
       ok: (found) => expect(found.map((r) => r.id)).toEqual([reservation.id]),
       err: () => {
         throw new Error('expected ok');

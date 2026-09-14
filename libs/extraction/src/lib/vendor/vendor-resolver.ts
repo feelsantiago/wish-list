@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { AsyncResult, Result } from '@wish-list/common-result';
+import { AsyncResult, Option, Result } from '@wish-list/common-result';
 import { UrlMetadata } from '@wish-list/common-utils';
 import { Url, Vendor, VendorDomain } from '@wish-list/domain';
 import type { ResolvedVendor } from '@wish-list/domain';
-import { VendorRepository } from '@wish-list/database';
+import { VendorRepository, VendorScope } from '@wish-list/database';
 import { match } from 'ts-pattern';
 import { ExtractionFailure } from '../extraction-failure.js';
 
@@ -19,12 +19,12 @@ export class VendorResolver {
       ),
     ).andThen((domain) =>
       this.vendors
-        .findByVendorDomain(domain)
+        .all(VendorScope.domain(domain))
         .mapErr((error): ExtractionFailure =>
           ExtractionFailure.persistFailed(error),
         )
         .andThen((found) =>
-          found.match<AsyncResult<Vendor, ExtractionFailure>>({
+          Option.from(found[0]).match<AsyncResult<Vendor, ExtractionFailure>>({
             some: (vendor) => AsyncResult.fromResult(Result.ok(vendor)),
             none: () => this.provision(domain, url),
           }),
@@ -64,12 +64,12 @@ export class VendorResolver {
       match(error.name)
         .with('constraint', () =>
           this.vendors
-            .findByVendorDomain(domain)
+            .all(VendorScope.domain(domain))
             .mapErr((error): ExtractionFailure =>
               ExtractionFailure.persistFailed(error),
             )
             .andThen((found) =>
-              found.match<Result<Vendor, ExtractionFailure>>({
+              Option.from(found[0]).match<Result<Vendor, ExtractionFailure>>({
                 some: (vendor) => Result.ok(vendor),
                 none: () => Result.err(ExtractionFailure.persistFailed(error)),
               }),

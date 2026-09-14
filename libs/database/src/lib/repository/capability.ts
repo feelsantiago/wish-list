@@ -30,6 +30,10 @@ export interface ScopedUpdatable<TEntity, TTable extends RepositoryTable> {
   ): AsyncResult<Option<TEntity>, DatabaseFailure>;
 }
 
+export interface Listable<TEntity, TTable extends RepositoryTable> {
+  all(scope: QueryScope<TTable>): AsyncResult<TEntity[], DatabaseFailure>;
+}
+
 export interface Deletable {
   delete(id: Id): AsyncResult<void, DatabaseFailure>;
 }

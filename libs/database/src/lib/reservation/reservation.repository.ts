@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Reservation } from '@wish-list/domain';
 import type { Plain, Id } from '@wish-list/domain';
@@ -8,9 +7,11 @@ import type {
   Readable,
   Insertable,
   Deletable,
+  Listable,
 } from '../repository/capability.js';
 import {
   find,
+  all,
   insert,
   remove,
   type RepositoryOptions,
@@ -18,14 +19,17 @@ import {
 import { QueryScope } from '../repository/query-scope.js';
 import { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
-import { DatabaseError } from '../database-failure/database-error.js';
 import { DATABASE_CLIENT } from '../client/client.token.js';
 import { RESERVATION_MAPPER } from './reservation.mapper.js';
 import { reservations } from './reservation.schema.js';
 
 @Injectable()
 export class ReservationRepository
-  implements Readable<Reservation>, Insertable<Reservation>, Deletable
+  implements
+    Readable<Reservation>,
+    Insertable<Reservation>,
+    Deletable,
+    Listable<Reservation, typeof reservations>
 {
   private readonly options: RepositoryOptions<
     Reservation,
@@ -55,16 +59,9 @@ export class ReservationRepository
     return remove(this.options, id);
   }
 
-  public findByItem(item: Id): AsyncResult<Reservation[], DatabaseFailure> {
-    return AsyncResult.fromThrowable(
-      () =>
-        this.options.db
-          .select()
-          .from(this.options.table)
-          .where(eq(this.options.table.item, item)) as unknown as Promise<
-          Plain<Reservation>[]
-        >,
-      (error) => DatabaseError.from(error).failure(),
-    ).andThen((rows) => this.options.mapper.domain(rows));
+  public all(
+    scope: QueryScope<typeof reservations>,
+  ): AsyncResult<Reservation[], DatabaseFailure> {
+    return all(this.options, scope);
   }
 }

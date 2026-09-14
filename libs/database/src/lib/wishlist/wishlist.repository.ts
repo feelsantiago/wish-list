@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Wishlist } from '@wish-list/domain';
 import type { Plain, Id } from '@wish-list/domain';
@@ -9,9 +8,11 @@ import type {
   Insertable,
   ScopedUpdatable,
   ScopedDeletable,
+  Listable,
 } from '../repository/capability.js';
 import {
   find,
+  all,
   insert,
   updateScoped,
   removeScoped,
@@ -20,7 +21,6 @@ import {
 import type { QueryScope } from '../repository/query-scope.js';
 import { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
-import { DatabaseError } from '../database-failure/database-error.js';
 import { DATABASE_CLIENT } from '../client/client.token.js';
 import { WISHLIST_MAPPER } from './wishlist.mapper.js';
 import { wishlists } from './wishlist.schema.js';
@@ -31,7 +31,8 @@ export class WishlistRepository
     ScopedReadable<Wishlist, typeof wishlists>,
     Insertable<Wishlist>,
     ScopedUpdatable<Wishlist, typeof wishlists>,
-    ScopedDeletable<typeof wishlists>
+    ScopedDeletable<typeof wishlists>,
+    Listable<Wishlist, typeof wishlists>
 {
   private readonly options: RepositoryOptions<
     Wishlist,
@@ -72,16 +73,9 @@ export class WishlistRepository
     return removeScoped(this.options, id, scope);
   }
 
-  public findByUser(user: Id): AsyncResult<Wishlist[], DatabaseFailure> {
-    return AsyncResult.fromThrowable(
-      () =>
-        this.options.db
-          .select()
-          .from(this.options.table)
-          .where(eq(this.options.table.user, user)) as unknown as Promise<
-          Plain<Wishlist>[]
-        >,
-      (error) => DatabaseError.from(error).failure(),
-    ).andThen((rows) => this.options.mapper.domain(rows));
+  public all(
+    scope: QueryScope<typeof wishlists>,
+  ): AsyncResult<Wishlist[], DatabaseFailure> {
+    return all(this.options, scope);
   }
 }

@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Coupon } from '@wish-list/domain';
 import type { Id } from '@wish-list/domain';
@@ -9,9 +8,11 @@ import type {
   Insertable,
   ScopedUpdatable,
   ScopedDeletable,
+  Listable,
 } from '../repository/capability.js';
 import {
   find,
+  all,
   insert,
   updateScoped,
   removeScoped,
@@ -21,7 +22,6 @@ import type { QueryScope } from '../repository/query-scope.js';
 import { CouponDatabaseDomainMapper } from './coupon.mapper.js';
 import type { CouponRow } from './coupon.mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
-import { DatabaseError } from '../database-failure/database-error.js';
 import { DATABASE_CLIENT } from '../client/client.token.js';
 import { coupons } from './coupon.schema.js';
 
@@ -31,7 +31,8 @@ export class CouponRepository
     ScopedReadable<Coupon, typeof coupons>,
     Insertable<Coupon>,
     ScopedUpdatable<Coupon, typeof coupons>,
-    ScopedDeletable<typeof coupons>
+    ScopedDeletable<typeof coupons>,
+    Listable<Coupon, typeof coupons>
 {
   private readonly options: RepositoryOptions<
     Coupon,
@@ -71,16 +72,9 @@ export class CouponRepository
     return removeScoped(this.options, id, scope);
   }
 
-  public findByUser(user: Id): AsyncResult<Coupon[], DatabaseFailure> {
-    return AsyncResult.fromThrowable(
-      () =>
-        this.options.db
-          .select()
-          .from(this.options.table)
-          .where(eq(this.options.table.user, user)) as unknown as Promise<
-          CouponRow[]
-        >,
-      (error) => DatabaseError.from(error).failure(),
-    ).andThen((rows) => this.options.mapper.domain(rows));
+  public all(
+    scope: QueryScope<typeof coupons>,
+  ): AsyncResult<Coupon[], DatabaseFailure> {
+    return all(this.options, scope);
   }
 }

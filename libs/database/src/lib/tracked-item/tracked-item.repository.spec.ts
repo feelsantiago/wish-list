@@ -18,6 +18,7 @@ import { VendorRepository } from '../vendor/vendor.repository.js';
 import { CategoryRepository } from '../category/category.repository.js';
 import { ItemRepository } from '../item/item.repository.js';
 import { TrackedItemRepository } from './tracked-item.repository.js';
+import { TrackedItemScope } from './tracked-item-scope.js';
 
 describe('TrackedItemRepository', () => {
   let testDb: TestDatabase;
@@ -91,11 +92,11 @@ describe('TrackedItemRepository', () => {
     });
   });
 
-  it('findByItem returns every tracked item for that item', async () => {
+  it('all(TrackedItemScope.item(...)) returns every tracked item for that item', async () => {
     const trackedItem = makeTrackedItem(itemId);
     await repository.insert(trackedItem).unwrapOr(trackedItem);
 
-    await repository.findByItem(itemId).match({
+    await repository.all(TrackedItemScope.item(itemId)).match({
       ok: (found) => expect(found.map((t) => t.id)).toEqual([trackedItem.id]),
       err: () => {
         throw new Error('expected ok');
