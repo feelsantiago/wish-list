@@ -1,23 +1,29 @@
 import { describe, expect, it } from 'vitest';
 import { vi } from 'vitest';
-import { AsyncResult, Option, err, ok } from '@wish-list/common-result';
+import { AsyncResult, err, ok } from '@wish-list/common-result';
 import { Failure } from '@wish-list/common-error';
-import { Category, Extraction, Id, Url, Wishlist } from '@wish-list/domain';
+import { Category, Extraction, Id, User, Url, Wishlist } from '@wish-list/domain';
 import type { ExtractionReason, SucceededExtraction } from '@wish-list/domain';
-import type {
-  CategoryRepository,
-  DatabaseFailure,
-  ItemRepository,
-  WishlistRepository,
-} from '@wish-list/database';
+import type { ItemRepository } from '@wish-list/database';
 import type { Extractor } from '@wish-list/extraction';
 import { ExtractionFailure } from '@wish-list/extraction';
 import { ItemService } from './item.service.js';
+import type { CreateItemInput } from './item.service.types.js';
 
 const USER = Id.generate();
 const WISHLIST = Id.generate();
 const CATEGORY = Id.generate();
 const URL = 'https://acme.example/p/trail-runner-3';
+
+function userFixture(id: Id): User {
+  const user = User.create({
+    email: 'wisher@example.com',
+    name: 'Wisher',
+    provider: 'google',
+    providerId: 'google-1',
+  }).unwrapOr(undefined as never);
+  return { ...user, id };
+}
 
 function wishlistFixture(user: Id): Wishlist {
   const wishlist = Wishlist.create({ user, name: 'Birthday' }).unwrapOr(
@@ -56,22 +62,12 @@ function failedExtraction(reason: ExtractionReason): Extraction {
 }
 
 interface Stubs {
-  readonly wishlistFind: ReturnType<typeof vi.fn>;
-  readonly categoryFind: ReturnType<typeof vi.fn>;
   readonly insert: ReturnType<typeof vi.fn>;
   readonly extract: ReturnType<typeof vi.fn>;
 }
 
 function buildStubs(): Stubs {
   return {
-    wishlistFind: vi.fn(
-      (): AsyncResult<Option<Wishlist>, DatabaseFailure> =>
-        AsyncResult.fromResult(ok(Option.some(wishlistFixture(USER)))),
-    ),
-    categoryFind: vi.fn(
-      (): AsyncResult<Option<Category>, DatabaseFailure> =>
-        AsyncResult.fromResult(ok(Option.some(categoryFixture(USER)))),
-    ),
     insert: vi.fn(
       (item) => AsyncResult.fromResult(ok(item)) as AsyncResult<never, never>,
     ),
@@ -84,142 +80,54 @@ function buildStubs(): Stubs {
 
 function buildService(stubs: Stubs): ItemService {
   return new ItemService(
-    { find: stubs.wishlistFind } as unknown as WishlistRepository,
-    { find: stubs.categoryFind } as unknown as CategoryRepository,
     { insert: stubs.insert } as unknown as ItemRepository,
     { extract: stubs.extract } as unknown as Extractor,
   );
 }
 
-function createInput(overrides: { url?: string } = {}): {
-  user: Id;
-  wishlist: Id;
-  category: Id;
-  url: string;
-} {
+function createInput(
+  overrides: {
+    wishlistOwner?: Id;
+    categoryOwner?: Id;
+  } = {},
+): CreateItemInput {
   return {
-    user: USER,
-    wishlist: WISHLIST,
-    category: CATEGORY,
-    url: overrides.url ?? URL,
+    user: userFixture(USER),
+    wishlist: wishlistFixture(overrides.wishlistOwner ?? USER),
+    category: categoryFixture(overrides.categoryOwner ?? USER),
+    url: Url.from(URL),
   };
 }
 
 describe('ItemService', () => {
   describe('create', () => {
-    it('rejects a malformed url before any repository or extractor call', async () => {
+    it('returns forbidden when the Wishlist belongs to a different User, never reaching Category or extraction', async () => {
       const stubs = buildStubs();
       const service = buildService(stubs);
 
       const failure = await service
-        .create(createInput({ url: 'not-a-url' }))
+        .create(createInput({ wishlistOwner: Id.generate() }))
         .match({ ok: () => undefined, err: (f) => f });
 
-      expect(failure?.name).toBe('invalid');
-      expect(stubs.wishlistFind).not.toHaveBeenCalled();
-      expect(stubs.categoryFind).not.toHaveBeenCalled();
+      expect(failure?.name).toBe('forbidden');
+      expect(failure?.metadata['actor']).toBe(USER);
+      expect(failure?.metadata['resource']).toBe(`wishlist:${WISHLIST}`);
       expect(stubs.extract).not.toHaveBeenCalled();
       expect(stubs.insert).not.toHaveBeenCalled();
     });
 
-    it('returns notFound when the Wishlist does not exist, never reaching Category', async () => {
+    it('returns forbidden when the Category belongs to a different User, only after the Wishlist check passes', async () => {
       const stubs = buildStubs();
-      stubs.wishlistFind.mockReturnValue(
-        AsyncResult.fromResult(ok(Option.none())),
-      );
       const service = buildService(stubs);
 
       const failure = await service
-        .create(createInput())
+        .create(createInput({ categoryOwner: Id.generate() }))
         .match({ ok: () => undefined, err: (f) => f });
 
-      expect(failure?.name).toBe('not-found');
-      expect(failure?.metadata['id']).toBe(`wishlist:${WISHLIST}`);
-      expect(stubs.categoryFind).not.toHaveBeenCalled();
-      expect(stubs.insert).not.toHaveBeenCalled();
-    });
-
-    it('returns notFound when the Wishlist belongs to a different User', async () => {
-      const stubs = buildStubs();
-      stubs.wishlistFind.mockReturnValue(
-        AsyncResult.fromResult(ok(Option.none())),
-      );
-      const service = buildService(stubs);
-
-      const failure = await service
-        .create(createInput())
-        .match({ ok: () => undefined, err: (f) => f });
-
-      expect(failure?.name).toBe('not-found');
-      expect(failure?.metadata['id']).toBe(`wishlist:${WISHLIST}`);
-      expect(stubs.categoryFind).not.toHaveBeenCalled();
-      expect(stubs.insert).not.toHaveBeenCalled();
-    });
-
-    it('returns notFound when the Category does not exist, only after the Wishlist check passes', async () => {
-      const stubs = buildStubs();
-      stubs.categoryFind.mockReturnValue(
-        AsyncResult.fromResult(ok(Option.none())),
-      );
-      const service = buildService(stubs);
-
-      const failure = await service
-        .create(createInput())
-        .match({ ok: () => undefined, err: (f) => f });
-
-      expect(failure?.name).toBe('not-found');
-      expect(failure?.metadata['id']).toBe(`category:${CATEGORY}`);
-      expect(stubs.wishlistFind).toHaveBeenCalledTimes(1);
-      expect(stubs.insert).not.toHaveBeenCalled();
-    });
-
-    it('returns notFound when the Category belongs to a different User', async () => {
-      const stubs = buildStubs();
-      stubs.categoryFind.mockReturnValue(
-        AsyncResult.fromResult(ok(Option.none())),
-      );
-      const service = buildService(stubs);
-
-      const failure = await service
-        .create(createInput())
-        .match({ ok: () => undefined, err: (f) => f });
-
-      expect(failure?.name).toBe('not-found');
-      expect(failure?.metadata['id']).toBe(`category:${CATEGORY}`);
-      expect(stubs.insert).not.toHaveBeenCalled();
-    });
-
-    it('treats a Wishlist DatabaseFailure as unexpected', async () => {
-      const stubs = buildStubs();
-      stubs.wishlistFind.mockReturnValue(
-        AsyncResult.fromResult(
-          err(Failure.create('query', 'connection lost') as DatabaseFailure),
-        ),
-      );
-      const service = buildService(stubs);
-
-      const failure = await service
-        .create(createInput())
-        .match({ ok: () => undefined, err: (f) => f });
-
-      expect(failure?.name).toBe('unexpected');
-      expect(stubs.insert).not.toHaveBeenCalled();
-    });
-
-    it('treats a Category DatabaseFailure as unexpected', async () => {
-      const stubs = buildStubs();
-      stubs.categoryFind.mockReturnValue(
-        AsyncResult.fromResult(
-          err(Failure.create('query', 'connection lost') as DatabaseFailure),
-        ),
-      );
-      const service = buildService(stubs);
-
-      const failure = await service
-        .create(createInput())
-        .match({ ok: () => undefined, err: (f) => f });
-
-      expect(failure?.name).toBe('unexpected');
+      expect(failure?.name).toBe('forbidden');
+      expect(failure?.metadata['actor']).toBe(USER);
+      expect(failure?.metadata['resource']).toBe(`category:${CATEGORY}`);
+      expect(stubs.extract).not.toHaveBeenCalled();
       expect(stubs.insert).not.toHaveBeenCalled();
     });
 

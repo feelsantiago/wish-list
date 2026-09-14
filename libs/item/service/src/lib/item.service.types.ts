@@ -1,8 +1,8 @@
-import type { Id } from '@wish-list/domain';
+import type { Category, User, Url, Wishlist } from '@wish-list/domain';
 
 export type CreateItemInput = {
-  user: Id;
-  wishlist: Id;
-  category: Id;
-  url: string;
+  user: User;
+  wishlist: Wishlist;
+  category: Category;
+  url: Url;
 };
