@@ -3,8 +3,7 @@ import { desc, eq } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Extraction } from '@wish-list/domain';
 import type { ExtractionKey, Id } from '@wish-list/domain';
-import { AsyncResult } from '@wish-list/common-result';
-import { Failure } from '@wish-list/common-error';
+import { AsyncResult, Option, ok, type Result } from '@wish-list/common-result';
 import type { Readable, Insertable } from '../repository/capability.js';
 import {
   find,
@@ -35,7 +34,7 @@ export class ExtractionRepository
     this.options = { db, table: extractions, mapper };
   }
 
-  public find(id: Id): AsyncResult<Extraction, DatabaseFailure> {
+  public find(id: Id): AsyncResult<Option<Extraction>, DatabaseFailure> {
     return find(this.options, id);
   }
 
@@ -45,7 +44,7 @@ export class ExtractionRepository
 
   public findLatestByKey(
     key: ExtractionKey,
-  ): AsyncResult<Extraction, DatabaseFailure> {
+  ): AsyncResult<Option<Extraction>, DatabaseFailure> {
     return AsyncResult.fromThrowable(
       () =>
         this.options.db
@@ -56,11 +55,11 @@ export class ExtractionRepository
           .limit(1)
           .then((rows) => rows[0] as ExtractionRow | undefined),
       (error) => DatabaseError.from(error).failure(),
-    ).andThen((row) =>
-      this.options.mapper.domain(
-        row,
-        Failure.create('not-found', 'Entity not found', { key }),
-      ),
+    ).andThen(
+      (row): Result<Option<Extraction>, DatabaseFailure> =>
+        row === undefined
+          ? ok(Option.none())
+          : this.options.mapper.domain(row).map(Option.some),
     );
   }
 }

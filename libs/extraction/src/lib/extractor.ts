@@ -1,4 +1,4 @@
-import { AsyncResult, err, ok, Result } from '@wish-list/common-result';
+import { AsyncResult, ok, Result } from '@wish-list/common-result';
 import { InFlightCache, WithTimeout } from '@wish-list/common-utils';
 import { Extraction, ExtractionKey, TimeWindow } from '@wish-list/domain';
 import type { Url } from '@wish-list/domain';
@@ -42,25 +42,17 @@ export class Extractor {
     key: ExtractionKey,
     url: Url,
   ): AsyncResult<Extraction, ExtractionFailure> {
-    return new AsyncResult(
-      Result.safeTry(this, async function* () {
-        const extraction = yield* this.extractions
-          .findLatestByKey(key)
-          .mapErr((error) =>
-            match(error.name)
-              .with('not-found', () => ExtractionFailure.notFound(error))
-              .otherwise(() => ExtractionFailure.persistFailed(error)),
-          );
-
-        return this.reuse(extraction, url).toPromise();
-      }),
-    ).orElse((error) => {
-      return match(error.name)
-        .with('not-found', () => this.refresh(url))
-        .otherwise(() =>
-          AsyncResult.fromResult(err(ExtractionFailure.persistFailed(error))),
-        );
-    });
+    return this.extractions
+      .findLatestByKey(key)
+      .mapErr(
+        (error): ExtractionFailure => ExtractionFailure.persistFailed(error),
+      )
+      .andThen((found) =>
+        found.match<AsyncResult<Extraction, ExtractionFailure>>({
+          some: (extraction) => this.reuse(extraction, url),
+          none: () => this.refresh(url),
+        }),
+      );
   }
 
   private reuse(

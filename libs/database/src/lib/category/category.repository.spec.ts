@@ -34,19 +34,19 @@ describe('CategoryRepository', () => {
     await repository.insert(category).unwrapOr(category);
 
     await repository.find(category.id).match({
-      ok: (found) => expect(found).toEqual(category),
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(category),
       err: () => {
         throw new Error('expected ok');
       },
     });
   });
 
-  it('returns "notFound" when finding a missing id', async () => {
+  it('returns None when finding a missing id', async () => {
     await repository.find(Id.generate()).match({
-      ok: () => {
-        throw new Error('expected err');
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
       },
-      err: (failure) => expect(failure.name).toBe('not-found'),
     });
   });
 

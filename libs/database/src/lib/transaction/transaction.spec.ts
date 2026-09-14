@@ -78,12 +78,10 @@ describe('Database.transaction (real db)', () => {
       .get(UserRepository)
       .find(first.id)
       .match({
-        ok: () => {
-          throw new Error(
-            'expected notFound: first insert should have rolled back',
-          );
+        ok: (found) => expect(found.isNone()).toBe(true),
+        err: () => {
+          throw new Error('expected ok');
         },
-        err: (failure) => expect(failure.name).toBe('not-found'),
       });
   });
 });

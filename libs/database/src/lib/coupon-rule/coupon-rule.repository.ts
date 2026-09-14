@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { CouponRule } from '@wish-list/domain';
 import type { Id } from '@wish-list/domain';
-import { AsyncResult } from '@wish-list/common-result';
+import { AsyncResult, type Option } from '@wish-list/common-result';
 import type {
   Readable,
   Insertable,
@@ -39,7 +39,7 @@ export class CouponRuleRepository
     this.options = { db, table: couponRules, mapper };
   }
 
-  public find(id: Id): AsyncResult<CouponRule, DatabaseFailure> {
+  public find(id: Id): AsyncResult<Option<CouponRule>, DatabaseFailure> {
     return find(this.options, id);
   }
 

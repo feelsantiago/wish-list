@@ -28,19 +28,19 @@ describe('VendorRepository', () => {
     await repository.insert(vendor).unwrapOr(vendor);
 
     await repository.find(vendor.id).match({
-      ok: (found) => expect(found).toEqual(vendor),
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(vendor),
       err: () => {
         throw new Error('expected ok');
       },
     });
   });
 
-  it('returns "notFound" when finding a missing id', async () => {
+  it('returns None when finding a missing id', async () => {
     await repository.find(Id.generate()).match({
-      ok: () => {
-        throw new Error('expected err');
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
       },
-      err: (failure) => expect(failure.name).toBe('not-found'),
     });
   });
 
@@ -57,14 +57,14 @@ describe('VendorRepository', () => {
     });
   });
 
-  it('findByVendorDomain returns "notFound" for an unknown domain', async () => {
+  it('findByVendorDomain returns None for an unknown domain', async () => {
     await repository
       .findByVendorDomain(VendorDomain.from('unknown.example.com'))
       .match({
-        ok: () => {
-          throw new Error('expected err');
+        ok: (found) => expect(found.isNone()).toBe(true),
+        err: () => {
+          throw new Error('expected ok');
         },
-        err: (failure) => expect(failure.name).toBe('not-found'),
       });
   });
 
@@ -73,7 +73,7 @@ describe('VendorRepository', () => {
     await repository.insert(vendor).unwrapOr(vendor);
 
     await repository.findByVendorDomain(vendor.vendorDomain).match({
-      ok: (found) => expect(found).toEqual(vendor),
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(vendor),
       err: () => {
         throw new Error('expected ok');
       },

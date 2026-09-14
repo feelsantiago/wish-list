@@ -29,7 +29,7 @@ export function find<
 >(
   options: RepositoryOptions<TEntity, TRow, TTable>,
   id: Id,
-): AsyncResult<TEntity, DatabaseFailure> {
+): AsyncResult<Option<TEntity>, DatabaseFailure> {
   return AsyncResult.fromThrowable(
     () =>
       options.db
@@ -38,7 +38,12 @@ export function find<
         .where(eq(options.table.id, id))
         .then((rows) => rows[0] as TRow | undefined),
     (error) => DatabaseError.from(error).failure(),
-  ).andThen((row) => options.mapper.domain(row, DatabaseFailure.notFound(id)));
+  ).andThen(
+    (row): Result<Option<TEntity>, DatabaseFailure> =>
+      row === undefined
+        ? ok(Option.none())
+        : options.mapper.domain(row).map(Option.some),
+  );
 }
 
 export function findForUser<

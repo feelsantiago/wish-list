@@ -61,19 +61,20 @@ describe('TrackedItemRepository', () => {
     await repository.insert(trackedItem).unwrapOr(trackedItem);
 
     await repository.find(trackedItem.id).match({
-      ok: (found) => expect(found).toEqual(trackedItem),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(trackedItem),
       err: () => {
         throw new Error('expected ok');
       },
     });
   });
 
-  it('returns "notFound" when finding a missing id', async () => {
+  it('returns None when finding a missing id', async () => {
     await repository.find(Id.generate()).match({
-      ok: () => {
-        throw new Error('expected err');
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
       },
-      err: (failure) => expect(failure.name).toBe('not-found'),
     });
   });
 
@@ -109,7 +110,7 @@ describe('TrackedItemRepository', () => {
     const stopped = TrackedItem.stop(trackedItem);
     await repository.update(stopped).unwrapOr(stopped);
     await repository.find(stopped.id).match({
-      ok: (found) => expect(found).toEqual(stopped),
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(stopped),
       err: () => {
         throw new Error('expected ok');
       },
@@ -118,7 +119,7 @@ describe('TrackedItemRepository', () => {
     const resumed = TrackedItem.resume(stopped);
     await repository.update(resumed).unwrapOr(resumed);
     await repository.find(resumed.id).match({
-      ok: (found) => expect(found).toEqual(resumed),
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(resumed),
       err: () => {
         throw new Error('expected ok');
       },

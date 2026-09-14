@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Id, Url, Vendor, VendorDomain } from '@wish-list/domain';
 import type { ProvisionalVendor } from '@wish-list/domain';
-import { DatabaseFailure } from '../database-failure/database-failure.js';
 import { VendorDatabaseDomainMapper, type VendorRow } from './vendor.mapper.js';
 
 function provisionalVendor(): ProvisionalVendor {
@@ -92,17 +91,6 @@ describe('VendorDatabaseDomainMapper', () => {
         err: () => {
           throw new Error('expected ok');
         },
-      });
-    });
-
-    it('returns the supplied notFound failure when row is undefined', () => {
-      const notFound = DatabaseFailure.notFound(Id.generate());
-      const result = mapper.domain(undefined, notFound);
-      result.match({
-        ok: () => {
-          throw new Error('expected err');
-        },
-        err: (failure) => expect(failure).toBe(notFound),
       });
     });
 

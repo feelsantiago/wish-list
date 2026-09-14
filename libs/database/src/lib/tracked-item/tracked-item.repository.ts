@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { TrackedItem } from '@wish-list/domain';
 import type { Plain, Id } from '@wish-list/domain';
-import { AsyncResult } from '@wish-list/common-result';
+import { AsyncResult, type Option } from '@wish-list/common-result';
 import type {
   Readable,
   Insertable,
@@ -43,7 +43,7 @@ export class TrackedItemRepository
     this.options = { db, table: trackedItems, mapper };
   }
 
-  public find(id: Id): AsyncResult<TrackedItem, DatabaseFailure> {
+  public find(id: Id): AsyncResult<Option<TrackedItem>, DatabaseFailure> {
     return find(this.options, id);
   }
 

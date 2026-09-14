@@ -25,19 +25,10 @@ export class CouponDatabaseDomainMapper
   }
 
   public domain(row: CouponRow): Result<Coupon, DatabaseFailure>;
-  public domain(
-    row: CouponRow | undefined,
-    notFound: DatabaseFailure,
-  ): Result<Coupon, DatabaseFailure>;
   public domain(rows: readonly CouponRow[]): Result<Coupon[], DatabaseFailure>;
   public domain(
-    input: CouponRow | readonly CouponRow[] | undefined,
-    notFound?: DatabaseFailure,
+    input: CouponRow | readonly CouponRow[],
   ): Result<Coupon, DatabaseFailure> | Result<Coupon[], DatabaseFailure> {
-    if (input === undefined) {
-      return this.delegate.domain(input, notFound as DatabaseFailure);
-    }
-
     return this.delegate.domain(input as CouponRow);
   }
 

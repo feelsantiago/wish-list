@@ -61,19 +61,20 @@ describe('ReservationRepository', () => {
     await repository.insert(reservation).unwrapOr(reservation);
 
     await repository.find(reservation.id).match({
-      ok: (found) => expect(found).toEqual(reservation),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(reservation),
       err: () => {
         throw new Error('expected ok');
       },
     });
   });
 
-  it('returns "notFound" when finding a missing id', async () => {
+  it('returns None when finding a missing id', async () => {
     await repository.find(Id.generate()).match({
-      ok: () => {
-        throw new Error('expected err');
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
       },
-      err: (failure) => expect(failure.name).toBe('not-found'),
     });
   });
 
@@ -90,7 +91,7 @@ describe('ReservationRepository', () => {
     });
   });
 
-  it('delete removes the reservation, so a later find returns "notFound"', async () => {
+  it('delete removes the reservation, so a later find returns None', async () => {
     const reservation = makeReservation(itemId);
     await repository.insert(reservation).unwrapOr(reservation);
 
@@ -102,10 +103,10 @@ describe('ReservationRepository', () => {
     });
 
     await repository.find(reservation.id).match({
-      ok: () => {
-        throw new Error('expected err');
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
       },
-      err: (failure) => expect(failure.name).toBe('not-found'),
     });
   });
 

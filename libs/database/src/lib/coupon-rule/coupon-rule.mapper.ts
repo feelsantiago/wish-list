@@ -25,22 +25,13 @@ export class CouponRuleDatabaseDomainMapper
 
   public domain(row: CouponRuleRow): Result<CouponRule, DatabaseFailure>;
   public domain(
-    row: CouponRuleRow | undefined,
-    notFound: DatabaseFailure,
-  ): Result<CouponRule, DatabaseFailure>;
-  public domain(
     rows: readonly CouponRuleRow[],
   ): Result<CouponRule[], DatabaseFailure>;
   public domain(
-    input: CouponRuleRow | readonly CouponRuleRow[] | undefined,
-    notFound?: DatabaseFailure,
+    input: CouponRuleRow | readonly CouponRuleRow[],
   ):
     | Result<CouponRule, DatabaseFailure>
     | Result<CouponRule[], DatabaseFailure> {
-    if (input === undefined) {
-      return this.delegate.domain(input, notFound as DatabaseFailure);
-    }
-
     return this.delegate.domain(input as CouponRuleRow);
   }
 

@@ -40,7 +40,8 @@ describe('ExtractionRepository', () => {
     await repository.insert(extraction).unwrapOr(extraction);
 
     await repository.find(extraction.id).match({
-      ok: (found) => expect(found).toEqual(extraction),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(extraction),
       err: () => {
         throw new Error('expected ok');
       },
@@ -52,19 +53,20 @@ describe('ExtractionRepository', () => {
     await repository.insert(extraction).unwrapOr(extraction);
 
     await repository.find(extraction.id).match({
-      ok: (found) => expect(found).toEqual(extraction),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(extraction),
       err: () => {
         throw new Error('expected ok');
       },
     });
   });
 
-  it('returns "not-found" when finding a missing id', async () => {
+  it('returns None when finding a missing id', async () => {
     await repository.find(Id.generate()).match({
-      ok: () => {
-        throw new Error('expected err');
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
       },
-      err: (failure) => expect(failure.name).toBe('not-found'),
     });
   });
 
@@ -78,13 +80,13 @@ describe('ExtractionRepository', () => {
     });
   });
 
-  it('findLatestByKey returns "not-found" for an unknown key', async () => {
+  it('findLatestByKey returns None for an unknown key', async () => {
     const extraction = makeFailedExtraction(vendor);
     await repository.findLatestByKey(extraction.key).match({
-      ok: () => {
-        throw new Error('expected err');
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
       },
-      err: (failure) => expect(failure.name).toBe('not-found'),
     });
   });
 
@@ -100,7 +102,7 @@ describe('ExtractionRepository', () => {
     await repository.insert(second).unwrapOr(second);
 
     await repository.findLatestByKey(first.key).match({
-      ok: (found) => expect(found).toEqual(second),
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(second),
       err: () => {
         throw new Error('expected ok');
       },

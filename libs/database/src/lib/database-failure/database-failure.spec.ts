@@ -1,18 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Failure } from '@wish-list/common-error';
-import { Id, DomainFailure } from '@wish-list/domain';
+import { DomainFailure } from '@wish-list/domain';
 import { DatabaseFailure } from './database-failure.js';
-
-describe('DatabaseFailure.notFound', () => {
-  it('returns Failure with name "notFound" and no source', () => {
-    const id = Id.generate();
-    const f = DatabaseFailure.notFound(id);
-    expect(f).toBeInstanceOf(Failure);
-    expect(f.name).toBe('not-found');
-    expect(f.source).toBeUndefined();
-    expect(f.metadata).toEqual({ id });
-  });
-});
 
 describe('DatabaseFailure.constraint', () => {
   it('returns Failure with name "constraint", driver error as source', () => {

@@ -11,7 +11,7 @@ import {
 } from '@wish-list/database/testing';
 import type { TestDatabase } from '@wish-list/database/testing';
 import type { z } from 'zod';
-import { AsyncResult, err, ok } from '@wish-list/common-result';
+import { AsyncResult, Option, err, ok } from '@wish-list/common-result';
 import { Failure } from '@wish-list/common-error';
 import { PAGE_FETCHER } from './fetcher/page-fetcher.js';
 import type { PageFetcher } from './fetcher/page-fetcher.js';
@@ -190,11 +190,13 @@ describe('Extractor', () => {
 
     const persisted = await extractionRepository
       .find(extraction.id)
+      .map((found) => found.unwrapOr(undefined as never))
       .unwrapOr(undefined as never);
     expect(persisted).toEqual(extraction);
 
     const vendor = await vendorRepository
       .find(extraction.vendor)
+      .map((found) => found.unwrapOr(undefined as never))
       .unwrapOr(undefined as never);
     expect(Vendor.isResolved(vendor)).toBe(true);
   });
@@ -215,6 +217,7 @@ describe('Extractor', () => {
 
     const vendor = await vendorRepository
       .find(extraction.vendor)
+      .map((found) => found.unwrapOr(undefined as never))
       .unwrapOr(undefined as never);
     expect(Vendor.isProvisional(vendor)).toBe(true);
   });
@@ -256,10 +259,7 @@ describe('Extractor', () => {
         AsyncResult.fromResult(
           err(Failure.create('query', 'insert failed') as DatabaseFailure),
         ),
-      findLatestByKey: () =>
-        AsyncResult.fromResult(
-          err(Failure.create('not-found', 'no record') as DatabaseFailure),
-        ),
+      findLatestByKey: () => AsyncResult.fromResult(ok(Option.none())),
     };
     const extractor = await buildExtractor(fetcherReturning(JSON_LD_COMPLETE), {
       extractionsOverride: failing,
@@ -304,7 +304,9 @@ describe('Extractor', () => {
     }
 
     function buildWithLatest(latest: Extraction) {
-      return buildWithLookup(() => AsyncResult.fromResult(ok(latest)));
+      return buildWithLookup(() =>
+        AsyncResult.fromResult(ok(Option.some(latest))),
+      );
     }
 
     function buildWithLookupFailure(failure: DatabaseFailure) {
@@ -376,12 +378,10 @@ describe('Extractor', () => {
       expect(fetcher.calls).toBe(1);
     });
 
-    it('refreshes when no record exists ("not-found")', async () => {
-      const notFound = Failure.create(
-        'not-found',
-        'no record',
-      ) as DatabaseFailure;
-      const { extractor, fetcher } = await buildWithLookupFailure(notFound);
+    it('refreshes when no record exists', async () => {
+      const { extractor, fetcher } = await buildWithLookup(() =>
+        AsyncResult.fromResult(ok(Option.none())),
+      );
 
       const extraction = await extractor
         .extract(url)

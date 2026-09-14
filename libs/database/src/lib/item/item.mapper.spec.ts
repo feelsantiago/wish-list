@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Id, Item, Money, Url } from '@wish-list/domain';
 import type { PendingItem } from '@wish-list/domain';
-import { DatabaseFailure } from '../database-failure/database-failure.js';
 import {
   ItemDatabaseDomainMapper,
   type ItemRow,
@@ -157,17 +156,6 @@ describe('ItemDatabaseDomainMapper', () => {
         err: () => {
           throw new Error('expected ok');
         },
-      });
-    });
-
-    it('returns the supplied notFound failure when row is undefined', () => {
-      const notFound = DatabaseFailure.notFound(Id.generate());
-      const result = mapper.domain(undefined, notFound);
-      result.match({
-        ok: () => {
-          throw new Error('expected err');
-        },
-        err: (failure) => expect(failure).toBe(notFound),
       });
     });
 

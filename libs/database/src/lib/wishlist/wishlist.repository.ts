@@ -46,7 +46,7 @@ export class WishlistRepository
     this.options = { db, table: wishlists, mapper };
   }
 
-  public find(id: Id): AsyncResult<Wishlist, DatabaseFailure> {
+  public find(id: Id): AsyncResult<Option<Wishlist>, DatabaseFailure> {
     return find(this.options, id);
   }
 

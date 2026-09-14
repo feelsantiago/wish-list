@@ -46,7 +46,7 @@ export class CategoryRepository
     this.options = { db, table: categories, mapper };
   }
 
-  public find(id: Id): AsyncResult<Category, DatabaseFailure> {
+  public find(id: Id): AsyncResult<Option<Category>, DatabaseFailure> {
     return find(this.options, id);
   }
 

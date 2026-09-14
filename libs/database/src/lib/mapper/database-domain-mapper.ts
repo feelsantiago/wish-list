@@ -36,14 +36,9 @@ export class DatabaseDomainMapper<TEntity, TRow>
   }
 
   public domain(row: TRow): Result<TEntity, DatabaseFailure>;
-  public domain(
-    row: TRow | undefined,
-    notFound: DatabaseFailure,
-  ): Result<TEntity, DatabaseFailure>;
   public domain(rows: readonly TRow[]): Result<TEntity[], DatabaseFailure>;
   public domain(
-    input: TRow | readonly TRow[] | undefined,
-    notFound?: DatabaseFailure,
+    input: TRow | readonly TRow[],
   ): Result<TEntity, DatabaseFailure> | Result<TEntity[], DatabaseFailure> {
     if (Array.isArray(input)) {
       return Result.safeTry(this, function* () {
@@ -55,10 +50,6 @@ export class DatabaseDomainMapper<TEntity, TRow>
 
         return Result.ok(entities);
       });
-    }
-
-    if (input === undefined) {
-      return Result.err(notFound as DatabaseFailure);
     }
 
     return this.fromRowFn(input as TRow);

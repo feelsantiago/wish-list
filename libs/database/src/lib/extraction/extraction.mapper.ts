@@ -35,22 +35,13 @@ export class ExtractionDatabaseDomainMapper implements DomainMapper<
 
   public domain(row: ExtractionRow): Result<Extraction, DatabaseFailure>;
   public domain(
-    row: ExtractionRow | undefined,
-    notFound: DatabaseFailure,
-  ): Result<Extraction, DatabaseFailure>;
-  public domain(
     rows: readonly ExtractionRow[],
   ): Result<Extraction[], DatabaseFailure>;
   public domain(
-    input: ExtractionRow | readonly ExtractionRow[] | undefined,
-    notFound?: DatabaseFailure,
+    input: ExtractionRow | readonly ExtractionRow[],
   ):
     | Result<Extraction, DatabaseFailure>
     | Result<Extraction[], DatabaseFailure> {
-    if (input === undefined) {
-      return this.delegate.domain(input, notFound as DatabaseFailure);
-    }
-
     return this.delegate.domain(input as ExtractionRow);
   }
 

@@ -3,7 +3,7 @@ import type { AsyncResult, Option } from '@wish-list/common-result';
 import type { DatabaseFailure } from '../database-failure/database-failure.js';
 
 export interface Readable<TEntity> {
-  find(id: Id): AsyncResult<TEntity, DatabaseFailure>;
+  find(id: Id): AsyncResult<Option<TEntity>, DatabaseFailure>;
 }
 
 export interface ReadableForUser<TEntity> {

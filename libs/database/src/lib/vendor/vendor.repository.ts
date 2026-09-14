@@ -3,8 +3,7 @@ import { eq } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Vendor } from '@wish-list/domain';
 import type { VendorDomain, Id } from '@wish-list/domain';
-import { AsyncResult } from '@wish-list/common-result';
-import { Failure } from '@wish-list/common-error';
+import { AsyncResult, Option, ok, type Result } from '@wish-list/common-result';
 import type {
   Readable,
   Insertable,
@@ -40,7 +39,7 @@ export class VendorRepository
     this.options = { db, table: vendors, mapper };
   }
 
-  public find(id: Id): AsyncResult<Vendor, DatabaseFailure> {
+  public find(id: Id): AsyncResult<Option<Vendor>, DatabaseFailure> {
     return find(this.options, id);
   }
 
@@ -54,7 +53,7 @@ export class VendorRepository
 
   public findByVendorDomain(
     domain: VendorDomain,
-  ): AsyncResult<Vendor, DatabaseFailure> {
+  ): AsyncResult<Option<Vendor>, DatabaseFailure> {
     return AsyncResult.fromThrowable(
       () =>
         this.options.db
@@ -63,13 +62,11 @@ export class VendorRepository
           .where(eq(this.options.table.vendorDomain, domain))
           .then((rows) => rows[0] as VendorRow | undefined),
       (error) => DatabaseError.from(error).failure(),
-    ).andThen((row) =>
-      this.options.mapper.domain(
-        row,
-        Failure.create('not-found', 'Entity not found', {
-          vendorDomain: domain,
-        }),
-      ),
+    ).andThen(
+      (row): Result<Option<Vendor>, DatabaseFailure> =>
+        row === undefined
+          ? ok(Option.none())
+          : this.options.mapper.domain(row).map(Option.some),
     );
   }
 }

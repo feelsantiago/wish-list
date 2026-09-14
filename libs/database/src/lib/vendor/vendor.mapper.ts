@@ -26,19 +26,10 @@ export class VendorDatabaseDomainMapper implements DomainMapper<
   }
 
   public domain(row: VendorRow): Result<Vendor, DatabaseFailure>;
-  public domain(
-    row: VendorRow | undefined,
-    notFound: DatabaseFailure,
-  ): Result<Vendor, DatabaseFailure>;
   public domain(rows: readonly VendorRow[]): Result<Vendor[], DatabaseFailure>;
   public domain(
-    input: VendorRow | readonly VendorRow[] | undefined,
-    notFound?: DatabaseFailure,
+    input: VendorRow | readonly VendorRow[],
   ): Result<Vendor, DatabaseFailure> | Result<Vendor[], DatabaseFailure> {
-    if (input === undefined) {
-      return this.delegate.domain(input, notFound as DatabaseFailure);
-    }
-
     return this.delegate.domain(input as VendorRow);
   }
 

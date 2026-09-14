@@ -40,6 +40,7 @@ describe('VendorResolver', () => {
 
     const persisted = await vendors
       .find(found?.id as never)
+      .map((option) => option.unwrapOr(undefined as never))
       .unwrapOr(undefined as never);
     expect(persisted).toEqual(found);
   });
@@ -71,6 +72,7 @@ describe('VendorResolver', () => {
 
     const persisted = await vendors
       .find(resolved.id)
+      .map((option) => option.unwrapOr(undefined as never))
       .unwrapOr(undefined as never);
     expect(persisted).toEqual(resolved);
   });
@@ -94,7 +96,10 @@ describe('VendorResolver', () => {
     expect(second.id).toEqual(first.id);
     expect(second.name).toBe('Acme Outfitters Inc.');
 
-    const persisted = await vendors.find(first.id).unwrapOr(undefined as never);
+    const persisted = await vendors
+      .find(first.id)
+      .map((option) => option.unwrapOr(undefined as never))
+      .unwrapOr(undefined as never);
     expect(persisted).toEqual(second);
   });
 

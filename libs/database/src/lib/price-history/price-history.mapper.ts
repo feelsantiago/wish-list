@@ -27,22 +27,13 @@ export class PriceHistoryDatabaseDomainMapper
 
   public domain(row: PriceHistoryRow): Result<PriceHistory, DatabaseFailure>;
   public domain(
-    row: PriceHistoryRow | undefined,
-    notFound: DatabaseFailure,
-  ): Result<PriceHistory, DatabaseFailure>;
-  public domain(
     rows: readonly PriceHistoryRow[],
   ): Result<PriceHistory[], DatabaseFailure>;
   public domain(
-    input: PriceHistoryRow | readonly PriceHistoryRow[] | undefined,
-    notFound?: DatabaseFailure,
+    input: PriceHistoryRow | readonly PriceHistoryRow[],
   ):
     | Result<PriceHistory, DatabaseFailure>
     | Result<PriceHistory[], DatabaseFailure> {
-    if (input === undefined) {
-      return this.delegate.domain(input, notFound as DatabaseFailure);
-    }
-
     return this.delegate.domain(input as PriceHistoryRow);
   }
 

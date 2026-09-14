@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { PriceHistory } from '@wish-list/domain';
 import type { Id } from '@wish-list/domain';
-import { AsyncResult } from '@wish-list/common-result';
+import { AsyncResult, type Option } from '@wish-list/common-result';
 import type { Readable, Insertable } from '../repository/capability.js';
 import {
   find,
@@ -34,7 +34,7 @@ export class PriceHistoryRepository
     this.options = { db, table: priceHistory, mapper };
   }
 
-  public find(id: Id): AsyncResult<PriceHistory, DatabaseFailure> {
+  public find(id: Id): AsyncResult<Option<PriceHistory>, DatabaseFailure> {
     return find(this.options, id);
   }
 

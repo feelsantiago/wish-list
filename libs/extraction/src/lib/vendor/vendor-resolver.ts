@@ -18,11 +18,17 @@ export class VendorResolver {
         ExtractionFailure.persistFailed(error),
       ),
     ).andThen((domain) =>
-      this.vendors.findByVendorDomain(domain).orElse((error) =>
-        match(error.name)
-          .with('not-found', () => this.provision(domain, url))
-          .otherwise(() => Result.err(ExtractionFailure.persistFailed(error))),
-      ),
+      this.vendors
+        .findByVendorDomain(domain)
+        .mapErr((error): ExtractionFailure =>
+          ExtractionFailure.persistFailed(error),
+        )
+        .andThen((found) =>
+          found.match<AsyncResult<Vendor, ExtractionFailure>>({
+            some: (vendor) => AsyncResult.fromResult(Result.ok(vendor)),
+            none: () => this.provision(domain, url),
+          }),
+        ),
     );
   }
 
@@ -59,7 +65,15 @@ export class VendorResolver {
         .with('constraint', () =>
           this.vendors
             .findByVendorDomain(domain)
-            .mapErr((error) => ExtractionFailure.persistFailed(error)),
+            .mapErr((error): ExtractionFailure =>
+              ExtractionFailure.persistFailed(error),
+            )
+            .andThen((found) =>
+              found.match<Result<Vendor, ExtractionFailure>>({
+                some: (vendor) => Result.ok(vendor),
+                none: () => Result.err(ExtractionFailure.persistFailed(error)),
+              }),
+            ),
         )
         .otherwise(() => Result.err(ExtractionFailure.persistFailed(error))),
     );

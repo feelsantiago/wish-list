@@ -10,8 +10,7 @@ export type ExtractionFailureType =
   | 'fetch-failed'
   | 'blocked'
   | 'timeout'
-  | 'llm-failed'
-  | 'not-found';
+  | 'llm-failed';
 export type ExtractionFailure = ServiceFailure<ExtractionFailureType>;
 
 export namespace ExtractionFailure {
@@ -33,10 +32,6 @@ export namespace ExtractionFailure {
 
   export function fetchFailed(reason: string): Failure<'fetch-failed'> {
     return Failure.create('fetch-failed', reason);
-  }
-
-  export function notFound(source: Failure<string>): Failure<'not-found'> {
-    return Failure.from(source, {}, 'not-found');
   }
 
   export function llmFailed(error: unknown): Failure<'llm-failed'> {

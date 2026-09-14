@@ -34,19 +34,19 @@ describe('WishlistRepository', () => {
     await repository.insert(wishlist).unwrapOr(wishlist);
 
     await repository.find(wishlist.id).match({
-      ok: (found) => expect(found).toEqual(wishlist),
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(wishlist),
       err: () => {
         throw new Error('expected ok');
       },
     });
   });
 
-  it('returns "notFound" when finding a missing id', async () => {
+  it('returns None when finding a missing id', async () => {
     await repository.find(Id.generate()).match({
-      ok: () => {
-        throw new Error('expected err');
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
       },
-      err: (failure) => expect(failure.name).toBe('not-found'),
     });
   });
 

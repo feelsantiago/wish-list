@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { User } from '@wish-list/domain';
 import type { Plain, Id } from '@wish-list/domain';
-import type { AsyncResult } from '@wish-list/common-result';
+import type { AsyncResult, Option } from '@wish-list/common-result';
 import type {
   Readable,
   Insertable,
@@ -34,7 +34,7 @@ export class UserRepository
     this.options = { db, table: users, mapper };
   }
 
-  public find(id: Id): AsyncResult<User, DatabaseFailure> {
+  public find(id: Id): AsyncResult<Option<User>, DatabaseFailure> {
     return find(this.options, id);
   }
 

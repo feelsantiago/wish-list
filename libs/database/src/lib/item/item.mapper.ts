@@ -23,19 +23,10 @@ export class ItemDatabaseDomainMapper implements DomainMapper<Item, ItemRow> {
   }
 
   public domain(row: ItemRow): Result<Item, DatabaseFailure>;
-  public domain(
-    row: ItemRow | undefined,
-    notFound: DatabaseFailure,
-  ): Result<Item, DatabaseFailure>;
   public domain(rows: readonly ItemRow[]): Result<Item[], DatabaseFailure>;
   public domain(
-    input: ItemRow | readonly ItemRow[] | undefined,
-    notFound?: DatabaseFailure,
+    input: ItemRow | readonly ItemRow[],
   ): Result<Item, DatabaseFailure> | Result<Item[], DatabaseFailure> {
-    if (input === undefined) {
-      return this.delegate.domain(input, notFound as DatabaseFailure);
-    }
-
     return this.delegate.domain(input as ItemRow);
   }
 
