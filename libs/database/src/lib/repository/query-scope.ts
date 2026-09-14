@@ -6,28 +6,28 @@ import type { RepositoryTable } from './operation.js';
 
 export type UserOwnedTable = RepositoryTable & { readonly user: SQLiteColumn };
 
-export abstract class QueryScope<TTable extends RepositoryTable> {
-  public abstract condition(table: TTable): SQL | undefined;
+export interface QueryScope<TTable extends RepositoryTable> {
+  condition(table: TTable): SQL | undefined;
+}
 
-  public static all(): QueryScope<RepositoryTable> {
+export namespace QueryScope {
+  export function all(): QueryScope<RepositoryTable> {
     return new AllScope();
   }
 
-  public static user(user: Id): QueryScope<UserOwnedTable> {
+  export function user(user: Id): QueryScope<UserOwnedTable> {
     return new UserScope(user);
   }
 }
 
-class AllScope extends QueryScope<RepositoryTable> {
+class AllScope implements QueryScope<RepositoryTable> {
   public condition(): SQL | undefined {
     return undefined;
   }
 }
 
-class UserScope extends QueryScope<UserOwnedTable> {
-  public constructor(private readonly user: Id) {
-    super();
-  }
+class UserScope implements QueryScope<UserOwnedTable> {
+  public constructor(private readonly user: Id) {}
 
   public condition(table: UserOwnedTable): SQL | undefined {
     return eq(table.user, this.user);

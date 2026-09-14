@@ -4,10 +4,8 @@ import type { VendorDomain } from '@wish-list/domain';
 import { QueryScope } from '../repository/query-scope.js';
 import { vendors } from './vendor.schema.js';
 
-export class VendorScope extends QueryScope<typeof vendors> {
-  private constructor(private readonly domain: VendorDomain) {
-    super();
-  }
+export class VendorScope implements QueryScope<typeof vendors> {
+  private constructor(private readonly domain: VendorDomain) {}
 
   public condition(table: typeof vendors): SQL | undefined {
     return eq(table.vendorDomain, this.domain);

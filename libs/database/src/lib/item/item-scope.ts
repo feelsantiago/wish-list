@@ -4,10 +4,8 @@ import type { Id } from '@wish-list/domain';
 import { QueryScope } from '../repository/query-scope.js';
 import { items } from './item.schema.js';
 
-export class ItemScope extends QueryScope<typeof items> {
-  private constructor(private readonly wishlist: Id) {
-    super();
-  }
+export class ItemScope implements QueryScope<typeof items> {
+  private constructor(private readonly wishlist: Id) {}
 
   public condition(table: typeof items): SQL | undefined {
     return eq(table.wishlist, this.wishlist);

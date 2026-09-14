@@ -4,10 +4,8 @@ import type { Id } from '@wish-list/domain';
 import { QueryScope } from '../repository/query-scope.js';
 import { couponRules } from './coupon-rule.schema.js';
 
-export class CouponRuleScope extends QueryScope<typeof couponRules> {
-  private constructor(private readonly coupon: Id) {
-    super();
-  }
+export class CouponRuleScope implements QueryScope<typeof couponRules> {
+  private constructor(private readonly coupon: Id) {}
 
   public condition(table: typeof couponRules): SQL | undefined {
     return eq(table.coupon, this.coupon);
