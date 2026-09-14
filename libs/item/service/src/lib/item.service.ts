@@ -6,6 +6,7 @@ import type { ExtractedItem, FailedExtractionItem } from '@wish-list/domain';
 import {
   CategoryRepository,
   ItemRepository,
+  QueryScope,
   WishlistRepository,
 } from '@wish-list/database';
 import type { DatabaseFailure } from '@wish-list/database';
@@ -42,7 +43,7 @@ export class ItemService {
     user: Id,
   ): AsyncResult<void, ServiceFailure> {
     return this.checkExists(
-      this.wishlists.findForUser(user, wishlist),
+      this.wishlists.find(wishlist, QueryScope.user(user)),
       `wishlist:${wishlist}`,
     );
   }
@@ -52,7 +53,7 @@ export class ItemService {
     user: Id,
   ): AsyncResult<void, ServiceFailure> {
     return this.checkExists(
-      this.categories.findForUser(user, category),
+      this.categories.find(category, QueryScope.user(user)),
       `category:${category}`,
     );
   }

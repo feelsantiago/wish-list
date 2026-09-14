@@ -15,6 +15,7 @@ import {
   update,
   type RepositoryOptions,
 } from '../repository/operation.js';
+import { QueryScope } from '../repository/query-scope.js';
 import { CouponRuleDatabaseDomainMapper } from './coupon-rule.mapper.js';
 import type { CouponRuleRow } from './coupon-rule.mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
@@ -40,7 +41,7 @@ export class CouponRuleRepository
   }
 
   public find(id: Id): AsyncResult<Option<CouponRule>, DatabaseFailure> {
-    return find(this.options, id);
+    return find(this.options, id, QueryScope.all());
   }
 
   public insert(entity: CouponRule): AsyncResult<CouponRule, DatabaseFailure> {

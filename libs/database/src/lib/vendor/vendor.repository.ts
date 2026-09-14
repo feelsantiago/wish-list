@@ -15,6 +15,7 @@ import {
   update,
   type RepositoryOptions,
 } from '../repository/operation.js';
+import { QueryScope } from '../repository/query-scope.js';
 import { VendorDatabaseDomainMapper } from './vendor.mapper.js';
 import type { VendorRow } from './vendor.mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
@@ -40,7 +41,7 @@ export class VendorRepository
   }
 
   public find(id: Id): AsyncResult<Option<Vendor>, DatabaseFailure> {
-    return find(this.options, id);
+    return find(this.options, id, QueryScope.all());
   }
 
   public insert(entity: Vendor): AsyncResult<Vendor, DatabaseFailure> {

@@ -10,6 +10,7 @@ import {
   insert,
   type RepositoryOptions,
 } from '../repository/operation.js';
+import { QueryScope } from '../repository/query-scope.js';
 import { ExtractionDatabaseDomainMapper } from './extraction.mapper.js';
 import type { ExtractionRow } from './extraction.mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
@@ -35,7 +36,7 @@ export class ExtractionRepository
   }
 
   public find(id: Id): AsyncResult<Option<Extraction>, DatabaseFailure> {
-    return find(this.options, id);
+    return find(this.options, id, QueryScope.all());
   }
 
   public insert(entity: Extraction): AsyncResult<Extraction, DatabaseFailure> {

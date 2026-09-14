@@ -10,6 +10,7 @@ import {
   insert,
   type RepositoryOptions,
 } from '../repository/operation.js';
+import { QueryScope } from '../repository/query-scope.js';
 import { PriceHistoryDatabaseDomainMapper } from './price-history.mapper.js';
 import type { PriceHistoryRow } from './price-history.mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
@@ -35,7 +36,7 @@ export class PriceHistoryRepository
   }
 
   public find(id: Id): AsyncResult<Option<PriceHistory>, DatabaseFailure> {
-    return find(this.options, id);
+    return find(this.options, id, QueryScope.all());
   }
 
   public insert(

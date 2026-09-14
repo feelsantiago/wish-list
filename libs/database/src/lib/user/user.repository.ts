@@ -14,6 +14,7 @@ import {
   update,
   type RepositoryOptions,
 } from '../repository/operation.js';
+import { QueryScope } from '../repository/query-scope.js';
 import { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
 import type { DatabaseFailure } from '../database-failure/database-failure.js';
 import { DATABASE_CLIENT } from '../client/client.token.js';
@@ -35,7 +36,7 @@ export class UserRepository
   }
 
   public find(id: Id): AsyncResult<Option<User>, DatabaseFailure> {
-    return find(this.options, id);
+    return find(this.options, id, QueryScope.all());
   }
 
   public insert(entity: User): AsyncResult<User, DatabaseFailure> {

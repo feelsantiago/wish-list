@@ -7,6 +7,7 @@ import type { TestDatabase } from '../testing/test-db.js';
 import { createTestingModule } from '../testing/testing-module.js';
 import { makeCategory, makeUser } from '../testing/fixtures.js';
 import { UserRepository } from '../user/user.repository.js';
+import { QueryScope } from '../repository/query-scope.js';
 import { CategoryRepository } from './category.repository.js';
 
 describe('CategoryRepository', () => {
@@ -33,7 +34,7 @@ describe('CategoryRepository', () => {
     const category = makeCategory(userId, { color: '#ff00aa' });
     await repository.insert(category).unwrapOr(category);
 
-    await repository.find(category.id).match({
+    await repository.find(category.id, QueryScope.user(userId)).match({
       ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(category),
       err: () => {
         throw new Error('expected ok');
@@ -42,7 +43,7 @@ describe('CategoryRepository', () => {
   });
 
   it('returns None when finding a missing id', async () => {
-    await repository.find(Id.generate()).match({
+    await repository.find(Id.generate(), QueryScope.user(userId)).match({
       ok: (found) => expect(found.isNone()).toBe(true),
       err: () => {
         throw new Error('expected ok');
@@ -63,36 +64,27 @@ describe('CategoryRepository', () => {
     });
   });
 
-  it('findForUser returns Some when the category belongs to that user', async () => {
-    const category = makeCategory(userId, { name: 'Books' });
-    await repository.insert(category).unwrapOr(category);
-
-    await repository.findForUser(userId, category.id).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(category),
-      err: () => {
-        throw new Error('expected ok');
-      },
-    });
-  });
-
-  it('findForUser returns None for a missing id', async () => {
-    await repository.findForUser(userId, Id.generate()).match({
-      ok: (found) => expect(found.isNone()).toBe(true),
-      err: () => {
-        throw new Error('expected ok');
-      },
-    });
-  });
-
-  it('findForUser returns None when the category belongs to a different user', async () => {
+  it('find returns None when the category belongs to a different user', async () => {
     const category = makeCategory(userId, { name: 'Books' });
     await repository.insert(category).unwrapOr(category);
 
     const otherUser = makeUser();
     await moduleRef.get(UserRepository).insert(otherUser).unwrapOr(otherUser);
 
-    await repository.findForUser(otherUser.id, category.id).match({
+    await repository.find(category.id, QueryScope.user(otherUser.id)).match({
       ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('find returns Some when scoped with QueryScope.all()', async () => {
+    const category = makeCategory(userId, { name: 'Books' });
+    await repository.insert(category).unwrapOr(category);
+
+    await repository.find(category.id, QueryScope.all()).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(category),
       err: () => {
         throw new Error('expected ok');
       },

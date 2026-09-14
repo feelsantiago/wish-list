@@ -6,11 +6,9 @@ import type { Id } from '@wish-list/domain';
 import type { DomainMapper } from '../mapper/domain-mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
 import { DatabaseError } from '../database-failure/database-error.js';
+import type { QueryScope } from './query-scope.js';
 
 export type RepositoryTable = SQLiteTable & { readonly id: SQLiteColumn };
-export type OwnedRepositoryTable = RepositoryTable & {
-  readonly user: SQLiteColumn;
-};
 
 export interface RepositoryOptions<
   TEntity,
@@ -29,38 +27,14 @@ export function find<
 >(
   options: RepositoryOptions<TEntity, TRow, TTable>,
   id: Id,
+  scope: QueryScope<TTable>,
 ): AsyncResult<Option<TEntity>, DatabaseFailure> {
   return AsyncResult.fromThrowable(
     () =>
       options.db
         .select()
         .from(options.table)
-        .where(eq(options.table.id, id))
-        .then((rows) => rows[0] as TRow | undefined),
-    (error) => DatabaseError.from(error).failure(),
-  ).andThen(
-    (row): Result<Option<TEntity>, DatabaseFailure> =>
-      row === undefined
-        ? ok(Option.none())
-        : options.mapper.domain(row).map(Option.some),
-  );
-}
-
-export function findForUser<
-  TEntity,
-  TRow extends { readonly id: string },
-  TTable extends OwnedRepositoryTable,
->(
-  options: RepositoryOptions<TEntity, TRow, TTable>,
-  user: Id,
-  id: Id,
-): AsyncResult<Option<TEntity>, DatabaseFailure> {
-  return AsyncResult.fromThrowable(
-    () =>
-      options.db
-        .select()
-        .from(options.table)
-        .where(and(eq(options.table.id, id), eq(options.table.user, user)))
+        .where(and(eq(options.table.id, id), scope.condition(options.table)))
         .then((rows) => rows[0] as TRow | undefined),
     (error) => DatabaseError.from(error).failure(),
   ).andThen(

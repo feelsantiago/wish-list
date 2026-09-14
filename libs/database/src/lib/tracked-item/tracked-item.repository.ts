@@ -15,6 +15,7 @@ import {
   update,
   type RepositoryOptions,
 } from '../repository/operation.js';
+import { QueryScope } from '../repository/query-scope.js';
 import { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
 import { DatabaseError } from '../database-failure/database-error.js';
@@ -44,7 +45,7 @@ export class TrackedItemRepository
   }
 
   public find(id: Id): AsyncResult<Option<TrackedItem>, DatabaseFailure> {
-    return find(this.options, id);
+    return find(this.options, id, QueryScope.all());
   }
 
   public insert(

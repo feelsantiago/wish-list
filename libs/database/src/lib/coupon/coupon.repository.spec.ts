@@ -14,6 +14,7 @@ import {
 } from '../testing/fixtures.js';
 import { UserRepository } from '../user/user.repository.js';
 import { VendorRepository } from '../vendor/vendor.repository.js';
+import { QueryScope } from '../repository/query-scope.js';
 import { CouponRepository } from './coupon.repository.js';
 
 describe('CouponRepository', () => {
@@ -44,7 +45,7 @@ describe('CouponRepository', () => {
     const coupon = makeFixedCoupon(userId, vendor);
     await repository.insert(coupon).unwrapOr(coupon);
 
-    await repository.find(coupon.id).match({
+    await repository.find(coupon.id, QueryScope.user(userId)).match({
       ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(coupon),
       err: () => {
         throw new Error('expected ok');
@@ -56,7 +57,7 @@ describe('CouponRepository', () => {
     const coupon = makePercentageCoupon(userId, vendor);
     await repository.insert(coupon).unwrapOr(coupon);
 
-    await repository.find(coupon.id).match({
+    await repository.find(coupon.id, QueryScope.user(userId)).match({
       ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(coupon),
       err: () => {
         throw new Error('expected ok');
@@ -65,8 +66,35 @@ describe('CouponRepository', () => {
   });
 
   it('returns None when finding a missing id', async () => {
-    await repository.find(Id.generate()).match({
+    await repository.find(Id.generate(), QueryScope.user(userId)).match({
       ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('find returns None when the coupon belongs to a different user', async () => {
+    const coupon = makeFixedCoupon(userId, vendor);
+    await repository.insert(coupon).unwrapOr(coupon);
+
+    const otherUser = makeUser();
+    await moduleRef.get(UserRepository).insert(otherUser).unwrapOr(otherUser);
+
+    await repository.find(coupon.id, QueryScope.user(otherUser.id)).match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('find returns Some when scoped with QueryScope.all()', async () => {
+    const coupon = makeFixedCoupon(userId, vendor);
+    await repository.insert(coupon).unwrapOr(coupon);
+
+    await repository.find(coupon.id, QueryScope.all()).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(coupon),
       err: () => {
         throw new Error('expected ok');
       },

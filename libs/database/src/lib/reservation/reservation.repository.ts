@@ -15,6 +15,7 @@ import {
   remove,
   type RepositoryOptions,
 } from '../repository/operation.js';
+import { QueryScope } from '../repository/query-scope.js';
 import { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
 import { DatabaseError } from '../database-failure/database-error.js';
@@ -41,7 +42,7 @@ export class ReservationRepository
   }
 
   public find(id: Id): AsyncResult<Option<Reservation>, DatabaseFailure> {
-    return find(this.options, id);
+    return find(this.options, id, QueryScope.all());
   }
 
   public insert(

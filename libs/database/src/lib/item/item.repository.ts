@@ -15,6 +15,7 @@ import {
   update,
   type RepositoryOptions,
 } from '../repository/operation.js';
+import { QueryScope } from '../repository/query-scope.js';
 import { ItemDatabaseDomainMapper } from './item.mapper.js';
 import type { ItemRow } from './item.mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
@@ -36,7 +37,7 @@ export class ItemRepository
   }
 
   public find(id: Id): AsyncResult<Option<Item>, DatabaseFailure> {
-    return find(this.options, id);
+    return find(this.options, id, QueryScope.all());
   }
 
   public insert(entity: Item): AsyncResult<Item, DatabaseFailure> {

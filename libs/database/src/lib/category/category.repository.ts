@@ -5,18 +5,17 @@ import { Category } from '@wish-list/domain';
 import type { Plain, Id } from '@wish-list/domain';
 import { AsyncResult, type Option } from '@wish-list/common-result';
 import type {
-  Readable,
-  ReadableForUser,
+  ScopedReadable,
   Insertable,
   Updatable,
 } from '../repository/capability.js';
 import {
   find,
-  findForUser,
   insert,
   update,
   type RepositoryOptions,
 } from '../repository/operation.js';
+import type { QueryScope } from '../repository/query-scope.js';
 import { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
 import { DatabaseError } from '../database-failure/database-error.js';
@@ -27,8 +26,7 @@ import { categories } from './category.schema.js';
 @Injectable()
 export class CategoryRepository
   implements
-    Readable<Category>,
-    ReadableForUser<Category>,
+    ScopedReadable<Category, typeof categories>,
     Insertable<Category>,
     Updatable<Category>
 {
@@ -46,15 +44,11 @@ export class CategoryRepository
     this.options = { db, table: categories, mapper };
   }
 
-  public find(id: Id): AsyncResult<Option<Category>, DatabaseFailure> {
-    return find(this.options, id);
-  }
-
-  public findForUser(
-    user: Id,
+  public find(
     id: Id,
+    scope: QueryScope<typeof categories>,
   ): AsyncResult<Option<Category>, DatabaseFailure> {
-    return findForUser(this.options, user, id);
+    return find(this.options, id, scope);
   }
 
   public insert(entity: Category): AsyncResult<Category, DatabaseFailure> {

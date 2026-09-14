@@ -14,6 +14,7 @@ export type { DatabaseFailureType } from './lib/database-failure/database-failur
 export { DatabaseError } from './lib/database-failure/database-error.js';
 export type {
   Readable,
+  ScopedReadable,
   Insertable,
   Updatable,
   Deletable,
@@ -22,6 +23,8 @@ export type {
   RepositoryTable,
   RepositoryOptions,
 } from './lib/repository/operation.js';
+export { QueryScope } from './lib/repository/query-scope.js';
+export type { UserOwnedTable } from './lib/repository/query-scope.js';
 export { DatabaseDomainMapper } from './lib/mapper/database-domain-mapper.js';
 export type { DomainMapper } from './lib/mapper/domain-mapper.js';
 export { UserRepository } from './lib/user/user.repository.js';

@@ -56,19 +56,19 @@ function failedExtraction(reason: ExtractionReason): Extraction {
 }
 
 interface Stubs {
-  readonly wishlistFindForUser: ReturnType<typeof vi.fn>;
-  readonly categoryFindForUser: ReturnType<typeof vi.fn>;
+  readonly wishlistFind: ReturnType<typeof vi.fn>;
+  readonly categoryFind: ReturnType<typeof vi.fn>;
   readonly insert: ReturnType<typeof vi.fn>;
   readonly extract: ReturnType<typeof vi.fn>;
 }
 
 function buildStubs(): Stubs {
   return {
-    wishlistFindForUser: vi.fn(
+    wishlistFind: vi.fn(
       (): AsyncResult<Option<Wishlist>, DatabaseFailure> =>
         AsyncResult.fromResult(ok(Option.some(wishlistFixture(USER)))),
     ),
-    categoryFindForUser: vi.fn(
+    categoryFind: vi.fn(
       (): AsyncResult<Option<Category>, DatabaseFailure> =>
         AsyncResult.fromResult(ok(Option.some(categoryFixture(USER)))),
     ),
@@ -84,8 +84,8 @@ function buildStubs(): Stubs {
 
 function buildService(stubs: Stubs): ItemService {
   return new ItemService(
-    { findForUser: stubs.wishlistFindForUser } as unknown as WishlistRepository,
-    { findForUser: stubs.categoryFindForUser } as unknown as CategoryRepository,
+    { find: stubs.wishlistFind } as unknown as WishlistRepository,
+    { find: stubs.categoryFind } as unknown as CategoryRepository,
     { insert: stubs.insert } as unknown as ItemRepository,
     { extract: stubs.extract } as unknown as Extractor,
   );
@@ -116,15 +116,15 @@ describe('ItemService', () => {
         .match({ ok: () => undefined, err: (f) => f });
 
       expect(failure?.name).toBe('invalid');
-      expect(stubs.wishlistFindForUser).not.toHaveBeenCalled();
-      expect(stubs.categoryFindForUser).not.toHaveBeenCalled();
+      expect(stubs.wishlistFind).not.toHaveBeenCalled();
+      expect(stubs.categoryFind).not.toHaveBeenCalled();
       expect(stubs.extract).not.toHaveBeenCalled();
       expect(stubs.insert).not.toHaveBeenCalled();
     });
 
     it('returns notFound when the Wishlist does not exist, never reaching Category', async () => {
       const stubs = buildStubs();
-      stubs.wishlistFindForUser.mockReturnValue(
+      stubs.wishlistFind.mockReturnValue(
         AsyncResult.fromResult(ok(Option.none())),
       );
       const service = buildService(stubs);
@@ -135,13 +135,13 @@ describe('ItemService', () => {
 
       expect(failure?.name).toBe('not-found');
       expect(failure?.metadata['id']).toBe(`wishlist:${WISHLIST}`);
-      expect(stubs.categoryFindForUser).not.toHaveBeenCalled();
+      expect(stubs.categoryFind).not.toHaveBeenCalled();
       expect(stubs.insert).not.toHaveBeenCalled();
     });
 
     it('returns notFound when the Wishlist belongs to a different User', async () => {
       const stubs = buildStubs();
-      stubs.wishlistFindForUser.mockReturnValue(
+      stubs.wishlistFind.mockReturnValue(
         AsyncResult.fromResult(ok(Option.none())),
       );
       const service = buildService(stubs);
@@ -152,13 +152,13 @@ describe('ItemService', () => {
 
       expect(failure?.name).toBe('not-found');
       expect(failure?.metadata['id']).toBe(`wishlist:${WISHLIST}`);
-      expect(stubs.categoryFindForUser).not.toHaveBeenCalled();
+      expect(stubs.categoryFind).not.toHaveBeenCalled();
       expect(stubs.insert).not.toHaveBeenCalled();
     });
 
     it('returns notFound when the Category does not exist, only after the Wishlist check passes', async () => {
       const stubs = buildStubs();
-      stubs.categoryFindForUser.mockReturnValue(
+      stubs.categoryFind.mockReturnValue(
         AsyncResult.fromResult(ok(Option.none())),
       );
       const service = buildService(stubs);
@@ -169,13 +169,13 @@ describe('ItemService', () => {
 
       expect(failure?.name).toBe('not-found');
       expect(failure?.metadata['id']).toBe(`category:${CATEGORY}`);
-      expect(stubs.wishlistFindForUser).toHaveBeenCalledTimes(1);
+      expect(stubs.wishlistFind).toHaveBeenCalledTimes(1);
       expect(stubs.insert).not.toHaveBeenCalled();
     });
 
     it('returns notFound when the Category belongs to a different User', async () => {
       const stubs = buildStubs();
-      stubs.categoryFindForUser.mockReturnValue(
+      stubs.categoryFind.mockReturnValue(
         AsyncResult.fromResult(ok(Option.none())),
       );
       const service = buildService(stubs);
@@ -191,7 +191,7 @@ describe('ItemService', () => {
 
     it('treats a Wishlist DatabaseFailure as unexpected', async () => {
       const stubs = buildStubs();
-      stubs.wishlistFindForUser.mockReturnValue(
+      stubs.wishlistFind.mockReturnValue(
         AsyncResult.fromResult(
           err(Failure.create('query', 'connection lost') as DatabaseFailure),
         ),
@@ -208,7 +208,7 @@ describe('ItemService', () => {
 
     it('treats a Category DatabaseFailure as unexpected', async () => {
       const stubs = buildStubs();
-      stubs.categoryFindForUser.mockReturnValue(
+      stubs.categoryFind.mockReturnValue(
         AsyncResult.fromResult(
           err(Failure.create('query', 'connection lost') as DatabaseFailure),
         ),

@@ -7,6 +7,7 @@ import type { TestDatabase } from '../testing/test-db.js';
 import { createTestingModule } from '../testing/testing-module.js';
 import { makeUser, makeWishlist } from '../testing/fixtures.js';
 import { UserRepository } from '../user/user.repository.js';
+import { QueryScope } from '../repository/query-scope.js';
 import { WishlistRepository } from './wishlist.repository.js';
 
 describe('WishlistRepository', () => {
@@ -33,7 +34,7 @@ describe('WishlistRepository', () => {
     const wishlist = makeWishlist(userId);
     await repository.insert(wishlist).unwrapOr(wishlist);
 
-    await repository.find(wishlist.id).match({
+    await repository.find(wishlist.id, QueryScope.user(userId)).match({
       ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(wishlist),
       err: () => {
         throw new Error('expected ok');
@@ -42,7 +43,7 @@ describe('WishlistRepository', () => {
   });
 
   it('returns None when finding a missing id', async () => {
-    await repository.find(Id.generate()).match({
+    await repository.find(Id.generate(), QueryScope.user(userId)).match({
       ok: (found) => expect(found.isNone()).toBe(true),
       err: () => {
         throw new Error('expected ok');
@@ -63,36 +64,27 @@ describe('WishlistRepository', () => {
     });
   });
 
-  it('findForUser returns Some when the wishlist belongs to that user', async () => {
-    const wishlist = makeWishlist(userId);
-    await repository.insert(wishlist).unwrapOr(wishlist);
-
-    await repository.findForUser(userId, wishlist.id).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(wishlist),
-      err: () => {
-        throw new Error('expected ok');
-      },
-    });
-  });
-
-  it('findForUser returns None for a missing id', async () => {
-    await repository.findForUser(userId, Id.generate()).match({
-      ok: (found) => expect(found.isNone()).toBe(true),
-      err: () => {
-        throw new Error('expected ok');
-      },
-    });
-  });
-
-  it('findForUser returns None when the wishlist belongs to a different user', async () => {
+  it('find returns None when the wishlist belongs to a different user', async () => {
     const wishlist = makeWishlist(userId);
     await repository.insert(wishlist).unwrapOr(wishlist);
 
     const otherUser = makeUser();
     await moduleRef.get(UserRepository).insert(otherUser).unwrapOr(otherUser);
 
-    await repository.findForUser(otherUser.id, wishlist.id).match({
+    await repository.find(wishlist.id, QueryScope.user(otherUser.id)).match({
       ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('find returns Some when scoped with QueryScope.all()', async () => {
+    const wishlist = makeWishlist(userId);
+    await repository.insert(wishlist).unwrapOr(wishlist);
+
+    await repository.find(wishlist.id, QueryScope.all()).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(wishlist),
       err: () => {
         throw new Error('expected ok');
       },
