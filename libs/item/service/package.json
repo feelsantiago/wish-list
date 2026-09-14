@@ -1,0 +1,36 @@
+{
+  "name": "@wish-list/item-service",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "nx": {
+    "name": "item-service",
+    "tags": [
+      "scope:item",
+      "type:service"
+    ]
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@wish-list/common-error": "*",
+    "@wish-list/common-result": "*",
+    "@wish-list/database": "*",
+    "@wish-list/domain": "*",
+    "@wish-list/extraction": "*",
+    "ts-pattern": "^5.9.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^11.1.28"
+  }
+}

@@ -20,6 +20,9 @@
     },
     {
       "path": "./libs/extraction"
+    },
+    {
+      "path": "./libs/item/service"
     }
   ]
 }
