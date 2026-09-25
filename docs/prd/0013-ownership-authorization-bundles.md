@@ -34,20 +34,27 @@ needs owned entities declares the brand in its input type and performs no check 
 
 ```ts
 // libs/domain/src/lib/authorization/
-type UserOwned = { readonly user: Id };
+type UserOwned = { readonly id: Id; readonly user: Id };
 type UserAuthorized<T> = T & Brand<T, `authorized:${keyof T & string}`>;
 
-Authorization.authorize<T extends Record<string, UserOwned>>(
-  user: User,
-  data: T,
-): Result<UserAuthorized<T>, AuthorizationFailure>;
+class Authorization {
+  constructor(user: User);
+  authorize<T extends Record<string, UserOwned>>(
+    data: T,
+  ): Result<UserAuthorized<T>, AuthorizationFailure>;
+}
 ```
+
+The actor is bound at construction, not passed per call: one `Authorization` serves an
+actor across as many bundles as that request needs, and `authorize` takes only what is
+being proved. `UserOwned` carries `id` as well as `user` because the failure names every
+member it rejected, by key and by id.
 
 The caller loads the entities, authorizes them together, and hands the proof to the
 service:
 
 ```ts
-const authorized = yield* Authorization.authorize(user, { wishlist, category });
+const authorized = yield* new Authorization(user).authorize({ wishlist, category });
 yield* this.items.create({ authorized, url });
 ```
 
@@ -128,11 +135,13 @@ debugging loop.
 `libs/domain` does not import `@wish-list/common-error/service`. `Failure<T>` is covariant
 in its tag, so `AuthorizationFailure` flows into a service channel with no `mapErr`:
 `'forbidden'` is already in `ServiceFailureType`, and `'user-deactivated'` is carried by
-widening the service's own return type — the same mechanism `ExtractionFailure =
-ServiceFailure<ExtractionFailureType>` already uses:
+widening the return type of whichever service *authorizes* — the same mechanism
+`ExtractionFailure = ServiceFailure<ExtractionFailureType>` already uses:
 
 ```ts
-public create(input: CreateItemInput): AsyncResult<Item, ServiceFailure<'user-deactivated'>>
+// the authorizing caller, not ItemService.create — after slice 2 ItemService never
+// authorizes, so it cannot emit 'user-deactivated' and keeps a bare ServiceFailure.
+public add(input: AddItemInput): AsyncResult<Item, ServiceFailure<'user-deactivated'>>
 ```
 
 ### How callers load
@@ -156,7 +165,7 @@ libs/domain/src/lib/authorization/
   user-owned.ts               type UserOwned
   user-authorized.ts          type UserAuthorized<T>
   authorization-failure.ts    type + namespace
-  authorization.ts            namespace Authorization { authorize }
+  authorization.ts            class Authorization { authorize }
   authorization.spec.ts       behavioural
   user-authorized.spec.ts     type-level pins
 ```
@@ -174,7 +183,8 @@ libs/domain/src/lib/authorization/
 - `CreateItemInput` becomes `{ authorized, url }`.
 - `authorizeWishlist` and `authorizeCategory` are **deleted**, and with them `ItemService`'s
   imports of `User`, `Wishlist`, `Category` and `ServiceFailure.forbidden`.
-- `create` widens to `AsyncResult<Item, ServiceFailure<'user-deactivated'>>`.
+- `create` keeps `AsyncResult<Item, ServiceFailure>`. It no longer authorizes, so it cannot
+  emit `'user-deactivated'`; that widening belongs to whichever future caller does.
 - `reconcile` is unchanged — it already takes `{ wishlist: Id; category: Id }`, which the
   service reads off `input.authorized`.
 - `item.service.spec.ts`: the two `returns forbidden when …` cases move to
@@ -236,7 +246,7 @@ libs/domain/src/lib/authorization/
    - a value with a non-`UserOwned` member (`{ url: Url }`) is rejected by `authorize`'s
      constraint
    - `{ ...authorized, wishlist: foreign }` is **accepted**, asserted positively with
-     `toMatchTypeOf` and a comment naming it as the known limit. If someone later closes
+     `toExtend` and a comment naming it as the known limit. If someone later closes
      this hole, the assertion fails and they find out why it was documented.
 3. **Slice 2 adds no new `ItemService` tests** — the two forbidden cases move out, and the
    remaining extraction/reconciliation cases only change how their input is built.

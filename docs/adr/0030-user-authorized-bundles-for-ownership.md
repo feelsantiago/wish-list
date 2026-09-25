@@ -11,13 +11,15 @@ returns a branded bundle. A service that needs owned entities declares `UserAuth
 in its input type and performs no ownership check at all.**
 
 ```ts
-type UserOwned = { readonly user: Id };
+type UserOwned = { readonly id: Id; readonly user: Id };
 type UserAuthorized<T> = T & Brand<T, `authorized:${keyof T & string}`>;
 
-Authorization.authorize<T extends Record<string, UserOwned>>(
-  user: User,
-  data: T,
-): Result<UserAuthorized<T>, AuthorizationFailure>;
+class Authorization {
+  constructor(user: User);
+  authorize<T extends Record<string, UserOwned>>(
+    data: T,
+  ): Result<UserAuthorized<T>, AuthorizationFailure>;
+}
 
 type CreateItemInput = {
   authorized: UserAuthorized<{ wishlist: Wishlist; category: Category }>;
@@ -34,7 +36,12 @@ type rather than of the caller's discipline. This is also why `authorize` has no
 single-entity overload: the overload resolves cleanly (`Wishlist` fails
 `Record<string, UserOwned>`; `{ wishlist: Wishlist }` fails `UserOwned`), but its return
 type would reintroduce the per-entity brand as a spellable type. One entity is spelled
-`authorize(user, { wishlist })`.
+`authorize({ wishlist })`.
+
+**The actor is bound at construction** — `new Authorization(user).authorize(data)` — so one
+`Authorization` serves an actor across as many bundles as a request needs, and `authorize`
+takes only what is being proved. `UserOwned` carries `id` alongside `user` because the
+failure names every member it rejected, by key and by id.
 
 **The tag carries the bundle's key set** (`` `authorized:${keyof T & string}` ``) rather
 than a constant. With a constant tag, `{ ...authorizedWishlist, ...authorizedCategory }`
