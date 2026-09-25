@@ -26,10 +26,11 @@ export class ItemService {
           .extract(input.url)
           .mapErr((error) => ServiceFailure.unexpected(error));
 
+        const { wishlist, category } = input.authorized;
         return this.reconcile(
           {
-            wishlist: input.authorized.wishlist.id,
-            category: input.authorized.category.id,
+            wishlist: wishlist.id,
+            category: category.id,
           },
           input.url,
           extraction,
