@@ -6,6 +6,11 @@ export { Id } from './lib/id/id.js';
 export { Email } from './lib/email/email.js';
 export { User } from './lib/user/user.js';
 export type { Plan, FreeUser, ProUser } from './lib/user/user.js';
+export type {
+  Status as UserStatus,
+  ActiveUser,
+  DeactivatedUser,
+} from './lib/user/user.js';
 export { VendorDomain } from './lib/vendor-domain/vendor-domain.js';
 export { Url } from './lib/url/url.js';
 export { TimeWindow } from './lib/time-window/time-window.js';

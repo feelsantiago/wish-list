@@ -1,5 +1,11 @@
 # Caller-supplied `QueryScope`; repositories never enforce ownership
 
+> **Amended by ADR-0030.** 403 and 404 are distinguishable again on the authorize path: a
+> caller loading an owned entity *in order to authorize it* reads with `QueryScope.all()`
+> and `Authorization.authorize` decides, so absence (`not-found`) and denial (`forbidden`)
+> are separate answers. `QueryScope.user` keeps its job for collection reads, where
+> narrowing is subsetting rather than authorization.
+
 Wishlists, Categories and Coupons each belong to one User, and almost every read or write
 against them should be narrowed to the acting User. The first attempt at this —
 `findForUser(user, id)` on `WishlistRepository` and `CategoryRepository`, behind a
