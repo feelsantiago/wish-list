@@ -2,7 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { vi } from 'vitest';
 import { AsyncResult, err, ok } from '@wish-list/common-result';
 import { Failure } from '@wish-list/common-error';
-import { Category, Extraction, Id, User, Url, Wishlist } from '@wish-list/domain';
+import {
+  Authorization,
+  Category,
+  Extraction,
+  Id,
+  User,
+  Url,
+  Wishlist,
+} from '@wish-list/domain';
 import type { ExtractionReason, SucceededExtraction } from '@wish-list/domain';
 import type { ItemRepository } from '@wish-list/database';
 import type { Extractor } from '@wish-list/extraction';
@@ -85,52 +93,19 @@ function buildService(stubs: Stubs): ItemService {
   );
 }
 
-function createInput(
-  overrides: {
-    wishlistOwner?: Id;
-    categoryOwner?: Id;
-  } = {},
-): CreateItemInput {
-  return {
-    user: userFixture(USER),
-    wishlist: wishlistFixture(overrides.wishlistOwner ?? USER),
-    category: categoryFixture(overrides.categoryOwner ?? USER),
-    url: Url.from(URL),
-  };
+function createInput(): CreateItemInput {
+  const authorized = new Authorization(userFixture(USER))
+    .authorize({
+      wishlist: wishlistFixture(USER),
+      category: categoryFixture(USER),
+    })
+    .unwrapOr(undefined as never);
+
+  return { authorized, url: Url.from(URL) };
 }
 
 describe('ItemService', () => {
   describe('create', () => {
-    it('returns forbidden when the Wishlist belongs to a different User, never reaching Category or extraction', async () => {
-      const stubs = buildStubs();
-      const service = buildService(stubs);
-
-      const failure = await service
-        .create(createInput({ wishlistOwner: Id.generate() }))
-        .match({ ok: () => undefined, err: (f) => f });
-
-      expect(failure?.name).toBe('forbidden');
-      expect(failure?.metadata['actor']).toBe(USER);
-      expect(failure?.metadata['resource']).toBe(`wishlist:${WISHLIST}`);
-      expect(stubs.extract).not.toHaveBeenCalled();
-      expect(stubs.insert).not.toHaveBeenCalled();
-    });
-
-    it('returns forbidden when the Category belongs to a different User, only after the Wishlist check passes', async () => {
-      const stubs = buildStubs();
-      const service = buildService(stubs);
-
-      const failure = await service
-        .create(createInput({ categoryOwner: Id.generate() }))
-        .match({ ok: () => undefined, err: (f) => f });
-
-      expect(failure?.name).toBe('forbidden');
-      expect(failure?.metadata['actor']).toBe(USER);
-      expect(failure?.metadata['resource']).toBe(`category:${CATEGORY}`);
-      expect(stubs.extract).not.toHaveBeenCalled();
-      expect(stubs.insert).not.toHaveBeenCalled();
-    });
-
     it('wraps an Extractor failure as unexpected and creates no Item', async () => {
       const stubs = buildStubs();
       stubs.extract.mockReturnValue(

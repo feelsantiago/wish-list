@@ -1,8 +1,6 @@
-import type { Category, User, Url, Wishlist } from '@wish-list/domain';
+import type { Category, Url, UserAuthorized, Wishlist } from '@wish-list/domain';
 
 export type CreateItemInput = {
-  user: User;
-  wishlist: Wishlist;
-  category: Category;
+  authorized: UserAuthorized<{ wishlist: Wishlist; category: Category }>;
   url: Url;
 };
