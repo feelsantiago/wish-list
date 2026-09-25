@@ -8,12 +8,16 @@ A multi-user SaaS for tracking desired items scraped from arbitrary retailer web
 An account holder, authenticated via an OAuth provider. Owns Wishlists, Categories, and a Plan. Carries a Status.
 
 **Status** (of a User):
-Active or Deactivated. A User is never hard-deleted — deactivation blocks login but leaves all owned data (Wishlists, Items, Categories) untouched, and reactivation restores full access as-is. Distinct from a Wishlist's own publish/unpublish control (see Sharing) — deactivating a User does not affect whether their Wishlists' share links resolve.
+Active or Deactivated. A User is never hard-deleted — deactivation blocks login but leaves all owned data (Wishlists, Items, Categories) untouched, and reactivation restores full access as-is. A Deactivated User's requests are refused at the authorization step, distinctly from an ownership denial. Distinct from a Wishlist's own publish/unpublish control (see Sharing) — deactivating a User does not affect whether their Wishlists' share links resolve.
 _Avoid_: don't confuse with Item's Status (Wanted/Fulfilled) or Extraction Status
 
 **Plan**:
 A subscription tier (Free or Pro) that gates feature access. Free includes manual Coupon storage; Pro adds the Coupon Rule engine and auto Price Tracking.
 _Avoid_: Tier (use Plan), Subscription (the billing record, not the tier itself)
+
+**Ownership**:
+The relation between a User and the Wishlists, Categories and Coupons they hold. Every mutation on an owned entity is performed by its owner — there is no sharing of write access, no delegation, and no admin actor. An Item is owned transitively, through the Wishlist it belongs to, and is never owned directly. A Reservation has no owner — it is held by an anonymous token (see Sharing).
+_Avoid_: Permission, Access (both imply a grantable right; Ownership is a fixed fact about the data, not something conferred)
 
 **Wishlist**:
 A named, ownable collection of Items belonging to one User. A User may own several. Shareable independently via its own link.
