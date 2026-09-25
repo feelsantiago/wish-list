@@ -48,3 +48,11 @@ export type {
   SucceededExtraction,
   FailedExtraction,
 } from './lib/extraction/extraction.js';
+export { Authorization } from './lib/authorization/authorization.js';
+export { AuthorizationFailure } from './lib/authorization/authorization-failure.js';
+export type {
+  AuthorizationFailureType,
+  ForeignMember,
+} from './lib/authorization/authorization-failure.js';
+export type { UserOwned } from './lib/authorization/user-owned.js';
+export type { UserAuthorized } from './lib/authorization/user-authorized.js';
