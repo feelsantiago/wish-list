@@ -7,8 +7,12 @@ A multi-user SaaS for tracking desired items scraped from arbitrary retailer web
 **User**:
 An account holder, authenticated via an OAuth provider. Owns Wishlists, Categories, and a Plan. Carries a Status.
 
+**Identity**:
+The external credential a User signs in with, held by an identity broker rather than by this system — this system never stores passwords or runs the login exchange. A User row records which social provider the broker reported and the broker's stable subject id for that person, and that pair is what a returning sign-in is matched on. One human is one Identity and therefore one User, even when they sign in through different social providers: reconciling those is the broker's job, not this system's.
+_Avoid_: Credential, Account (the account holder is the User), Session (the per-request proof, not the standing identity)
+
 **Status** (of a User):
-Active or Deactivated. A User is never hard-deleted — deactivation blocks login but leaves all owned data (Wishlists, Items, Categories) untouched, and reactivation restores full access as-is. A Deactivated User's requests are refused at the authorization step, distinctly from an ownership denial. Distinct from a Wishlist's own publish/unpublish control (see Sharing) — deactivating a User does not affect whether their Wishlists' share links resolve.
+Active or Deactivated. A User is never hard-deleted — deactivation refuses their requests but leaves all owned data (Wishlists, Items, Categories) untouched, and reactivation restores full access as-is. Signing in still succeeds, since the Identity is held elsewhere; it is this system that turns the request away. A Deactivated User's requests are refused at the authorization step, distinctly from an ownership denial. Distinct from a Wishlist's own publish/unpublish control (see Sharing) — deactivating a User does not affect whether their Wishlists' share links resolve.
 _Avoid_: don't confuse with Item's Status (Wanted/Fulfilled) or Extraction Status
 
 **Plan**:
@@ -32,7 +36,7 @@ Wanted or Fulfilled. Fulfilled means the owner has acquired it — a stored stat
 _Avoid_: don't confuse with Extraction Status
 
 **Extraction Status**:
-Tracks the async LLM-based scraping outcome for an Item, separate from its Wanted/Fulfilled Status. An Item is created immediately from just its URL and exists in a pending state until scraping fills in its fields, or fails and leaves them blank for manual entry.
+Tracks the scraping outcome for an Item, separate from its Wanted/Fulfilled Status. An Item begins Pending — known only by its URL — and becomes Extracted once a reading fills its fields, or Failed, leaving them blank for manual entry. Pending is a state an Item can hold, not a promise about when the reading happens: a Failed Item can be re-read later, and a reading that has not happened yet leaves the Item Pending however long that takes.
 _Avoid_: don't confuse with Extraction — this is the Item's own state, not the attempt record
 
 **Extraction**:
