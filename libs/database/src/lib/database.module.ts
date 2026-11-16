@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ConfigurableModuleClass } from './database.options.js';
 import { UserRepository } from './user/user.repository.js';
 import { WishlistRepository } from './wishlist/wishlist.repository.js';
@@ -28,6 +28,12 @@ import { ExtractionDatabaseDomainMapper } from './extraction/extraction.mapper.j
 
 export { DATABASE_CLIENT };
 
+/**
+ * Global so one configured instance serves every module. Importing the bare
+ * class elsewhere would create a second, unconfigured instance whose client
+ * provider cannot resolve `MODULE_OPTIONS_TOKEN`.
+ */
+@Global()
 @Module({
   providers: [
     clientProvider,

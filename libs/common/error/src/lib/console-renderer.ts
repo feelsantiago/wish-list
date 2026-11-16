@@ -9,19 +9,19 @@ export class ConsoleRenderer implements FailureRenderer {
     this.defaultStacks = config.stacks ?? false;
   }
 
-  public render(failure: Failure, config?: RendererConfig): string {
+  public render(failure: Failure<string>, config?: RendererConfig): string {
     const stacks = config?.stacks ?? this.defaultStacks;
     const lines: string[] = [];
     this._renderFailure(failure, lines, 0, stacks, true);
     return lines.join('\n');
   }
 
-  public print(failure: Failure, config?: RendererConfig): void {
+  public print(failure: Failure<string>, config?: RendererConfig): void {
     console.error(this.render(failure, config));
   }
 
   private _renderFailure(
-    failure: Failure,
+    failure: Failure<string>,
     lines: string[],
     depth: number,
     stacks: boolean,
@@ -51,7 +51,7 @@ export class ConsoleRenderer implements FailureRenderer {
   }
 
   private _renderSource(
-    source: Failure | Error,
+    source: Failure<string> | Error,
     lines: string[],
     depth: number,
     stacks: boolean,
