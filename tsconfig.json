@@ -23,6 +23,9 @@
     },
     {
       "path": "./libs/item/service"
+    },
+    {
+      "path": "./apps/api"
     }
   ]
 }

@@ -58,3 +58,8 @@ vite.config.*.timestamp*
 vitest.config.*.timestamp*
 # transient implementation plans
 docs/plan
+
+# local env files
+.env
+.env.*
+!.env.example
