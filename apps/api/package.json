@@ -95,6 +95,7 @@
     "zod": "^3.25.76",
     "@wish-list/common-config": "*",
     "@wish-list/common-logging": "*",
+    "@wish-list/common-http": "*",
     "ts-pattern": "^5.9.0"
   },
   "devDependencies": {

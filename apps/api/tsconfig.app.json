@@ -24,6 +24,9 @@
       "path": "../../libs/common/logging/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/common/http/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/extraction/tsconfig.lib.json"
     },
     {

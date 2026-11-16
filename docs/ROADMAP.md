@@ -56,6 +56,7 @@ controller, nothing more.
 | 11 | Long-running container; migrations as a release step; env validated once at bootstrap with zod | this file |
 | 12 | `libs/<feature>/data` libs created per slice | this file |
 | 13 | Firebase Authentication is the broker; lookup by `providerId` alone, `provider` re-synced as drift | ADR-0034 |
+| 14 | HTTP edge in `@wish-list/common-http`: `nestjs-zod` pipe, per-tag default messages with `@FailureMessages` overrides, `HTTP_EXPOSE_FAILURES` for dev | ADR-0036 |
 
 Glossary changes made alongside: **Identity** added; **Status (of a User)** corrected
 (deactivation refuses requests, it does not block login); **Extraction Status** reworded so

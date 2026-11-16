@@ -22,6 +22,11 @@ export namespace Env {
       .string()
       .regex(/^[A-Za-z0-9-]+$/)
       .default('x-request-id'),
+    /** Adds the failure's cause chain to error bodies. Never on in production. */
+    HTTP_EXPOSE_FAILURES: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((v) => v === 'true'),
     DATABASE_URL: z.string().min(1),
     LLM_API_KEY: z.string().min(1),
     LLM_MODEL: z.string().min(1),

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ENV, EnvModule } from '@wish-list/common-config';
+import { HttpEdgeModule } from '@wish-list/common-http';
 import { LoggingModule } from '@wish-list/common-logging';
 import { DatabaseModule } from '@wish-list/database';
 import { ExtractionModule } from '@wish-list/extraction';
@@ -19,6 +20,10 @@ const ENV_FILE_PATH = 'apps/api/.env';
         pretty: env.LOG_PRETTY,
         requestIdHeader: env.LOG_REQUEST_ID_HEADER,
       }),
+    }),
+    HttpEdgeModule.forRootAsync({
+      inject: [ENV],
+      useFactory: (env: Env) => ({ exposeFailures: env.HTTP_EXPOSE_FAILURES }),
     }),
     DatabaseModule.registerAsync({
       inject: [ENV],

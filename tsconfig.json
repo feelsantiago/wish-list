@@ -32,6 +32,9 @@
     },
     {
       "path": "./libs/common/logging"
+    },
+    {
+      "path": "./libs/common/http"
     }
   ]
 }
