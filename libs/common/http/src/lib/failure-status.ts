@@ -1,8 +1,7 @@
 import { HttpStatus } from '@nestjs/common';
 import type { ServiceFailureType } from '@wish-list/common-error/service';
 import { match, P } from 'ts-pattern';
-
-type Entry = { readonly status: HttpStatus; readonly message: string };
+import type { FailureResponse } from './failure-translator.js';
 
 /**
  * `ServiceFailure` tag → HTTP status and default user-facing message
@@ -10,7 +9,7 @@ type Entry = { readonly status: HttpStatus; readonly message: string };
  * shared vocabulary; a service-specific tag falls through to 500 (ADR-0020).
  */
 export namespace FailureStatus {
-  const ENTRIES: Record<ServiceFailureType, Entry> = {
+  const ENTRIES: Record<ServiceFailureType, FailureResponse> = {
     invalid: { status: HttpStatus.BAD_REQUEST, message: 'Invalid request' },
     forbidden: { status: HttpStatus.FORBIDDEN, message: 'Forbidden' },
     'plan-required': {
@@ -25,6 +24,10 @@ export namespace FailureStatus {
     },
   };
 
+  export function response(name: string): FailureResponse {
+    return entry(name);
+  }
+
   export function of(name: string): HttpStatus {
     return entry(name).status;
   }
@@ -33,7 +36,7 @@ export namespace FailureStatus {
     return entry(name).message;
   }
 
-  function entry(name: string): Entry {
+  function entry(name: string): FailureResponse {
     return match(name)
       .with(
         P.when((n): n is ServiceFailureType => Object.hasOwn(ENTRIES, n)),

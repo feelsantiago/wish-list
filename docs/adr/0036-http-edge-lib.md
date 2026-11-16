@@ -28,10 +28,19 @@ maps `ENV` onto the options. The module is named `HttpEdgeModule` so it doesn't 
 - **Status codes**: `FailureStatus` holds a `Record<ServiceFailureType, …>`. The compiler
   keeps it exhaustive over the shared vocabulary, and a service-specific tag falls through to
   500 (ADR-0020).
-- **Messages**: each tag has a generic default ("Not found", "Something went wrong"). A
-  controller or handler overrides one with `@FailureMessages({ 'not-found': 'Wishlist not
-  found' })`, and the handler's entry wins. The interceptor is global, so a controller with no
-  overrides still gets correct statuses.
+- **Overrides**: each tag has a generic default ("Not found", "Something went wrong").
+  `@FailureResponses`, on a controller or a handler, overrides it in one of two forms. A
+  **map** keyed by the failure union's tags, `@FailureResponses<WishlistFailure>({ 'slug-taken':
+  { status: HttpStatus.CONFLICT, message: '…' } })`, where `status` is optional and falls back
+  to the table. Or a **`FailureTranslator` class**, `@FailureResponses(WishlistFailureTranslator)`,
+  whose `translate(failure)` returns the full `{ status, message }` and can read the failure's
+  metadata. It delegates to `FailureStatus.response` for the defaults explicitly. Translators are
+  `@Injectable`, resolved through `ModuleRef` (`strict: false`), and must be listed in the
+  feature module's providers. The handler's spec is consulted first, then the class's, then the
+  defaults. Map keys are typed: without a type argument they are the shared
+  `ServiceFailureType`, and with one they are that union's tags. Either way a typo is a compile
+  error. Because the interceptor is global, a controller with no overrides still gets correct
+  statuses.
 - **Validation errors** add `issues: [{ path, message }]`. They describe the caller's own
   input, not failure internals, so decision 9 doesn't apply to them.
 - **`exposeFailures`** (`HTTP_EXPOSE_FAILURES`, default `false`) adds the rendered cause chain
@@ -47,7 +56,13 @@ maps `ENV` onto the options. The module is named `HttpEdgeModule` so it doesn't 
   each service's failure union, but most controllers would repeat the same generic text.
 - **Tag defaults only** (rejected). Simplest, but drops the user-facing message the roadmap
   asks controllers to own.
-- **Global lib, defaults plus overrides, an expose flag** (chosen).
+- **Message-only overrides** (rejected). A service's own tags (ADR-0020's extension point)
+  could never leave 500 without the controller re-tagging each one onto a shared name.
+- **A translator returning `Option`** (rejected). Shorter, but falling back to the defaults
+  would be implicit.
+- **A translator instantiated with `new`** (rejected). No registration, but it couldn't inject
+  dependencies.
+- **Global lib, map or translator overrides, an expose flag** (chosen).
 
 ## Consequences
 
@@ -57,8 +72,10 @@ maps `ENV` onto the options. The module is named `HttpEdgeModule` so it doesn't 
   `Result`.
 - `user-deactivated` (403) isn't in `ServiceFailureType` yet. It joins the `Record` when M0
   step 4 adds the tag.
-- Service-specific tags (`ExtractionFailure`'s `fetch-failed`, `llm-failed`) map to 500 until
-  a controller needs something else. Extending the status table is the obvious first revision.
+- Service-specific tags (`ExtractionFailure`'s `fetch-failed`, `llm-failed`) map to 500 unless
+  a `@FailureResponses` map or translator says otherwise.
+- A translator referenced by `@FailureResponses` but missing from the module's providers fails
+  at request time, as a logged 500, not at boot.
 - `HttpEdgeModule` depends on `LoggingModule` being imported by the app for
   `PinoFailureRenderer`.
 - Strict DTO declaration (`strictSchemaDeclaration`) is off: `@Param('id') id: string` stays

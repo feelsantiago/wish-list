@@ -1,5 +1,12 @@
 import { afterAll, beforeAll, describe, it, expect, vi } from 'vitest';
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Injectable,
+  Post,
+} from '@nestjs/common';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { Failure } from '@wish-list/common-error';
@@ -7,16 +14,43 @@ import { ServiceFailure } from '@wish-list/common-error/service';
 import { LoggingModule, PinoFailureRenderer } from '@wish-list/common-logging';
 import { AsyncResult, Result } from '@wish-list/common-result';
 import { createZodDto } from 'nestjs-zod';
+import { match } from 'ts-pattern';
 import { z } from 'zod';
-import { FailureMessages } from './failure-messages.decorator.js';
+import { FailureResponses } from './failure-responses.decorator.js';
+import { FailureStatus } from './failure-status.js';
+import type {
+  FailureResponse,
+  FailureTranslator,
+} from './failure-translator.js';
 import { HttpEdgeModule } from './http-edge.module.js';
 
 class CreateThingDto extends createZodDto(
   z.object({ name: z.string().min(1), size: z.number().int() }),
 ) {}
 
+type ThingFailure = ServiceFailure<'name-taken'>;
+
+function nameTaken(name: string): Failure<'name-taken'> {
+  return Failure.create('name-taken', `Name in use: ${name}`, { name });
+}
+
+@Injectable()
+class ThingFailureTranslator implements FailureTranslator<ThingFailure> {
+  public translate(failure: ThingFailure): FailureResponse {
+    return match(failure.name)
+      .with('name-taken', () => ({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        message: `"${String(failure.metadata['name'])}" is taken`,
+      }))
+      .otherwise((name) => FailureStatus.response(name));
+  }
+}
+
 @Controller('things')
-@FailureMessages({ 'not-found': 'Thing not found', conflict: 'Thing clash' })
+@FailureResponses({
+  'not-found': { message: 'Thing not found' },
+  conflict: { message: 'Thing clash' },
+})
 class ThingController {
   @Get('plain')
   public plain(): { ok: true } {
@@ -54,9 +88,34 @@ class ThingController {
   }
 
   @Get('clash')
-  @FailureMessages({ conflict: 'Name already taken' })
+  @FailureResponses({ conflict: { message: 'Name already taken' } })
   public clash(): Result<never, ServiceFailure> {
     return Result.err(ServiceFailure.conflict('unique name'));
+  }
+
+  @Get('taken')
+  @FailureResponses<ThingFailure>({
+    'name-taken': { status: HttpStatus.CONFLICT, message: 'Pick another name' },
+  })
+  public taken(): Result<never, ThingFailure> {
+    return Result.err(nameTaken('lamp'));
+  }
+
+  @Get('taken-unmapped')
+  public takenUnmapped(): Result<never, ThingFailure> {
+    return Result.err(nameTaken('lamp'));
+  }
+
+  @Get('translated')
+  @FailureResponses(ThingFailureTranslator)
+  public translated(): Result<never, ThingFailure> {
+    return Result.err(nameTaken('lamp'));
+  }
+
+  @Get('translated-default')
+  @FailureResponses(ThingFailureTranslator)
+  public translatedDefault(): Result<never, ThingFailure> {
+    return Result.err(ServiceFailure.forbidden('user:u1', 'thing:t1'));
   }
 
   @Get('forbidden')
@@ -76,6 +135,21 @@ class ThingController {
   @Get('throws')
   public throws(): never {
     throw new TypeError('boom');
+  }
+}
+
+/** Compile-time only: map keys are checked against the failure union. */
+export class TypeChecks {
+  // @ts-expect-error -- 'name-taken' is not a shared ServiceFailure tag
+  @FailureResponses({ 'name-taken': { message: 'x' } })
+  public sharedOnly(): void {
+    return;
+  }
+
+  // @ts-expect-error -- 'typo' is not a ThingFailure tag
+  @FailureResponses<ThingFailure>({ typo: { message: 'x' } })
+  public typo(): void {
+    return;
   }
 }
 
@@ -106,6 +180,7 @@ describe('HttpEdgeModule', () => {
         HttpEdgeModule.forRoot({ exposeFailures: false }),
       ],
       controllers: [ThingController, OtherController],
+      providers: [ThingFailureTranslator],
     }).compile();
     app = moduleRef.createNestApplication({ logger: false });
     print = vi.spyOn(app.get(PinoFailureRenderer), 'print');
@@ -197,6 +272,31 @@ describe('HttpEdgeModule', () => {
       expect(await call('/others/missing')).toEqual({
         status: 404,
         body: { status: 'error', error: { message: 'Not found' } },
+      });
+    });
+
+    it('maps a service-specific tag to its overridden status and message', async () => {
+      expect(await call('/things/taken')).toEqual({
+        status: 409,
+        body: { status: 'error', error: { message: 'Pick another name' } },
+      });
+    });
+
+    it('sends an unmapped service-specific tag to 500', async () => {
+      expect((await call('/things/taken-unmapped')).status).toBe(500);
+    });
+
+    it('lets a translator build the response from the failure', async () => {
+      expect(await call('/things/translated')).toEqual({
+        status: 422,
+        body: { status: 'error', error: { message: '"lamp" is taken' } },
+      });
+    });
+
+    it('lets a translator delegate to the defaults', async () => {
+      expect(await call('/things/translated-default')).toEqual({
+        status: 403,
+        body: { status: 'error', error: { message: 'Forbidden' } },
       });
     });
 
