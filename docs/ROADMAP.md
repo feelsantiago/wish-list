@@ -55,6 +55,7 @@ controller, nothing more.
 | 10 | Logging at the edge only, with `libs/extraction` the one exception; `nestjs-pino` | this file |
 | 11 | Long-running container; migrations as a release step; env validated once at bootstrap with zod | this file |
 | 12 | `libs/<feature>/data` libs created per slice | this file |
+| 13 | Firebase Authentication is the broker; lookup by `providerId` alone, `provider` re-synced as drift | ADR-0034 |
 
 Glossary changes made alongside: **Identity** added; **Status (of a User)** corrected
 (deactivation refuses requests, it does not block login); **Extraction Status** reworded so
@@ -127,7 +128,8 @@ envelope and deployment against real traffic before six service libs are built o
 
 ## Open questions
 
-- Which broker (Clerk / WorkOS AuthKit / Auth0). The ADR holds for any of them.
+- ~~Which broker.~~ Resolved: Firebase Authentication (ADR-0034). Changes ADR-0032's lookup
+  key to `providerId` alone, which needs a unique index on `users.provider_id` in M0 step 4.
 - `authorizeVia`'s exact shape for transitive Item ownership — designed in M1, its loading
   half in `libs/authorization`, its checking half in `libs/domain`.
 - Whether `libs/authorization`'s registry batches its reads once bundles exceed two members.
