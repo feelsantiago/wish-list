@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ENV, EnvModule } from '@wish-list/common-config';
+import { LoggingModule } from '@wish-list/common-logging';
 import { DatabaseModule } from '@wish-list/database';
 import { ExtractionModule } from '@wish-list/extraction';
 import { Env } from '../config/env.js';
@@ -11,6 +12,14 @@ const ENV_FILE_PATH = 'apps/api/.env';
 @Module({
   imports: [
     EnvModule.forRoot({ schema: Env.$, envFilePath: ENV_FILE_PATH }),
+    LoggingModule.forRootAsync({
+      inject: [ENV],
+      useFactory: (env: Env) => ({
+        level: env.LOG_LEVEL,
+        pretty: env.LOG_PRETTY,
+        requestIdHeader: env.LOG_REQUEST_ID_HEADER,
+      }),
+    }),
     DatabaseModule.registerAsync({
       inject: [ENV],
       useFactory: (env: Env) => ({ url: env.DATABASE_URL }),

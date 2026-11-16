@@ -29,6 +29,9 @@
     },
     {
       "path": "./libs/common/config"
+    },
+    {
+      "path": "./libs/common/logging"
     }
   ]
 }
