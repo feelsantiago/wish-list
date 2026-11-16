@@ -1,6 +1,4 @@
-import { z, ZodError } from 'zod';
-import { Result } from '@wish-list/common-result';
-import { EnvFailure } from './env-failure.js';
+import { z } from 'zod';
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -8,6 +6,7 @@ const HOUR = 60 * MINUTE;
 export type Env = z.infer<typeof Env.$>;
 
 export namespace Env {
+  /** Parsed once by `EnvModule`; nothing else reads `process.env`. */
   export const $ = z.object({
     PORT: z.coerce.number().int().positive().default(3000),
     DATABASE_URL: z.string().min(1),
@@ -22,11 +21,4 @@ export namespace Env {
       .positive()
       .default(5 * MINUTE),
   });
-
-  /** Validated once at bootstrap; nothing else reads `process.env`. */
-  export function load(source: NodeJS.ProcessEnv): Result<Env, EnvFailure> {
-    return Result.fromThrowable<Env, ZodError>(() => $.parse(source)).mapErr(
-      EnvFailure.invalid,
-    );
-  }
 }
