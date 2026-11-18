@@ -5,14 +5,14 @@ A multi-user SaaS for tracking desired items scraped from arbitrary retailer web
 ## Language
 
 **User**:
-An account holder, authenticated via an OAuth provider. Owns Wishlists, Categories, and a Plan. Carries a Status.
+An account holder, authenticated via an OAuth provider. Owns Wishlists, Categories, and a Plan. Carries a Status. Has a name, taken from the Identity on first sign-in (or the email's local part when the broker reports none) and kept in sync with it until the User edits it themselves; an edited name is never overwritten.
 
 **Identity**:
 The external credential a User signs in with, held by an identity broker rather than by this system — this system never stores passwords or runs the login exchange. A User row records which social provider the broker reported and the broker's stable subject id for that person, and that pair is what a returning sign-in is matched on. One human is one Identity and therefore one User, even when they sign in through different social providers: reconciling those is the broker's job, not this system's.
 _Avoid_: Credential, Account (the account holder is the User), Session (the per-request proof, not the standing identity)
 
 **Status** (of a User):
-Active or Deactivated. A User is never hard-deleted — deactivation refuses their requests but leaves all owned data (Wishlists, Items, Categories) untouched, and reactivation restores full access as-is. Signing in still succeeds, since the Identity is held elsewhere; it is this system that turns the request away. A Deactivated User's requests are refused at the authorization step, distinctly from an ownership denial. Distinct from a Wishlist's own publish/unpublish control (see Sharing) — deactivating a User does not affect whether their Wishlists' share links resolve.
+Active or Deactivated. A User is never hard-deleted — deactivation refuses their requests but leaves all owned data (Wishlists, Items, Categories) untouched, and reactivation restores full access as-is. Signing in still succeeds, since the Identity is held elsewhere; it is this system that turns the request away. A Deactivated User's requests are refused at the request guard, and again at the authorization step for owned entities, distinctly from an ownership denial. Reactivation stays reachable to a Deactivated User. Distinct from a Wishlist's own publish/unpublish control (see Sharing) — deactivating a User does not affect whether their Wishlists' share links resolve.
 _Avoid_: don't confuse with Item's Status (Wanted/Fulfilled) or Extraction Status
 
 **Plan**:

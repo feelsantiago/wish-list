@@ -57,6 +57,10 @@ controller, nothing more.
 | 12 | `libs/<feature>/data` libs created per slice | this file |
 | 13 | Firebase Authentication is the broker; lookup by `providerId` alone, `provider` re-synced as drift | ADR-0034 |
 | 14 | HTTP edge in `@wish-list/common-http`: `nestjs-zod` pipe, per-tag defaults with `@FailureResponses` map or `FailureTranslator` overrides, `HTTP_EXPOSE_FAILURES` for dev | ADR-0036 |
+| 15 | `unauthenticated` (401) and `user-deactivated` (403) join `ServiceFailureType`; one generic 401 message, reason in metadata, logged by the guard, `WWW-Authenticate: Bearer` | ADR-0037 |
+| 16 | `Identity` in `libs/domain`; token verification in horizontal `libs/authentication`; `AccountService.resolve` in `libs/account/service`; global `AuthGuard` + `@CurrentUser()` in `apps/api`, `@Public()` opt-out | ADR-0038 |
+| 17 | `AuthGuard` refuses a Deactivated `User` (403 `user-deactivated`) unless the route is `@AllowDeactivated()` (built in M1 with reactivate); `Authorization`'s check stays | ADR-0039 |
+| 18 | `Identity.name` is `Option`; missing name falls back to the email local part; `User.nameSource` (`broker`/`user`) stops re-sync once the User renames | ADR-0040 |
 
 Glossary changes made alongside: **Identity** added; **Status (of a User)** corrected
 (deactivation refuses requests, it does not block login); **Extraction Status** reworded so
@@ -67,6 +71,7 @@ Pending is a state an Item holds rather than a promise about when the reading ha
 | tag | code |
 | --- | --- |
 | `invalid` | 400 |
+| `unauthenticated` | 401 |
 | `forbidden` | 403 |
 | `user-deactivated` | 403 |
 | `plan-required` | 403 |
