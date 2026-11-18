@@ -59,3 +59,10 @@ so it never needs a fallback, and neither field is user-editable.
   the owner, it has to account for that: anonymous by default, or shown only for
   `nameSource: 'user'`.
 - **ADR-0038's last open item is closed.**
+- **Where the rules are written (amended during M0 step 4).** The table's rules live in
+  `libs/domain` as pure functions, not inside `AccountService.resolve`:
+  `User.fromIdentity(identity)` covers the create row (including the email fallback), and
+  `User.sync(user, identity)` covers the returning rows, returning `Option<User>` that is
+  `Some` only when a field changed. `resolve` only orchestrates: it looks the user up,
+  calls one of these, and writes when there is something to write. The rules themselves
+  are unchanged.
