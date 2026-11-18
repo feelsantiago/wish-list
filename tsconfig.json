@@ -38,6 +38,9 @@
     },
     {
       "path": "./libs/authentication"
+    },
+    {
+      "path": "./libs/account/service"
     }
   ]
 }

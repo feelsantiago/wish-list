@@ -1,0 +1,35 @@
+{
+  "name": "@wish-list/account-service",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "nx": {
+    "name": "account-service",
+    "tags": [
+      "scope:account",
+      "type:service"
+    ]
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@wish-list/common-error": "*",
+    "@wish-list/common-result": "*",
+    "@wish-list/database": "*",
+    "@wish-list/domain": "*",
+    "drizzle-orm": "^0.45.2",
+    "ts-pattern": "^5.9.0"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^11.1.28"
+  }
+}
