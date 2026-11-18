@@ -35,6 +35,9 @@
     },
     {
       "path": "./libs/common/http"
+    },
+    {
+      "path": "./libs/authentication"
     }
   ]
 }

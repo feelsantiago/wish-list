@@ -1,0 +1,31 @@
+{
+  "name": "@wish-list/authentication",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "nx": {
+    "name": "authentication",
+    "tags": [
+      "type:authentication"
+    ]
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@wish-list/common-error": "*",
+    "@wish-list/common-result": "*",
+    "@wish-list/domain": "*",
+    "jose": "^6.2.17",
+    "ts-pattern": "^5.9.0",
+    "zod": "^3.25.76"
+  }
+}
