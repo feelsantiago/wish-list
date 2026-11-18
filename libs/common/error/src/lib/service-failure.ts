@@ -3,7 +3,9 @@ import { Failure } from './failure.js';
 export type ServiceFailureType =
   | 'not-found'
   | 'invalid'
+  | 'unauthenticated'
   | 'forbidden'
+  | 'user-deactivated'
   | 'plan-required'
   | 'conflict'
   | 'unexpected';
@@ -19,6 +21,17 @@ export namespace ServiceFailure {
 
   export function invalid(source: Failure<string>): Failure<'invalid'> {
     return Failure.from(source, {}, 'invalid');
+  }
+
+  /** No verified identity. `reason` stays in metadata, never in the message (ADR-0037). */
+  export function unauthenticated(reason: string): Failure<'unauthenticated'> {
+    return Failure.create('unauthenticated', 'Unauthenticated', { reason });
+  }
+
+  export function userDeactivated(user: string): Failure<'user-deactivated'> {
+    return Failure.create('user-deactivated', `User is deactivated: ${user}`, {
+      user,
+    });
   }
 
   export function forbidden(

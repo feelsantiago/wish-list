@@ -21,6 +21,23 @@ describe('ServiceFailure.invalid', () => {
   });
 });
 
+describe('ServiceFailure.unauthenticated', () => {
+  it('keeps the reason in metadata, not in the message', () => {
+    const f = ServiceFailure.unauthenticated('missing-token');
+    expect(f.name).toBe('unauthenticated');
+    expect(f.metadata).toEqual({ reason: 'missing-token' });
+    expect(f.message).not.toContain('missing-token');
+  });
+});
+
+describe('ServiceFailure.userDeactivated', () => {
+  it('names the deactivated user', () => {
+    const f = ServiceFailure.userDeactivated('user-1');
+    expect(f.name).toBe('user-deactivated');
+    expect(f.metadata).toEqual({ user: 'user-1' });
+  });
+});
+
 describe('ServiceFailure.forbidden', () => {
   it('names the actor and resource', () => {
     const f = ServiceFailure.forbidden('user-1', 'wishlist-1');

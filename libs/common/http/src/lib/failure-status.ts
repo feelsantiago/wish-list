@@ -11,7 +11,15 @@ import type { FailureResponse } from './failure-translator.js';
 export namespace FailureStatus {
   const ENTRIES: Record<ServiceFailureType, FailureResponse> = {
     invalid: { status: HttpStatus.BAD_REQUEST, message: 'Invalid request' },
+    unauthenticated: {
+      status: HttpStatus.UNAUTHORIZED,
+      message: 'Unauthorized',
+    },
     forbidden: { status: HttpStatus.FORBIDDEN, message: 'Forbidden' },
+    'user-deactivated': {
+      status: HttpStatus.FORBIDDEN,
+      message: 'Account deactivated',
+    },
     'plan-required': {
       status: HttpStatus.FORBIDDEN,
       message: 'This feature requires a different plan',

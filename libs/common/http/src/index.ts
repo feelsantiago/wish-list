@@ -10,6 +10,7 @@ export type {
   FailureTranslator,
 } from './lib/failure-translator.js';
 export { FailureStatus } from './lib/failure-status.js';
+export { FailureHttpException } from './lib/failure-http-exception.js';
 export { Envelope } from './lib/envelope.js';
 export type {
   ErrorBody,

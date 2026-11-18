@@ -17,9 +17,11 @@ type Resolved = {
   readonly status: number;
   readonly body: ErrorBody;
   readonly failure: Failure<string>;
+  readonly headers: Readonly<Record<string, string>>;
 };
 
 type JsonResponse = {
+  setHeader(name: string, value: string): void;
   status(code: number): { json(body: unknown): void };
 };
 
@@ -45,7 +47,7 @@ export class FailureFilter implements ExceptionFilter {
   ) {}
 
   public catch(exception: unknown, host: ArgumentsHost): void {
-    const { status, body, failure } = this.resolve(exception);
+    const { status, body, failure, headers } = this.resolve(exception);
 
     match(status >= HttpStatus.INTERNAL_SERVER_ERROR)
       .with(true, () => this.renderer.print(failure))
@@ -53,9 +55,11 @@ export class FailureFilter implements ExceptionFilter {
       .with(false, () => {})
       .exhaustive();
 
-    host
-      .switchToHttp()
-      .getResponse<JsonResponse>()
+    const response = host.switchToHttp().getResponse<JsonResponse>();
+    Object.entries(headers).forEach(([name, value]) =>
+      response.setHeader(name, value),
+    );
+    response
       .status(status)
       .json(Envelope.error({ ...body, ...this.expose(failure) }));
   }
@@ -66,6 +70,7 @@ export class FailureFilter implements ExceptionFilter {
         status: e.getStatus(),
         body: { message: e.message },
         failure: e.failure,
+        headers: e.headers,
       }))
       .with(P.instanceOf(ZodValidationException), (e) => ({
         status: e.getStatus(),
@@ -74,16 +79,19 @@ export class FailureFilter implements ExceptionFilter {
           issues: this.issues(e.getZodError()),
         },
         failure: Failure.from(e),
+        headers: {},
       }))
       .with(P.instanceOf(HttpException), (e) => ({
         status: e.getStatus(),
         body: { message: e.message },
         failure: Failure.from(e),
+        headers: {},
       }))
       .otherwise((e) => ({
         status: FailureStatus.of('unexpected'),
         body: { message: FailureStatus.message('unexpected') },
         failure: Failure.from(e),
+        headers: {},
       }));
   }
 

@@ -4,7 +4,9 @@ import { FailureStatus } from './failure-status.js';
 describe('FailureStatus', () => {
   it.each([
     ['invalid', 400, 'Invalid request'],
+    ['unauthenticated', 401, 'Unauthorized'],
     ['forbidden', 403, 'Forbidden'],
+    ['user-deactivated', 403, 'Account deactivated'],
     ['plan-required', 403, 'This feature requires a different plan'],
     ['not-found', 404, 'Not found'],
     ['conflict', 409, 'Conflict'],

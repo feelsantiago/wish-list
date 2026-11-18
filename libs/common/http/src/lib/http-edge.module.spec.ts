@@ -16,6 +16,7 @@ import { AsyncResult, Result } from '@wish-list/common-result';
 import { createZodDto } from 'nestjs-zod';
 import { match } from 'ts-pattern';
 import { z } from 'zod';
+import { FailureHttpException } from './failure-http-exception.js';
 import { FailureResponses } from './failure-responses.decorator.js';
 import { FailureStatus } from './failure-status.js';
 import type {
@@ -135,6 +136,20 @@ class ThingController {
   @Get('throws')
   public throws(): never {
     throw new TypeError('boom');
+  }
+
+  @Get('unauthenticated')
+  public unauthenticated(): never {
+    const failure = ServiceFailure.unauthenticated('missing-token');
+    const { status, message } = FailureStatus.response(failure.name);
+    throw new FailureHttpException(failure, status, message, {
+      'WWW-Authenticate': 'Bearer',
+    });
+  }
+
+  @Get('deactivated')
+  public deactivated(): Result<never, ServiceFailure> {
+    return Result.err(ServiceFailure.userDeactivated('u1'));
   }
 }
 
@@ -325,6 +340,28 @@ describe('HttpEdgeModule', () => {
       expect(result.body).toEqual({
         status: 'error',
         error: { message: expect.any(String) },
+      });
+    });
+
+    it('writes the headers a FailureHttpException carries', async () => {
+      const res = await fetch(`${base}/things/unauthenticated`);
+      expect(res.status).toBe(401);
+      expect(res.headers.get('www-authenticate')).toBe('Bearer');
+      expect(await res.json()).toEqual({
+        status: 'error',
+        error: { message: 'Unauthorized' },
+      });
+    });
+
+    it('adds no WWW-Authenticate header to other failures', async () => {
+      const res = await fetch(`${base}/things/forbidden`);
+      expect(res.headers.get('www-authenticate')).toBeNull();
+    });
+
+    it('maps user-deactivated to 403', async () => {
+      expect(await call('/things/deactivated')).toEqual({
+        status: 403,
+        body: { status: 'error', error: { message: 'Account deactivated' } },
       });
     });
 
