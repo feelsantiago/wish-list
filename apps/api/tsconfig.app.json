@@ -2,7 +2,9 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "rootDir": "src",
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "experimentalDecorators": true,
@@ -14,8 +16,15 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["eslint.config.js", "eslint.config.cjs", "eslint.config.mjs"],
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "eslint.config.js",
+    "eslint.config.cjs",
+    "eslint.config.mjs",
+    "src/**/*.spec.ts"
+  ],
   "references": [
     {
       "path": "../../libs/common/config/tsconfig.lib.json"
@@ -37,6 +46,15 @@
     },
     {
       "path": "../../libs/common/error/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/domain/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/authentication/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/account/service/tsconfig.lib.json"
     }
   ]
 }

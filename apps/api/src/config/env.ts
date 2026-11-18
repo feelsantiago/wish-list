@@ -28,6 +28,8 @@ export namespace Env {
       .default('false')
       .transform((v) => v === 'true'),
     DATABASE_URL: z.string().min(1),
+    /** Firebase project whose ID tokens the API accepts (ADR-0034). */
+    FIREBASE_PROJECT_ID: z.string().min(1),
     LLM_API_KEY: z.string().min(1),
     LLM_MODEL: z.string().min(1),
     EXTRACTION_MARKDOWN_CAP: z.coerce.number().int().positive().default(40_000),

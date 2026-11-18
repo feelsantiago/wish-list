@@ -1,9 +1,13 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { AccountService } from '@wish-list/account-service';
+import { AuthenticationModule } from '@wish-list/authentication';
 import { ENV, EnvModule } from '@wish-list/common-config';
 import { HttpEdgeModule } from '@wish-list/common-http';
 import { LoggingModule } from '@wish-list/common-logging';
 import { DatabaseModule } from '@wish-list/database';
 import { ExtractionModule } from '@wish-list/extraction';
+import { AuthGuard } from '../auth/auth.guard.js';
 import { Env } from '../config/env.js';
 import { HealthController } from '../health/health.controller.js';
 
@@ -29,6 +33,10 @@ const ENV_FILE_PATH = 'apps/api/.env';
       inject: [ENV],
       useFactory: (env: Env) => ({ url: env.DATABASE_URL }),
     }),
+    AuthenticationModule.forRootAsync({
+      inject: [ENV],
+      useFactory: (env: Env) => ({ projectId: env.FIREBASE_PROJECT_ID }),
+    }),
     ExtractionModule.registerAsync({
       inject: [ENV],
       useFactory: (env: Env) => ({
@@ -41,5 +49,6 @@ const ENV_FILE_PATH = 'apps/api/.env';
     }),
   ],
   controllers: [HealthController],
+  providers: [AccountService, { provide: APP_GUARD, useClass: AuthGuard }],
 })
 export class AppModule {}
