@@ -6,6 +6,7 @@ export {
   makeUser,
   makeVendor,
   makeCategory,
+  makeUnsortedCategory,
   makeWishlist,
   makeFixedCoupon,
   makePercentageCoupon,

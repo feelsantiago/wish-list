@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { Id } from '@wish-list/domain';
+import { Id, User } from '@wish-list/domain';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import type { TestingModule } from '@nestjs/testing';
 import { createTestDatabase } from '../testing/test-db.js';
@@ -49,6 +49,58 @@ describe('UserRepository', () => {
     await repository.insert(user).unwrapOr(user);
 
     const duplicate = makeUser({ email: user.email });
+    await repository.insert(duplicate).match({
+      ok: () => {
+        throw new Error('expected err');
+      },
+      err: (failure) => expect(failure.name).toBe('constraint'),
+    });
+  });
+
+  it('round-trips a user-written name source', async () => {
+    const user = User.rename(makeUser(), 'Renamed').unwrapOr(
+      undefined as never,
+    );
+    await repository.insert(user).unwrapOr(user);
+
+    await repository.find(user.id).match({
+      ok: (found) =>
+        expect(found.map((u) => u.nameSource).unwrapOr('broker')).toBe('user'),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('finds a user by providerId', async () => {
+    const user = makeUser();
+    await repository.insert(user).unwrapOr(user);
+
+    await repository.findByProviderId(user.providerId).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(user),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('returns None for an unknown providerId', async () => {
+    await repository.findByProviderId('unknown').match({
+      ok: (found) => expect(found.isNone()).toBe(true),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('returns "constraint" on a duplicate providerId under another provider', async () => {
+    const user = makeUser({ provider: 'google' });
+    await repository.insert(user).unwrapOr(user);
+
+    const duplicate = makeUser({
+      provider: 'github',
+      providerId: user.providerId,
+    });
     await repository.insert(duplicate).match({
       ok: () => {
         throw new Error('expected err');

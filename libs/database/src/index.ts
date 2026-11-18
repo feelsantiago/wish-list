@@ -21,10 +21,12 @@ export type {
   Deletable,
   ScopedDeletable,
   Listable,
+  Transactional,
 } from './lib/repository/capability.js';
 export type {
   RepositoryTable,
   RepositoryOptions,
+  DatabaseExecutor,
 } from './lib/repository/operation.js';
 export { QueryScope } from './lib/repository/query-scope.js';
 export type { UserOwnedTable } from './lib/repository/query-scope.js';
@@ -53,3 +55,4 @@ export { DATABASE_CLIENT } from './lib/client/client.token.js';
 export { DatabaseModule } from './lib/database.module.js';
 export type { DatabaseModuleOptions } from './lib/database.options.js';
 export { Database } from './lib/transaction/transaction.js';
+export type { Transaction } from './lib/transaction/transaction.js';

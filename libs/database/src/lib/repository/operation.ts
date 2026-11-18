@@ -1,6 +1,11 @@
 import { and, eq } from 'drizzle-orm';
-import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
-import type { LibSQLDatabase } from 'drizzle-orm/libsql';
+import type { SQL } from 'drizzle-orm';
+import type {
+  BaseSQLiteDatabase,
+  SQLiteColumn,
+  SQLiteTable,
+} from 'drizzle-orm/sqlite-core';
+import type { ResultSet } from '@libsql/client';
 import { AsyncResult, Option, ok, type Result } from '@wish-list/common-result';
 import type { Id } from '@wish-list/domain';
 import type { DomainMapper } from '../mapper/domain-mapper.js';
@@ -10,12 +15,15 @@ import type { QueryScope } from './query-scope.js';
 
 export type RepositoryTable = SQLiteTable & { readonly id: SQLiteColumn };
 
+/** What both the database and a transaction satisfy (ADR-0041). */
+export type DatabaseExecutor = BaseSQLiteDatabase<'async', ResultSet>;
+
 export interface RepositoryOptions<
   TEntity,
   TRow extends { readonly id: string },
   TTable extends RepositoryTable,
 > {
-  readonly db: LibSQLDatabase;
+  readonly db: DatabaseExecutor;
   readonly table: TTable;
   readonly mapper: DomainMapper<TEntity, TRow>;
 }
@@ -37,11 +45,35 @@ export function find<
         .where(and(eq(options.table.id, id), scope.condition(options.table)))
         .then((rows) => rows[0] as TRow | undefined),
     (error) => DatabaseError.from(error).failure(),
-  ).andThen(
-    (row): Result<Option<TEntity>, DatabaseFailure> =>
-      row === undefined
-        ? ok(Option.none())
-        : options.mapper.domain(row).map(Option.some),
+  ).andThen((row): Result<Option<TEntity>, DatabaseFailure> =>
+    row === undefined
+      ? ok(Option.none())
+      : options.mapper.domain(row).map(Option.some),
+  );
+}
+
+/** First row matching `condition`, for lookups by a unique non-id column. */
+export function findBy<
+  TEntity,
+  TRow extends { readonly id: string },
+  TTable extends RepositoryTable,
+>(
+  options: RepositoryOptions<TEntity, TRow, TTable>,
+  condition: SQL,
+): AsyncResult<Option<TEntity>, DatabaseFailure> {
+  return AsyncResult.fromThrowable(
+    () =>
+      options.db
+        .select()
+        .from(options.table)
+        .where(condition)
+        .limit(1)
+        .then((rows) => rows[0] as TRow | undefined),
+    (error) => DatabaseError.from(error).failure(),
+  ).andThen((row): Result<Option<TEntity>, DatabaseFailure> =>
+    row === undefined
+      ? ok(Option.none())
+      : options.mapper.domain(row).map(Option.some),
   );
 }
 
@@ -141,11 +173,10 @@ export function updateScoped<
         .returning()
         .then((rows) => rows[0] as TRow | undefined),
     (error) => DatabaseError.from(error).failure(),
-  ).andThen(
-    (updated): Result<Option<TEntity>, DatabaseFailure> =>
-      updated === undefined
-        ? ok(Option.none())
-        : options.mapper.domain(updated).map(Option.some),
+  ).andThen((updated): Result<Option<TEntity>, DatabaseFailure> =>
+    updated === undefined
+      ? ok(Option.none())
+      : options.mapper.domain(updated).map(Option.some),
   );
 }
 

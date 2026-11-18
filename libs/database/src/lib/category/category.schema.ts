@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { sqliteTable, text, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { users } from '../user/user.schema.js';
 
@@ -8,6 +9,9 @@ export const categories = sqliteTable(
     user: text('user')
       .notNull()
       .references(() => users.id),
+    kind: text('kind', { enum: ['unsorted', 'custom'] })
+      .notNull()
+      .default('custom'),
     name: text('name').notNull(),
     color: text('color'),
     createdAt: text('created_at').notNull(),
@@ -16,5 +20,8 @@ export const categories = sqliteTable(
   (table) => [
     index('categories_user_idx').on(table.user),
     uniqueIndex('categories_user_name_idx').on(table.user, table.name),
+    uniqueIndex('categories_user_unsorted_idx')
+      .on(table.user)
+      .where(sql`${table.kind} = 'unsorted'`),
   ],
 );

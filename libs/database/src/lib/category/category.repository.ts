@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Category } from '@wish-list/domain';
 import type { Plain, Id } from '@wish-list/domain';
 import { AsyncResult, type Option } from '@wish-list/common-result';
@@ -9,6 +8,7 @@ import type {
   ScopedUpdatable,
   ScopedDeletable,
   Listable,
+  Transactional,
 } from '../repository/capability.js';
 import {
   find,
@@ -16,8 +16,10 @@ import {
   insert,
   updateScoped,
   removeScoped,
+  type DatabaseExecutor,
   type RepositoryOptions,
 } from '../repository/operation.js';
+import type { Transaction } from '../transaction/transaction.js';
 import type { QueryScope } from '../repository/query-scope.js';
 import { DatabaseDomainMapper } from '../mapper/database-domain-mapper.js';
 import { DatabaseFailure } from '../database-failure/database-failure.js';
@@ -32,7 +34,8 @@ export class CategoryRepository
     Insertable<Category>,
     ScopedUpdatable<Category, typeof categories>,
     ScopedDeletable<typeof categories>,
-    Listable<Category, typeof categories>
+    Listable<Category, typeof categories>,
+    Transactional<CategoryRepository>
 {
   private readonly options: RepositoryOptions<
     Category,
@@ -41,11 +44,15 @@ export class CategoryRepository
   >;
 
   public constructor(
-    @Inject(DATABASE_CLIENT) db: LibSQLDatabase,
+    @Inject(DATABASE_CLIENT) db: DatabaseExecutor,
     @Inject(CATEGORY_MAPPER)
-    mapper: DatabaseDomainMapper<Category, Plain<Category>>,
+    private readonly mapper: DatabaseDomainMapper<Category, Plain<Category>>,
   ) {
     this.options = { db, table: categories, mapper };
+  }
+
+  public withTransaction(tx: Transaction): CategoryRepository {
+    return new CategoryRepository(tx, this.mapper);
   }
 
   public find(

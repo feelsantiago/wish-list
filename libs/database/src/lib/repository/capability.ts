@@ -3,6 +3,12 @@ import type { AsyncResult, Option } from '@wish-list/common-result';
 import type { DatabaseFailure } from '../database-failure/database-failure.js';
 import type { RepositoryTable } from './operation.js';
 import type { QueryScope } from './query-scope.js';
+import type { Transaction } from '../transaction/transaction.js';
+
+/** A copy of the repository that writes through `tx` (ADR-0041). */
+export interface Transactional<TSelf> {
+  withTransaction(tx: Transaction): TSelf;
+}
 
 export interface Readable<TEntity> {
   find(id: Id): AsyncResult<Option<TEntity>, DatabaseFailure>;

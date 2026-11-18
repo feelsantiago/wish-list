@@ -6,6 +6,9 @@ export const users = sqliteTable(
     id: text('id').primaryKey(),
     email: text('email').notNull(),
     name: text('name').notNull(),
+    nameSource: text('name_source', { enum: ['broker', 'user'] })
+      .notNull()
+      .default('broker'),
     provider: text('provider').notNull(),
     providerId: text('provider_id').notNull(),
     plan: text('plan', { enum: ['free', 'pro'] }).notNull(),
@@ -16,9 +19,6 @@ export const users = sqliteTable(
   },
   (table) => [
     uniqueIndex('users_email_idx').on(table.email),
-    uniqueIndex('users_provider_provider_id_idx').on(
-      table.provider,
-      table.providerId,
-    ),
+    uniqueIndex('users_provider_id_idx').on(table.providerId),
   ],
 );

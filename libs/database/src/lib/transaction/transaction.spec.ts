@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, it, expect } from 'vitest';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import type { TestingModule } from '@nestjs/testing';
-import { User } from '@wish-list/domain';
+import { AsyncResult, Result } from '@wish-list/common-result';
 import { Database } from './transaction.js';
 import { createTestDatabase } from '../testing/test-db.js';
 import type { TestDatabase } from '../testing/test-db.js';
 import { createTestingModule } from '../testing/testing-module.js';
-import { makeUser } from '../testing/fixtures.js';
-import { users } from '../user/user.schema.js';
+import { makeUnsortedCategory, makeUser } from '../testing/fixtures.js';
 import { UserRepository } from '../user/user.repository.js';
+import { CategoryRepository } from '../category/category.repository.js';
 
 function fakeDb(
   transactionImpl: (fn: (tx: never) => unknown) => Promise<unknown>,
@@ -16,11 +16,15 @@ function fakeDb(
   return { transaction: transactionImpl } as unknown as LibSQLDatabase;
 }
 
+function okNothing(): AsyncResult<undefined, never> {
+  return AsyncResult.fromResult(Result.ok(undefined));
+}
+
 describe('Database.transaction', () => {
   it('resolves Ok with the callback result on success', async () => {
     const db = fakeDb((fn) => Promise.resolve(fn(undefined as never)));
     const value = await Database.transaction(db, () =>
-      Promise.resolve(42),
+      AsyncResult.fromResult(Result.ok(42)),
     ).unwrapOr(0);
     expect(value).toBe(42);
   });
@@ -33,9 +37,10 @@ describe('Database.transaction', () => {
       error.code = 'SQLITE_CONSTRAINT_UNIQUE';
       throw error;
     });
-    const name = await Database.transaction(db, () =>
-      Promise.resolve(undefined),
-    ).match({ ok: () => 'ok', err: (failure) => failure.name });
+    const name = await Database.transaction(db, okNothing).match({
+      ok: () => 'ok',
+      err: (failure) => failure.name,
+    });
     expect(name).toBe('constraint');
   });
 
@@ -43,9 +48,10 @@ describe('Database.transaction', () => {
     const db = fakeDb(() => {
       throw new Error('disk I/O error');
     });
-    const name = await Database.transaction(db, () =>
-      Promise.resolve(undefined),
-    ).match({ ok: () => 'ok', err: (failure) => failure.name });
+    const name = await Database.transaction(db, okNothing).match({
+      ok: () => 'ok',
+      err: (failure) => failure.name,
+    });
     expect(name).toBe('query');
   });
 });
@@ -53,35 +59,92 @@ describe('Database.transaction', () => {
 describe('Database.transaction (real db)', () => {
   let testDb: TestDatabase;
   let db: LibSQLDatabase;
-  let moduleRef: TestingModule;
+  let users: UserRepository;
+  let categories: CategoryRepository;
 
   beforeEach(async () => {
     testDb = await createTestDatabase();
     db = testDb.db;
-    moduleRef = await createTestingModule(db);
+    const moduleRef: TestingModule = await createTestingModule(db);
+    users = moduleRef.get(UserRepository);
+    categories = moduleRef.get(CategoryRepository);
   });
 
   afterEach(() => testDb.close());
 
-  it('rolls back the first write when the second write violates a constraint', async () => {
-    const first = makeUser();
-    const second = makeUser({ email: first.email });
+  async function userExists(
+    user: ReturnType<typeof makeUser>,
+  ): Promise<boolean> {
+    return users.find(user.id).match({
+      ok: (found) => found.isSome(),
+      err: (failure) => {
+        throw failure;
+      },
+    });
+  }
 
-    const name = await Database.transaction(db, async (tx) => {
-      await tx.insert(users).values(User.plain(first));
-      await tx.insert(users).values(User.plain(second));
-    }).match({ ok: () => 'ok', err: (failure) => failure.name });
+  it('commits writes made through repositories bound to the transaction', async () => {
+    const user = makeUser();
+    const unsorted = makeUnsortedCategory(user.id);
+
+    const result = await Database.transaction(db, (tx) =>
+      users
+        .withTransaction(tx)
+        .insert(user)
+        .andThen(() => categories.withTransaction(tx).insert(unsorted)),
+    ).toPromise();
+
+    expect(result.isOk()).toBe(true);
+    expect(await userExists(user)).toBe(true);
+  });
+
+  it('rolls back the first write when a repository write fails', async () => {
+    const user = makeUser();
+
+    const name = await Database.transaction(db, (tx) =>
+      users
+        .withTransaction(tx)
+        .insert(user)
+        .andThen(() =>
+          categories.withTransaction(tx).insert(makeUnsortedCategory(user.id)),
+        )
+        .andThen(() =>
+          categories.withTransaction(tx).insert(makeUnsortedCategory(user.id)),
+        ),
+    ).match({ ok: () => 'ok', err: (failure) => failure.name });
 
     expect(name).toBe('constraint');
+    expect(await userExists(user)).toBe(false);
+  });
 
-    await moduleRef
-      .get(UserRepository)
-      .find(first.id)
-      .match({
-        ok: (found) => expect(found.isNone()).toBe(true),
-        err: () => {
-          throw new Error('expected ok');
-        },
-      });
+  it("rolls back and returns the callback's own Err unchanged", async () => {
+    const user = makeUser();
+
+    const error = await Database.transaction(db, (tx) =>
+      users
+        .withTransaction(tx)
+        .insert(user)
+        .mapErr((failure): string => failure.name)
+        .andThen(() => Result.err('refused')),
+    ).match({ ok: () => 'ok', err: (failure) => failure });
+
+    expect(error).toBe('refused');
+    expect(await userExists(user)).toBe(false);
+  });
+
+  it('rolls back when the callback throws', async () => {
+    const user = makeUser();
+
+    const name = await Database.transaction(db, (tx) =>
+      users
+        .withTransaction(tx)
+        .insert(user)
+        .map(() => {
+          throw new Error('boom');
+        }),
+    ).match({ ok: () => 'ok', err: (failure) => failure.name });
+
+    expect(name).toBe('query');
+    expect(await userExists(user)).toBe(false);
   });
 });

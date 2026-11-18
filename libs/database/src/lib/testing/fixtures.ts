@@ -93,6 +93,10 @@ export function makeCategory(
   );
 }
 
+export function makeUnsortedCategory(user: Id): Category {
+  return CategoryEntity.createUnsorted(user);
+}
+
 export function makeWishlist(
   user: Id,
   overrides: Partial<WishlistEntity.CreateInput> = {},

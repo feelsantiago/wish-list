@@ -5,7 +5,11 @@ import type { TestingModule } from '@nestjs/testing';
 import { createTestDatabase } from '../testing/test-db.js';
 import type { TestDatabase } from '../testing/test-db.js';
 import { createTestingModule } from '../testing/testing-module.js';
-import { makeCategory, makeUser } from '../testing/fixtures.js';
+import {
+  makeCategory,
+  makeUnsortedCategory,
+  makeUser,
+} from '../testing/fixtures.js';
 import { UserRepository } from '../user/user.repository.js';
 import { QueryScope } from '../repository/query-scope.js';
 import { CategoryRepository } from './category.repository.js';
@@ -203,5 +207,41 @@ describe('CategoryRepository', () => {
         throw new Error('expected ok');
       },
     });
+  });
+
+  it('round-trips the Unsorted Category with its kind', async () => {
+    const unsorted = makeUnsortedCategory(userId);
+    await repository.insert(unsorted).unwrapOr(unsorted);
+
+    await repository.find(unsorted.id, QueryScope.user(userId)).match({
+      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(unsorted),
+      err: () => {
+        throw new Error('expected ok');
+      },
+    });
+  });
+
+  it('returns "constraint" on a second Unsorted Category for the same user', async () => {
+    const unsorted = makeUnsortedCategory(userId);
+    await repository.insert(unsorted).unwrapOr(unsorted);
+
+    await repository.insert(makeUnsortedCategory(userId)).match({
+      ok: () => {
+        throw new Error('expected err');
+      },
+      err: (failure) => expect(failure.name).toBe('constraint'),
+    });
+  });
+
+  it('allows one Unsorted Category per user', async () => {
+    const other = makeUser();
+    await moduleRef.get(UserRepository).insert(other).unwrapOr(other);
+    const mine = makeUnsortedCategory(userId);
+    await repository.insert(mine).unwrapOr(mine);
+
+    const inserted = await repository
+      .insert(makeUnsortedCategory(other.id))
+      .toPromise();
+    expect(inserted.isOk()).toBe(true);
   });
 });
