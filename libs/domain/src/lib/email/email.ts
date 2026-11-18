@@ -22,4 +22,9 @@ export namespace Email {
   export function from(value: string): Email {
     return value as Email;
   }
+
+  /** The part before the last `@` (`jane.doe@x.com` → `jane.doe`). */
+  export function localPart(email: Email): string {
+    return email.slice(0, email.lastIndexOf('@'));
+  }
 }

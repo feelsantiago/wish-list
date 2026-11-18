@@ -31,3 +31,13 @@ describe('Email.from', () => {
     expect(email).toBe('user@example.com');
   });
 });
+
+describe('Email.localPart', () => {
+  it('returns the part before the @', () => {
+    expect(Email.localPart(Email.from('jane.doe@x.com'))).toBe('jane.doe');
+  });
+
+  it('splits on the last @ of a quoted local part', () => {
+    expect(Email.localPart(Email.from('"a@b"@x.com'))).toBe('"a@b"');
+  });
+});

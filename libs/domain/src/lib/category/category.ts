@@ -12,16 +12,26 @@ const HEX_COLOR_PATTERN = createRegExp(
   exactly('#').at.lineStart().and(hexDigit.times(6)).at.lineEnd(),
 );
 
+/** `'unsorted'` marks the one Category every User owns (ADR-0042). */
+export type Kind = 'unsorted' | 'custom';
+
 export interface Category {
   readonly id: Id;
   readonly user: Id;
+  readonly kind: Kind;
   readonly name: string;
   readonly color: Option<string>;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
 
+export type UnsortedCategory = Category & { readonly kind: 'unsorted' };
+export type CustomCategory = Category & { readonly kind: 'custom' };
+
 export namespace Category {
+  /** Set once at creation; the name does not identify Unsorted, `kind` does. */
+  export const UNSORTED_NAME = 'Unsorted';
+
   export const $ = z.object({
     name: z.string().min(1),
     color: z.string().regex(HEX_COLOR_PATTERN).optional(),
@@ -35,7 +45,7 @@ export namespace Category {
 
   export function create(
     input: CreateInput,
-  ): Result<Category, DomainFailure> {
+  ): Result<CustomCategory, DomainFailure> {
     return Result.fromThrowable<z.infer<typeof $>, ZodError>(() =>
       $.parse({ name: input.name, color: input.color }),
     )
@@ -47,6 +57,7 @@ export namespace Category {
         return {
           id: Id.generate(),
           user: input.user,
+          kind: 'custom',
           name: value.name,
           color: Option.from(value.color),
           createdAt: now,
@@ -55,10 +66,24 @@ export namespace Category {
       });
   }
 
+  export function createUnsorted(user: Id): UnsortedCategory {
+    const now = new Date();
+    return {
+      id: Id.generate(),
+      user,
+      kind: 'unsorted',
+      name: UNSORTED_NAME,
+      color: Option.none(),
+      createdAt: now,
+      updatedAt: now,
+    };
+  }
+
   export function from(plain: Plain<Category>): Category {
     return {
       id: plain.id as Id,
       user: plain.user as Id,
+      kind: plain.kind,
       name: plain.name,
       color: Option.from(plain.color),
       createdAt: new Date(plain.createdAt),
@@ -70,6 +95,7 @@ export namespace Category {
     return {
       id: category.id,
       user: category.user,
+      kind: category.kind,
       name: category.name,
       color: category.color.match({ some: (v) => v, none: () => null }),
       createdAt: category.createdAt.toISOString(),
