@@ -1,7 +1,10 @@
 import { ConfigurableModuleBuilder } from '@nestjs/common';
+import type { Option } from '@wish-list/common-result';
 
 export interface DatabaseModuleOptions {
   url: string;
+  /** Turso auth token. `None` for a local `file:` database. */
+  authToken: Option<string>;
 }
 
 /**

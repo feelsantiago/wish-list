@@ -158,3 +158,9 @@ FailureRenderer`, email and auth headers redacted.
   half in `libs/authorization`, its checking half in `libs/domain`.
 - Whether `libs/authorization`'s registry batches its reads once bundles exceed two members.
 - Deleting a Category: reassign Items to Unsorted, or refuse while non-empty.
+- When to move from libSQL to the new Turso engine (the Rust rewrite). Staging and prod stay
+  on libSQL Turso Cloud databases for now: a new-engine Cloud database needs
+  `@tursodatabase/serverless`, and Drizzle has no stable adapter for it (as of 2026-11,
+  `drizzle-orm` 0.45 has none, and the 1.0 RC only covers the local `@tursodatabase/database`
+  driver). Revisit once Drizzle ships one. The change stays inside `libs/database` (client,
+  migrator, test harness) and `drizzle.config.ts`.

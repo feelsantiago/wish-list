@@ -19,9 +19,9 @@ loading code does not change. `DATABASE_AUTH_TOKEN` joins `Env.$` and `DatabaseM
 and it is required whenever `DATABASE_URL` is remote.**
 
 ```sh
-infisical login                 # once per machine
-infisical run -- npx nx serve api                       # dev, from .infisical.json
-infisical run -- npx nx run database:db:migrate        # drizzle-kit sees the same values
+infisical login      # once per machine
+npm start            # infisical run -- nx serve api (dev, from .infisical.yaml)
+npm run db:migrate   # infisical run -- nx run database:db:migrate
 infisical run --env=staging -- npx nx run database:db:migrate
 ```
 
@@ -30,7 +30,7 @@ infisical run --env=staging -- npx nx run database:db:migrate
   sets real environment variables, so it works with no code change. A `.env` that someone
   creates by hand still works, which is useful offline, but it is no longer the documented
   way.
-- **`.infisical.json` is committed.** `infisical init` writes it with the project id and
+- **`.infisical.yaml` is committed.** `infisical init` writes it with the project id and
   the default environment (`dev`). The id identifies the project and grants nothing.
   Access comes from `infisical login`, so the file is safe in the repository.
 - **`.env.example` stays** as the list of keys and what each one means. It is the

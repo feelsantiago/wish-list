@@ -33,7 +33,10 @@ const ENV_FILE_PATH = 'apps/api/.env';
     }),
     DatabaseModule.registerAsync({
       inject: [ENV],
-      useFactory: (env: Env) => ({ url: env.DATABASE_URL }),
+      useFactory: (env: Env) => ({
+        url: env.DATABASE_URL,
+        authToken: env.DATABASE_AUTH_TOKEN,
+      }),
     }),
     AuthenticationModule.forRootAsync({
       inject: [ENV],

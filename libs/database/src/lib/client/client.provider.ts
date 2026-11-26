@@ -8,6 +8,6 @@ import type { DatabaseModuleOptions } from '../database.options.js';
 export const clientProvider: Provider = {
   provide: DATABASE_CLIENT,
   useFactory: (options: DatabaseModuleOptions): LibSQLDatabase =>
-    createDatabaseClient(options.url),
+    createDatabaseClient(options),
   inject: [MODULE_OPTIONS_TOKEN],
 };
