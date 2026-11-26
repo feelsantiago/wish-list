@@ -55,6 +55,15 @@
     },
     {
       "path": "../../libs/account/service/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/wishlist/data/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/wishlist/service/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/common/utils/tsconfig.lib.json"
     }
   ]
 }

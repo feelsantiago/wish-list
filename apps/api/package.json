@@ -99,7 +99,11 @@
     "ts-pattern": "^5.9.0",
     "@wish-list/authentication": "*",
     "@wish-list/account-service": "*",
-    "@wish-list/domain": "*"
+    "@wish-list/domain": "*",
+    "@wish-list/wishlist-data": "*",
+    "@wish-list/wishlist-service": "*",
+    "nestjs-zod": "^5.6.0",
+    "@wish-list/common-utils": "*"
   },
   "devDependencies": {
     "@nestjs/testing": "^11.0.0"

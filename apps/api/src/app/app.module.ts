@@ -7,9 +7,11 @@ import { HttpEdgeModule } from '@wish-list/common-http';
 import { LoggingModule } from '@wish-list/common-logging';
 import { DatabaseModule } from '@wish-list/database';
 import { ExtractionModule } from '@wish-list/extraction';
+import { WishlistService } from '@wish-list/wishlist-service';
 import { AuthGuard } from '../auth/auth.guard.js';
 import { Env } from '../config/env.js';
 import { HealthController } from '../health/health.controller.js';
+import { WishlistController } from '../wishlist/wishlist.controller.js';
 
 /** Resolved against the workspace root, where `nx serve` runs the bundle. */
 const ENV_FILE_PATH = 'apps/api/.env';
@@ -48,7 +50,11 @@ const ENV_FILE_PATH = 'apps/api/.env';
       }),
     }),
   ],
-  controllers: [HealthController],
-  providers: [AccountService, { provide: APP_GUARD, useClass: AuthGuard }],
+  controllers: [HealthController, WishlistController],
+  providers: [
+    AccountService,
+    WishlistService,
+    { provide: APP_GUARD, useClass: AuthGuard },
+  ],
 })
 export class AppModule {}
