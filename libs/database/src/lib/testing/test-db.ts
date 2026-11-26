@@ -19,7 +19,9 @@ export interface TestDatabase {
 
 export async function createTestDatabase(): Promise<TestDatabase> {
   const dir = await mkdtemp(path.join(tmpdir(), 'wish-list-database-'));
-  const client = createClient({ url: `file:${path.join(dir, `${randomUUID()}.db`)}` });
+  const client = createClient({
+    url: `file:${path.join(dir, `${randomUUID()}.db`)}`,
+  });
   const db = drizzle(client);
   await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
 

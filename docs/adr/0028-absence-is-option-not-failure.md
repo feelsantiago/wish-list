@@ -33,7 +33,7 @@ event as absence.
 - **Err with a `'not-found'` tag (rejected — the status quo).** The convention nearly every
   repository layer reaches for, and it survives exactly as long as nobody wants to act on
   it. Services map the whole `DatabaseFailure` channel wholesale — `ItemService` does
-  `.mapErr(ServiceFailure.unexpected)` — so a caller that wants *not found* semantics must
+  `.mapErr(ServiceFailure.unexpected)` — so a caller that wants _not found_ semantics must
   `match` on the tag to fish one member back out of a union it has otherwise decided is an
   internal error, then re-tag it. The information round-trips through the wrong channel to
   arrive where `Option` would have put it directly.

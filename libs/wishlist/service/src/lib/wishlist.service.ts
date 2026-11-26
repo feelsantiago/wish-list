@@ -31,7 +31,9 @@ export class WishlistService {
     ).andThen((wishlist) =>
       this.wishlists
         .insert(wishlist)
-        .mapErr((failure): ServiceFailure => ServiceFailure.unexpected(failure)),
+        .mapErr((failure): ServiceFailure =>
+          ServiceFailure.unexpected(failure),
+        ),
     );
   }
 

@@ -25,6 +25,7 @@ Full glossary lives in [`CONTEXT.md`](./CONTEXT.md). Short version:
 ## Features
 
 **Built:**
+
 - Domain model for the full glossary above (branded value types, entities, invariants) — `libs/domain`
 - Persistence layer — Drizzle/Turso schema + repositories for every entity — `libs/database`
 - Extraction pipeline — `libs/extraction`:
@@ -36,6 +37,7 @@ Full glossary lives in [`CONTEXT.md`](./CONTEXT.md). Short version:
   - Page fetch + LLM budget bounded by a shared timeout
 
 **Not yet built (see `docs/adr` for design):**
+
 - `apps/api` — NestJS HTTP API (controllers live here per ADR-0025, not in service libs)
 - `apps/web` — Angular frontend
 - Per-feature `service`/`data`/`ui` libs (`wishlist`, `item`, `category`, `coupon`, `sharing`, `tracking`, `account`) — scaffolded on demand, not up front (ADR-0004)
@@ -75,7 +77,7 @@ libs/domain     → libs/common
 
 - `libs/domain` never imports NestJS or Angular — the one layer both future apps share unmodified.
 - `libs/domain` is the ubiquitous language: every other lib derives its types from domain types, never restates them.
-- Services never import other services — cross-feature reads go through `libs/database` repositories directly; a feature's service only *writes* its own entities (ADR-0025).
+- Services never import other services — cross-feature reads go through `libs/database` repositories directly; a feature's service only _writes_ its own entities (ADR-0025).
 - Controllers live in `apps/api`, not in service libs, so services stay usable from a CLI/cron/queue worker unchanged.
 
 See ADR-0003 (tooling), ADR-0004 (feature-based layout, amended by ADR-0025) for the full rationale.

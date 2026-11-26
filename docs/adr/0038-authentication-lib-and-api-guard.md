@@ -17,12 +17,12 @@ rules:
 
 **The work is split three ways, and `apps/api` joins the pieces:**
 
-| piece | lives in | depends on |
-| --- | --- | --- |
-| `Identity` value | `libs/domain` | `libs/common` |
+| piece                                                                  | lives in                                | depends on                                                             |
+| ---------------------------------------------------------------------- | --------------------------------------- | ---------------------------------------------------------------------- |
+| `Identity` value                                                       | `libs/domain`                           | `libs/common`                                                          |
 | `AuthenticationModule`, `IdentityVerifier`, `AuthFailure`, `@Public()` | `libs/authentication` (new, horizontal) | `libs/domain`, `common-error`, `common-http`, `common-logging`, `jose` |
-| `AccountService.resolve` | `libs/account/service` (new) | `libs/domain`, `libs/database`, `libs/account/data` |
-| `AuthGuard`, `@CurrentUser()` | `apps/api` | all of the above |
+| `AccountService.resolve`                                               | `libs/account/service` (new)            | `libs/domain`, `libs/database`, `libs/account/data`                    |
+| `AuthGuard`, `@CurrentUser()`                                          | `apps/api`                              | all of the above                                                       |
 
 - **`Identity`** in `libs/domain` is a pure, broker-agnostic value: `providerId`, `provider`,
   `email` (`Email`), and `name`. Its field types follow `User`'s, so `User.create` can be fed

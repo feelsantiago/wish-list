@@ -192,9 +192,7 @@ describe('AsyncResult', () => {
 
     it('orElse is a no-op on Ok', async () => {
       const spy = vi.fn();
-      const result = await AsyncResult.fromResult<number, string>(
-        Result.ok(10),
-      )
+      const result = await AsyncResult.fromResult<number, string>(Result.ok(10))
         .orElse((e) => {
           spy(e);
           return Result.ok(0);

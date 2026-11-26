@@ -28,7 +28,7 @@ type CreateItemInput = {
 ```
 
 **The brand is on the bundle, not on the entity.** A per-entity `UserAuthorized<Wishlist>`
-only proves *some* user owns it, so a wishlist authorized for A and a category authorized
+only proves _some_ user owns it, so a wishlist authorized for A and a category authorized
 for B both satisfy a two-field signature and the item lands in A's wishlist under B's
 category — the exact bug this replaces, re-expressed as valid code. Authorizing the
 members together against one actor is what makes same-owner coherence a property of the
@@ -58,7 +58,7 @@ assertions rather than left to review.
 ## Considered options
 
 - **Phantom user parameter** (`UserAuthorized<T, U>`, tagged with the actor) (rejected).
-  Would make coherence checkable per entity, but requires a distinct *type* per user.
+  Would make coherence checkable per entity, but requires a distinct _type_ per user.
   Every `Id` is the same type at runtime, and TypeScript has no rank-2 polymorphism to
   mint a fresh one per scope. Not implementable.
 - **Per-entity brand plus the service still comparing ids** (rejected). The brand becomes
@@ -66,9 +66,9 @@ assertions rather than left to review.
 - **Repository mints the brand on scoped reads** — `find(id, QueryScope.user(u))` returns
   `Option<UserScoped<Wishlist>>` (rejected). Probed and it works: ADR-0029's variance
   gating survives, and the conditional return fires when written against the scope's
-  inferred *kind* rather than against `QueryScope<…>` (checking the full scope type fails,
+  inferred _kind_ rather than against `QueryScope<…>` (checking the full scope type fails,
   because the contravariance that makes the gate work also blocks the `extends`). Rejected
-  on meaning, not mechanics: `QueryScope.user` says *which rows*, not *whose* — narrowing
+  on meaning, not mechanics: `QueryScope.user` says _which rows_, not _whose_ — narrowing
   is repository vocabulary for a subset of the data, and labelling its result "authorized"
   puts an authorization word in the layer ADR-0029 deliberately stripped of one. It also
   cannot replace `authorize`, since a repository fetches one entity and can therefore only
@@ -92,10 +92,10 @@ assertions rather than left to review.
 ## Consequences
 
 - **This amends ADR-0029's "403 and 404 are collapsed permanently."** That ADR invited the
-  revisit and this is it. A caller loading an owned entity *in order to authorize it* uses
+  revisit and this is it. A caller loading an owned entity _in order to authorize it_ uses
   `QueryScope.all()`, so absence (`None` → `not-found`) and denial (`authorize` →
   `forbidden`) are distinguishable again. A 403 confirms the row exists; acceptable because
-  ids are opaque UUIDs. `QueryScope.user` keeps its job for collection reads — listing *my*
+  ids are opaque UUIDs. `QueryScope.user` keeps its job for collection reads — listing _my_
   wishlists is subsetting, not authorization.
 - The inverse risk is accepted knowingly: an unscoped read followed by a forgotten
   `authorize` holds another user's row in memory. It cannot reach a mutation, because the
@@ -103,7 +103,7 @@ assertions rather than left to review.
   only place it matters. Read-only paths that never authorize keep using `QueryScope.user`.
 - `authorize` also rejects a Deactivated `User` (`AuthorizationFailure` is
   `Failure<'forbidden' | 'user-deactivated'>`), so it takes a `User`, not an `ActiveUser`
-  or an `Id`. This is deliberately not the session layer's job *yet* — `apps/api` does not
+  or an `Id`. This is deliberately not the session layer's job _yet_ — `apps/api` does not
   exist. When a session guard appears, the status check belongs there and this becomes
   defense in depth.
 - `libs/domain` does not import `@wish-list/common-error/service`. `AuthorizationFailure`
@@ -118,11 +118,11 @@ assertions rather than left to review.
   seed script that has no `User`.
 - Plan gating stays out of `authorize`. `ProUser` narrowing is per-feature (ADR-0012);
   folding it in would make `authorize` the sink every gate accretes into.
-- Transitive Ownership — "is this *Item* mine" — is deferred, not solved. `Item` has no
+- Transitive Ownership — "is this _Item_ mine" — is deferred, not solved. `Item` has no
   `user` field, so it cannot enter a bundle at all. Services needing it load the Item's
   Wishlist and authorize that. When the first Item mutation ships, the intended shape is a
   witness form (`authorizeVia(user, { item }, { wishlist })`) checking both links in one
-  place — explicitly *not* a denormalized `Item.user`, which would create a second source
+  place — explicitly _not_ a denormalized `Item.user`, which would create a second source
   of truth that disagrees after a future move-between-wishlists.
 - `ItemService` stops importing `User`, `Wishlist`, `Category` and
   `ServiceFailure.forbidden` entirely. Its remaining failure surface is `unexpected` from

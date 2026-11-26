@@ -5,7 +5,9 @@ import { HtmlDocument } from '../html/html-document.js';
 import { MarkdownPage } from './markdown-page.js';
 
 function fixture(name: string): HtmlDocument {
-  const path = fileURLToPath(new URL(`./__fixtures__/${name}`, import.meta.url));
+  const path = fileURLToPath(
+    new URL(`./__fixtures__/${name}`, import.meta.url),
+  );
   return HtmlDocument.parse(readFileSync(path, 'utf-8'));
 }
 
@@ -16,7 +18,10 @@ function page(html: string, cap = 40_000): MarkdownPage {
 describe('MarkdownPage', () => {
   describe('from', () => {
     it('keeps the product block of a noisy page', () => {
-      const text = MarkdownPage.from(fixture('noisy-product.html'), 40_000).text();
+      const text = MarkdownPage.from(
+        fixture('noisy-product.html'),
+        40_000,
+      ).text();
 
       expect(text).toContain('Trail Runner 3');
       expect(text).toContain('$129.99');
@@ -24,7 +29,10 @@ describe('MarkdownPage', () => {
     });
 
     it('drops the noise around the product block', () => {
-      const text = MarkdownPage.from(fixture('noisy-product.html'), 40_000).text();
+      const text = MarkdownPage.from(
+        fixture('noisy-product.html'),
+        40_000,
+      ).text();
 
       for (const noise of [
         'Socks',
@@ -41,7 +49,9 @@ describe('MarkdownPage', () => {
     });
 
     it('reports untruncated when the markdown fits the cap', () => {
-      const fitting = page('<html><body><main>Trail Runner 3</main></body></html>');
+      const fitting = page(
+        '<html><body><main>Trail Runner 3</main></body></html>',
+      );
 
       expect(fitting.truncated()).toBe(false);
       expect(fitting.text()).toContain('Trail Runner 3');

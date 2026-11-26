@@ -14,4 +14,4 @@ This differs from ADR-0008's case in two ways that make `_tag` unnecessary here:
 
 - This pattern applies only when variants are shape-identical and the discriminating field has no naming collision with another domain concept. A future entity whose states genuinely differ in shape (like `Item`'s) still uses ADR-0008's `_tag` convention, not this one.
 - `User.create()` always produces a `FreeUser` (new accounts start on Free) — its return type can be narrowed to `Result<FreeUser, DomainFailure>` rather than the wider `User` union.
-- Enforcement *behavior* (Guard classes, `plan.track(user)`-style checks) is a separate decision from this narrowing mechanism — this ADR covers only the types, not how Plan-gated logic is implemented (see PRD-0003, deferred).
+- Enforcement _behavior_ (Guard classes, `plan.track(user)`-style checks) is a separate decision from this narrowing mechanism — this ADR covers only the types, not how Plan-gated logic is implemented (see PRD-0003, deferred).

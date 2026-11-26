@@ -12,7 +12,7 @@ settles where that lives and how its open details work.
 - **`ZodValidationPipe` from `nestjs-zod`.** Request DTOs are `createZodDto` classes. Values
   not typed with one pass through untouched.
 - **`ResponseInterceptor`**, outermost. Wraps the value in `{ status: 'success' | 'created',
-  data }`. `created` follows a 201 response. An absent value becomes `data: null`, so deletes
+data }`. `created` follows a 201 response. An absent value becomes `data: null`, so deletes
   return 200 and 204 never appears.
 - **`FailureInterceptor`**, inside it. Unwraps `Ok`, `Err`, `AsyncResult` and `Promise<Result>`.
   An `Err` becomes a `FailureHttpException` that keeps the original `Failure`. Plain values
@@ -31,7 +31,7 @@ maps `ENV` onto the options. The module is named `HttpEdgeModule` so it doesn't 
 - **Overrides**: each tag has a generic default ("Not found", "Something went wrong").
   `@FailureResponses`, on a controller or a handler, overrides it in one of two forms. A
   **map** keyed by the failure union's tags, `@FailureResponses<WishlistFailure>({ 'slug-taken':
-  { status: HttpStatus.CONFLICT, message: '…' } })`, where `status` is optional and falls back
+{ status: HttpStatus.CONFLICT, message: '…' } })`, where `status` is optional and falls back
   to the table. Or a **`FailureTranslator` class**, `@FailureResponses(WishlistFailureTranslator)`,
   whose `translate(failure)` returns the full `{ status, message }` and can read the failure's
   metadata. It delegates to `FailureStatus.response` for the defaults explicitly. Translators are

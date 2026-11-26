@@ -20,13 +20,12 @@ export class Authorization {
         (user): Result<UserAuthorized<T>, AuthorizationFailure> =>
           Result.err(AuthorizationFailure.userDeactivated(user.id)),
       )
-      .otherwise(
-        (user): Result<UserAuthorized<T>, AuthorizationFailure> =>
-          match(this.foreign(data))
-            .with([], () => Result.ok(data as UserAuthorized<T>))
-            .otherwise((foreign) =>
-              Result.err(AuthorizationFailure.notOwned(user.id, foreign)),
-            ),
+      .otherwise((user): Result<UserAuthorized<T>, AuthorizationFailure> =>
+        match(this.foreign(data))
+          .with([], () => Result.ok(data as UserAuthorized<T>))
+          .otherwise((foreign) =>
+            Result.err(AuthorizationFailure.notOwned(user.id, foreign)),
+          ),
       );
   }
 

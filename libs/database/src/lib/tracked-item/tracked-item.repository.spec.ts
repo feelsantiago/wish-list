@@ -111,7 +111,8 @@ describe('TrackedItemRepository', () => {
     const stopped = TrackedItem.stop(trackedItem);
     await repository.update(stopped).unwrapOr(stopped);
     await repository.find(stopped.id).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(stopped),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(stopped),
       err: () => {
         throw new Error('expected ok');
       },
@@ -120,7 +121,8 @@ describe('TrackedItemRepository', () => {
     const resumed = TrackedItem.resume(stopped);
     await repository.update(resumed).unwrapOr(resumed);
     await repository.find(resumed.id).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(resumed),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(resumed),
       err: () => {
         throw new Error('expected ok');
       },

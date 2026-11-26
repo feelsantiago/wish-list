@@ -25,10 +25,12 @@ class EntityAuthorizer {
 }
 
 // apps/api — a controller
-const authorized = yield* this.authorizer.authorize(user, {
-  wishlist: params.wishlistId,
-  category: body.categoryId,
-});
+const authorized =
+  yield *
+  this.authorizer.authorize(user, {
+    wishlist: params.wishlistId,
+    category: body.categoryId,
+  });
 return this.items.create({ authorized, url: body.url });
 ```
 
@@ -61,7 +63,7 @@ the rule (compare `entity.user` to `user.id`, reject a Deactivated actor), and
 ## Consequences
 
 - **ADR-0004's dependency graph gains a node.** `apps/api → libs/authorization →
-  libs/domain, libs/database`, alongside `libs/extraction`. A `service` lib does *not*
+libs/domain, libs/database`, alongside `libs/extraction`. A `service` lib does _not_
   depend on it: services receive the bundle, they never mint one.
 - **The lib holds a registry** mapping member key to repository — `wishlist`, `category`,
   `coupon`, `coupon-rule`, `tracked-item`. It is the one place that enumerates every owned
@@ -71,8 +73,8 @@ the rule (compare `entity.user` to `user.id`, reject a Deactivated actor), and
   `QueryScope.all()`: a missing row is `not-found`, a foreign row is `forbidden`. Collection
   reads keep using `QueryScope.user` and never go through this lib.
 - **Transitive Item ownership lands here too.** ADR-0030 defers `authorizeVia(user,
-  { item }, { wishlist })`; when it ships, the witness *loading* belongs to this lib and the
-  witness *check* to `libs/domain`, on the same split as the rest.
+{ item }, { wishlist })`; when it ships, the witness _loading_ belongs to this lib and the
+  witness _check_ to `libs/domain`, on the same split as the rest.
 - **One extra round trip per authorized member.** Loading is per-id; a bundle of two is two
   reads. Acceptable at this scale, and batching stays a private optimisation of the lib
   because the signature takes the whole bundle at once.

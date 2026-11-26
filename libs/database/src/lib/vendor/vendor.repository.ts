@@ -56,7 +56,9 @@ export class VendorRepository
     return update(this.options, entity);
   }
 
-  public all(scope: QueryScope<typeof vendors>): AsyncResult<Vendor[], DatabaseFailure> {
+  public all(
+    scope: QueryScope<typeof vendors>,
+  ): AsyncResult<Vendor[], DatabaseFailure> {
     return all(this.options, scope);
   }
 }

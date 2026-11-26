@@ -17,9 +17,7 @@ describe('HtmlDocument', () => {
         '<html><head><meta name="twitter:title" content="Ceramic Mug Set" /></head></html>',
       );
 
-      expect(doc.meta('twitter:title')).toEqual(
-        Option.some('Ceramic Mug Set'),
-      );
+      expect(doc.meta('twitter:title')).toEqual(Option.some('Ceramic Mug Set'));
     });
 
     it('prefers property= over name= when both are present', () => {

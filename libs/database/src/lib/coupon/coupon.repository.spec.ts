@@ -122,7 +122,8 @@ describe('CouponRepository', () => {
     const relabeled = { ...coupon, code: 'NEWCODE' };
 
     await repository.update(relabeled, QueryScope.user(userId)).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(relabeled),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(relabeled),
       err: () => {
         throw new Error('expected ok');
       },
@@ -168,7 +169,8 @@ describe('CouponRepository', () => {
     await repository.insert(coupon).unwrapOr(coupon);
 
     await repository.delete(coupon.id, QueryScope.user(userId)).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(coupon.id),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(coupon.id),
       err: () => {
         throw new Error('expected ok');
       },

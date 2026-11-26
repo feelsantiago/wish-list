@@ -12,9 +12,10 @@ function wrap<TRow, TEntity>(
     );
 }
 
-export class DatabaseDomainMapper<TEntity, TRow>
-  implements DomainMapper<TEntity, TRow>
-{
+export class DatabaseDomainMapper<TEntity, TRow> implements DomainMapper<
+  TEntity,
+  TRow
+> {
   private readonly fromRowFn: (row: TRow) => Result<TEntity, DatabaseFailure>;
 
   private constructor(

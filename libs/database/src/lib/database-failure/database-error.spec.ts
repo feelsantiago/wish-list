@@ -21,11 +21,17 @@ describe('DatabaseError.from', () => {
   });
 
   it('classifies a constraint code nested under .cause (drizzle-orm wraps the driver error)', () => {
-    const err = Object.assign(new Error('Failed query: insert into "users" ...'), {
-      cause: Object.assign(new Error('SQLITE_CONSTRAINT: UNIQUE constraint failed'), {
-        code: 'SQLITE_CONSTRAINT',
-      }),
-    });
+    const err = Object.assign(
+      new Error('Failed query: insert into "users" ...'),
+      {
+        cause: Object.assign(
+          new Error('SQLITE_CONSTRAINT: UNIQUE constraint failed'),
+          {
+            code: 'SQLITE_CONSTRAINT',
+          },
+        ),
+      },
+    );
     const failure = DatabaseError.from(err).failure();
     expect(failure.name).toBe('constraint');
   });

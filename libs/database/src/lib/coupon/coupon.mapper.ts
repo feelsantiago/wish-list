@@ -11,9 +11,10 @@ import { coupons } from './coupon.schema.js';
 export type CouponRow = typeof coupons.$inferSelect;
 
 @Injectable()
-export class CouponDatabaseDomainMapper
-  implements DomainMapper<Coupon, CouponRow>
-{
+export class CouponDatabaseDomainMapper implements DomainMapper<
+  Coupon,
+  CouponRow
+> {
   private readonly delegate: DatabaseDomainMapper<Coupon, CouponRow> =
     DatabaseDomainMapper.create(
       (coupon: Coupon) => this.toRow(coupon),

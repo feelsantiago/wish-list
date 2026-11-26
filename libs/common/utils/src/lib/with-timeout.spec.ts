@@ -33,7 +33,9 @@ describe('WithTimeout.run', () => {
     vi.useFakeTimers();
     const clearSpy = vi.spyOn(global, 'clearTimeout');
 
-    await new WithTimeout(50).run(AsyncResult.fromResult(ok('done'))).toPromise();
+    await new WithTimeout(50)
+      .run(AsyncResult.fromResult(ok('done')))
+      .toPromise();
 
     expect(clearSpy).toHaveBeenCalled();
   });

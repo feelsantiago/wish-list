@@ -56,11 +56,10 @@ export class ExtractionRepository
           .limit(1)
           .then((rows) => rows[0] as ExtractionRow | undefined),
       (error) => DatabaseError.from(error).failure(),
-    ).andThen(
-      (row): Result<Option<Extraction>, DatabaseFailure> =>
-        row === undefined
-          ? ok(Option.none())
-          : this.options.mapper.domain(row).map(Option.some),
+    ).andThen((row): Result<Option<Extraction>, DatabaseFailure> =>
+      row === undefined
+        ? ok(Option.none())
+        : this.options.mapper.domain(row).map(Option.some),
     );
   }
 }

@@ -24,6 +24,8 @@ describe('productPrompt', () => {
   });
 
   it('tells the model to omit rather than guess', () => {
-    expect(productPrompt(page)).toContain('Omit any field the page does not state');
+    expect(productPrompt(page)).toContain(
+      'Omit any field the page does not state',
+    );
   });
 });

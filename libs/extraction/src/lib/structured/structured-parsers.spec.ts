@@ -5,8 +5,14 @@ import { ProductReading } from '../reading/product-reading.js';
 import { StructuredParsers } from './structured-parsers.js';
 import type { StructuredParser } from './structured-parser.js';
 
-const READING_A: ProductReading = { ...ProductReading.EMPTY, name: Option.some('A') };
-const READING_B: ProductReading = { ...ProductReading.EMPTY, name: Option.some('B') };
+const READING_A: ProductReading = {
+  ...ProductReading.EMPTY,
+  name: Option.some('A'),
+};
+const READING_B: ProductReading = {
+  ...ProductReading.EMPTY,
+  name: Option.some('B'),
+};
 
 function stubParser(
   source: StructuredParser['source'],

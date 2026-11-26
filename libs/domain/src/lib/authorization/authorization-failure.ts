@@ -26,10 +26,8 @@ export namespace AuthorizationFailure {
   }
 
   export function userDeactivated(actor: Id): Failure<'user-deactivated'> {
-    return Failure.create(
-      'user-deactivated',
-      `User ${actor} is deactivated`,
-      { actor },
-    );
+    return Failure.create('user-deactivated', `User ${actor} is deactivated`, {
+      actor,
+    });
   }
 }

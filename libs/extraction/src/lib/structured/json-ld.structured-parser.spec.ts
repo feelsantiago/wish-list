@@ -6,7 +6,9 @@ import { HtmlDocument } from '../html/html-document.js';
 import { JsonLdStructuredParser } from './json-ld.structured-parser.js';
 
 function fixture(name: string): HtmlDocument {
-  const path = fileURLToPath(new URL(`./__fixtures__/${name}`, import.meta.url));
+  const path = fileURLToPath(
+    new URL(`./__fixtures__/${name}`, import.meta.url),
+  );
   return HtmlDocument.parse(readFileSync(path, 'utf-8'));
 }
 

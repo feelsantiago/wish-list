@@ -39,7 +39,8 @@ describe('CategoryRepository', () => {
     await repository.insert(category).unwrapOr(category);
 
     await repository.find(category.id, QueryScope.user(userId)).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(category),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(category),
       err: () => {
         throw new Error('expected ok');
       },
@@ -88,7 +89,8 @@ describe('CategoryRepository', () => {
     await repository.insert(category).unwrapOr(category);
 
     await repository.find(category.id, QueryScope.all()).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(category),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(category),
       err: () => {
         throw new Error('expected ok');
       },
@@ -101,7 +103,8 @@ describe('CategoryRepository', () => {
     const renamed = { ...category, name: 'Literature' };
 
     await repository.update(renamed, QueryScope.user(userId)).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(renamed),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(renamed),
       err: () => {
         throw new Error('expected ok');
       },
@@ -124,7 +127,8 @@ describe('CategoryRepository', () => {
     });
 
     await repository.find(category.id, QueryScope.all()).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(category),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(category),
       err: () => {
         throw new Error('expected ok');
       },
@@ -132,7 +136,10 @@ describe('CategoryRepository', () => {
   });
 
   it('update returns None for a missing id', async () => {
-    const missing = { ...makeCategory(userId, { name: 'Books' }), id: Id.generate() };
+    const missing = {
+      ...makeCategory(userId, { name: 'Books' }),
+      id: Id.generate(),
+    };
 
     await repository.update(missing, QueryScope.user(userId)).match({
       ok: (found) => expect(found.isNone()).toBe(true),
@@ -147,7 +154,8 @@ describe('CategoryRepository', () => {
     await repository.insert(category).unwrapOr(category);
 
     await repository.delete(category.id, QueryScope.user(userId)).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(category.id),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(category.id),
       err: () => {
         throw new Error('expected ok');
       },
@@ -176,7 +184,8 @@ describe('CategoryRepository', () => {
     });
 
     await repository.find(category.id, QueryScope.all()).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(category),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(category),
       err: () => {
         throw new Error('expected ok');
       },
@@ -214,7 +223,8 @@ describe('CategoryRepository', () => {
     await repository.insert(unsorted).unwrapOr(unsorted);
 
     await repository.find(unsorted.id, QueryScope.user(userId)).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(unsorted),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(unsorted),
       err: () => {
         throw new Error('expected ok');
       },

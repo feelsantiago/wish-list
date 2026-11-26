@@ -10,9 +10,10 @@ import { priceHistory } from './price-history.schema.js';
 export type PriceHistoryRow = typeof priceHistory.$inferSelect;
 
 @Injectable()
-export class PriceHistoryDatabaseDomainMapper
-  implements DomainMapper<PriceHistory, PriceHistoryRow>
-{
+export class PriceHistoryDatabaseDomainMapper implements DomainMapper<
+  PriceHistory,
+  PriceHistoryRow
+> {
   private readonly delegate: DatabaseDomainMapper<
     PriceHistory,
     PriceHistoryRow

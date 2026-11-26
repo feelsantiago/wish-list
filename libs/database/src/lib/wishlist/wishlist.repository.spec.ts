@@ -35,7 +35,8 @@ describe('WishlistRepository', () => {
     await repository.insert(wishlist).unwrapOr(wishlist);
 
     await repository.find(wishlist.id, QueryScope.user(userId)).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(wishlist),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(wishlist),
       err: () => {
         throw new Error('expected ok');
       },
@@ -84,7 +85,8 @@ describe('WishlistRepository', () => {
     await repository.insert(wishlist).unwrapOr(wishlist);
 
     await repository.find(wishlist.id, QueryScope.all()).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(wishlist),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(wishlist),
       err: () => {
         throw new Error('expected ok');
       },
@@ -99,7 +101,8 @@ describe('WishlistRepository', () => {
     );
 
     await repository.update(renamed, QueryScope.user(userId)).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(renamed),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(renamed),
       err: () => {
         throw new Error('expected ok');
       },
@@ -124,7 +127,8 @@ describe('WishlistRepository', () => {
     });
 
     await repository.find(wishlist.id, QueryScope.all()).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(wishlist),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(wishlist),
       err: () => {
         throw new Error('expected ok');
       },
@@ -147,7 +151,8 @@ describe('WishlistRepository', () => {
     await repository.insert(wishlist).unwrapOr(wishlist);
 
     await repository.delete(wishlist.id, QueryScope.user(userId)).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(wishlist.id),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(wishlist.id),
       err: () => {
         throw new Error('expected ok');
       },
@@ -176,7 +181,8 @@ describe('WishlistRepository', () => {
     });
 
     await repository.find(wishlist.id, QueryScope.all()).match({
-      ok: (found) => expect(found.unwrapOr(undefined as never)).toEqual(wishlist),
+      ok: (found) =>
+        expect(found.unwrapOr(undefined as never)).toEqual(wishlist),
       err: () => {
         throw new Error('expected ok');
       },

@@ -12,7 +12,7 @@ the only user table and the sole source of truth for everything the domain cares
 `Plan`, `Status`, and Ownership of Wishlists, Categories and Coupons.
 
 The mirror key keeps its original meaning: `providerId` stores the broker's stable subject
-id, and `provider` stores the *social connection the broker reports* (`'google'`,
+id, and `provider` stores the _social connection the broker reports_ (`'google'`,
 `'github'`), not the broker's own name. The alternative — writing a constant broker name
 into `provider` — is one character cheaper and throws away the only locally-knowable fact
 about how someone signs in.
@@ -54,7 +54,7 @@ email differs from the stored row, the row is re-synced on that same resolve.
   than relaxed.
 - **Account linking is the broker's problem.** One human is one subject id even across
   social providers, so the unique email index cannot be violated by a second sign-in method.
-  If the broker is configured *not* to link, the JIT insert fails on that index — an
+  If the broker is configured _not_ to link, the JIT insert fails on that index — an
   intentionally loud failure rather than a silent duplicate account.
 - **The guard depends on the network.** JWKS is cached, and the guard is testable offline by
   signing a token with a local key — it stays a pure verify plus a repository read.

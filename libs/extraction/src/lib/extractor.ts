@@ -44,8 +44,8 @@ export class Extractor {
   ): AsyncResult<Extraction, ExtractionFailure> {
     return this.extractions
       .findLatestByKey(key)
-      .mapErr(
-        (error): ExtractionFailure => ExtractionFailure.persistFailed(error),
+      .mapErr((error): ExtractionFailure =>
+        ExtractionFailure.persistFailed(error),
       )
       .andThen((found) =>
         found.match<AsyncResult<Extraction, ExtractionFailure>>({

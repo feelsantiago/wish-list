@@ -45,7 +45,9 @@ export class EnvModule {
     schema: S,
     source: NodeJS.ProcessEnv,
   ): z.infer<S> {
-    return Result.fromThrowable<z.infer<S>, ZodError>(() => schema.parse(source))
+    return Result.fromThrowable<z.infer<S>, ZodError>(() =>
+      schema.parse(source),
+    )
       .mapErr(EnvFailure.invalid)
       .match({
         ok: (env) => env,

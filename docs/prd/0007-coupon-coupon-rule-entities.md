@@ -10,7 +10,7 @@ Matching and Effective Price are **not** a stored relation — the grilling sess
 
 `Money` (`libs/domain/src/lib/money/money.ts`) is loosened from `.positive()` to `.nonnegative()`, since a fixed discount larger than an Item's price produces a $0 Effective Price (floored, not rejected) — see Implementation Decisions.
 
-Introduces ADR-0014 (cross-entity value passing for create-time invariants): `Coupon.create`'s fixed variant and `CouponRule.create` both need the referenced Vendor's `Currency` to validate against, not just its `Id` — first case in this codebase where a create-time rule depends on a *value* from a referenced entity, not just the entity's presence.
+Introduces ADR-0014 (cross-entity value passing for create-time invariants): `Coupon.create`'s fixed variant and `CouponRule.create` both need the referenced Vendor's `Currency` to validate against, not just its `Id` — first case in this codebase where a create-time rule depends on a _value_ from a referenced entity, not just the entity's presence.
 
 ## User Stories
 

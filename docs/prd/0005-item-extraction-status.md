@@ -12,7 +12,7 @@ Add `Item` to `libs/domain` as a `_tag`-discriminated union (`PendingItem | Extr
 
 1. As a developer, I want `BaseItem` with `id: Id`, `wishlist: Id`, `vendor: Id`, `category: Id`, `url: Url`, `status: 'wanted' | 'fulfilled'`, `createdAt: Date`, `updatedAt: Date` (ADR-0013 naming) — the fields valid across every Extraction Status variant.
 2. As a developer, I want `wishlist`, `vendor`, and `category` treated as already-trusted `Id`s at creation (the item feature's service layer resolves/creates the Vendor, defaults to the User's Unsorted Category, and confirms Wishlist ownership before calling `Item.create`) — no re-validation, per PRD-0004's precedent.
-3. As a developer, I want `url` validated via `Url.create` *inside* `Item.create`, since it's genuinely untrusted user-pasted input — unlike the FK fields above.
+3. As a developer, I want `url` validated via `Url.create` _inside_ `Item.create`, since it's genuinely untrusted user-pasted input — unlike the FK fields above.
 4. As a developer, I want `status` to always default to `'wanted'` at creation — there's no path to create an already-Fulfilled Item.
 
 ### Extraction Status (`_tag` union, ADR-0008)

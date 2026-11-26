@@ -25,7 +25,7 @@ state with the `Extraction`'s business outcome in a single write.
 The resulting `Extraction` already carries a resolved `vendor: Id` (`VendorResolver`
 runs inside `Extractor`, ADR-0025) — this service never touches Vendor lookup/creation
 itself, only reads `extraction.vendor` off the result, so `Item.create` can only be
-called *after* extraction returns, not before. A `PendingItem` is constructed in memory
+called _after_ extraction returns, not before. A `PendingItem` is constructed in memory
 only — never inserted on its own — and immediately transitioned: `Item.extract` for a
 `'succeeded'` Extraction, `Item.failed` for a `'failed'` one, before the single
 `ItemRepository.insert`. A `'failed'` Extraction is a normal business outcome (the page
@@ -44,7 +44,7 @@ is created at all.
 ### Input & authorization
 
 1. As a developer, I want `ItemService.create(input: { user: Id; wishlist: Id; category:
-   Id; url: string }): AsyncResult<Item, ServiceFailure>` as the lib's one public
+Id; url: string }): AsyncResult<Item, ServiceFailure>` as the lib's one public
    method.
 2. As a developer, I want `input.url` validated exactly once via `Url.create`, checked
    first — before any repository call, since it's free and needs no DB. `Url.create`
@@ -99,7 +99,7 @@ is created at all.
    `Item.extract(pending, extraction.data)` — `extraction.data` is already shaped as
    `Item.ExtractionData` (PRD-0005/ADR-0023), so no field mapping is needed.
    `Item.extract` itself returns `Result<ExtractedItem, DomainFailure>` (it schema-checks
-   `data.name` as non-empty) — an `Err` here is *not* surfaced as a `ServiceFailure`.
+   `data.name` as non-empty) — an `Err` here is _not_ surfaced as a `ServiceFailure`.
    Instead it's downgraded the same way a `'failed'` Extraction is: call
    `Item.failed(pending, 'invalid-data')` and persist that instead, so the User still gets
    an Item to correct manually rather than the whole `create()` call aborting. This keeps
@@ -116,7 +116,7 @@ is created at all.
     for the in-memory `PendingItem`.
 12. As a developer, I want the reconciliation written as `ts-pattern`'s
     `match(extraction).with({ _tag: 'succeeded' }, ...).with({ _tag: 'failed' },
-    ...).exhaustive()` per CLAUDE.md's no-`switch`-on-discriminated-unions rule.
+...).exhaustive()` per CLAUDE.md's no-`switch`-on-discriminated-unions rule.
 
 ### Failure vocabulary
 
@@ -129,7 +129,7 @@ is created at all.
 ## Implementation Decisions
 
 - **File:** `libs/item/service/src/lib/item.service.ts` — one `@Injectable()
-  ItemService` class; ownership checks and the extraction-reconciliation step are
+ItemService` class; ownership checks and the extraction-reconciliation step are
   `private` methods on it, not top-level helpers (CLAUDE.md).
 - **Nx project:** `libs/item/service`, package `@wish-list/item-service`, nx name
   `item-service`, tags `scope:item`, `type:service` (ADR-0004's tagging convention).

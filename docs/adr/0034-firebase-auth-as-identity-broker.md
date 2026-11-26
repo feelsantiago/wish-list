@@ -13,19 +13,19 @@ is the client SDK's job.
 
 The mirror key is filled from these claims:
 
-| `User` field | claim |
-| --- | --- |
-| `providerId` | `sub` (the Firebase `uid`) |
-| `provider` | `firebase.sign_in_provider`, mapped `google.com` → `google`, `github.com` → `github` |
-| `email` | `email` |
-| `name` | `name` |
+| `User` field | claim                                                                                |
+| ------------ | ------------------------------------------------------------------------------------ |
+| `providerId` | `sub` (the Firebase `uid`)                                                           |
+| `provider`   | `firebase.sign_in_provider`, mapped `google.com` → `google`, `github.com` → `github` |
+| `email`      | `email`                                                                              |
+| `name`       | `name`                                                                               |
 
 The mapping is a closed list. A token whose `sign_in_provider` is not on it (`password`,
 `anonymous`, `phone`, a provider enabled in the console by mistake) is refused at the guard,
 so turning on a new sign-in method needs a code change as well as a console change.
 
 **The steady-path lookup is by `providerId` alone, not by the (`provider`, `providerId`)
-pair ADR-0032 describes.** `sign_in_provider` reports the connection used for *this* sign-in,
+pair ADR-0032 describes.** `sign_in_provider` reports the connection used for _this_ sign-in,
 so a linked user who signed up with Google and comes back with GitHub keeps the same `sub`
 but a different `provider`. A pair lookup would miss, try a JIT insert, and fail on the
 unique email index. With Firebase, `sub` is unique on its own, and `provider` is treated as
@@ -54,7 +54,7 @@ which keeps ADR-0032's "how someone signs in" meaning.
   serve a lookup by `providerId` alone, because SQLite indexes only match from their
   leftmost column. The pair index becomes redundant and can be dropped in the same
   migration. This changes ADR-0032's lookup key; its other decisions stand.
-- **Linking is not silent.** With *one account per email address* enabled (required),
+- **Linking is not silent.** With _one account per email address_ enabled (required),
   Firebase refuses a second provider for an existing email with
   `auth/account-exists-with-different-credential`, and the **client** has to sign in with
   the original provider and call `linkWithCredential`. The web app owns that flow. If it is

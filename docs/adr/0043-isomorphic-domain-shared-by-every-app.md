@@ -20,7 +20,10 @@ definition of each rule. `Plain<T>` is the wire format in both directions: the A
 
 ```ts
 // libs/wishlist/data: composes, never restates
-export const CreateWishlistRequest = Wishlist.$.pick({ name: true, style: true });
+export const CreateWishlistRequest = Wishlist.$.pick({
+  name: true,
+  style: true,
+});
 export type CreateWishlistRequest = z.input<typeof CreateWishlistRequest>;
 export type WishlistResponse = Plain<Wishlist>;
 

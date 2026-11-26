@@ -37,7 +37,9 @@ describe('Authorization.authorize', () => {
   it('authorizes a single owned member and leaves it readable and unchanged', () => {
     const wishlist = wishlistFixture(OWNER);
 
-    const result = new Authorization(userFixture(OWNER)).authorize({ wishlist });
+    const result = new Authorization(userFixture(OWNER)).authorize({
+      wishlist,
+    });
 
     expect(result.isOk()).toBe(true);
     if (result.isErr()) return;

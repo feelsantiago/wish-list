@@ -13,7 +13,9 @@ whose `options.db` is `tx`. `table` and `mapper` carry over unchanged.**
 
 ```ts
 Database.transaction(db, (tx) =>
-  users.withTransaction(tx).insert(user)
+  users
+    .withTransaction(tx)
+    .insert(user)
     .andThen(() => categories.withTransaction(tx).insert(unsorted)),
 );
 ```

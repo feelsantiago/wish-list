@@ -1,6 +1,6 @@
 # Cross-entity value passing when a create-time invariant needs it
 
-`Coupon.create` (fixed-discount variant) and `CouponRule.create` must reject a `Money` (discount amount / threshold) whose `Currency` doesn't match the `Vendor`'s own `Currency` — comparing amounts across currencies is meaningless (ADR-0002). PRD-0003/0004/0005 established that cross-entity FK fields (`Category.user`, `Item.vendor`, etc.) are passed as an already-trusted `Id` and never re-validated inside `create`. That precedent is silent on this case: the invariant isn't about the `Id` being well-formed, it's about a *value on the referenced entity* agreeing with a value on the one being created. We extend the pattern rather than break it: `create` accepts the specific field value it needs (`vendorCurrency: Currency`) alongside the trusted `Id`, and validates against that value — it does not accept or re-fetch the whole `Vendor`.
+`Coupon.create` (fixed-discount variant) and `CouponRule.create` must reject a `Money` (discount amount / threshold) whose `Currency` doesn't match the `Vendor`'s own `Currency` — comparing amounts across currencies is meaningless (ADR-0002). PRD-0003/0004/0005 established that cross-entity FK fields (`Category.user`, `Item.vendor`, etc.) are passed as an already-trusted `Id` and never re-validated inside `create`. That precedent is silent on this case: the invariant isn't about the `Id` being well-formed, it's about a _value on the referenced entity_ agreeing with a value on the one being created. We extend the pattern rather than break it: `create` accepts the specific field value it needs (`vendorCurrency: Currency`) alongside the trusted `Id`, and validates against that value — it does not accept or re-fetch the whole `Vendor`.
 
 ## Considered options
 
@@ -10,6 +10,6 @@
 
 ## Consequences
 
-- Establishes the pattern for future entities in the same position: when a `create`-time rule depends on a value that lives on a *referenced* entity, pass that value explicitly (named for what it is, e.g. `vendorCurrency`, not `vendor.currency`) — don't pass the whole entity, and don't skip the check.
+- Establishes the pattern for future entities in the same position: when a `create`-time rule depends on a value that lives on a _referenced_ entity, pass that value explicitly (named for what it is, e.g. `vendorCurrency`, not `vendor.currency`) — don't pass the whole entity, and don't skip the check.
 - The caller (service layer) is responsible for fetching the referenced entity and extracting the value; the domain layer never fetches anything itself.
-- Doesn't apply to the plain FK-`Id`-trust case (`Category.user`, `Item.vendor`) — that precedent is unchanged. This ADR only covers the narrower case where a *value*, not just presence, must be cross-checked.
+- Doesn't apply to the plain FK-`Id`-trust case (`Category.user`, `Item.vendor`) — that precedent is unchanged. This ADR only covers the narrower case where a _value_, not just presence, must be cross-checked.

@@ -66,7 +66,11 @@ function succeededExtraction(name = 'Trail Runner 3'): SucceededExtraction {
 }
 
 function failedExtraction(reason: ExtractionReason): Extraction {
-  return Extraction.failed({ url: Url.from(URL), vendor: Id.generate(), reason });
+  return Extraction.failed({
+    url: Url.from(URL),
+    vendor: Id.generate(),
+    reason,
+  });
 }
 
 interface Stubs {
@@ -79,9 +83,8 @@ function buildStubs(): Stubs {
     insert: vi.fn(
       (item) => AsyncResult.fromResult(ok(item)) as AsyncResult<never, never>,
     ),
-    extract: vi.fn(
-      (): AsyncResult<Extraction, ExtractionFailure> =>
-        AsyncResult.fromResult(ok(succeededExtraction())),
+    extract: vi.fn((): AsyncResult<Extraction, ExtractionFailure> =>
+      AsyncResult.fromResult(ok(succeededExtraction())),
     ),
   };
 }

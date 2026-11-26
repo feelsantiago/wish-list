@@ -1,10 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Id, Item, Money, Url } from '@wish-list/domain';
 import type { PendingItem } from '@wish-list/domain';
-import {
-  ItemDatabaseDomainMapper,
-  type ItemRow,
-} from './item.mapper.js';
+import { ItemDatabaseDomainMapper, type ItemRow } from './item.mapper.js';
 
 function pendingItem(): PendingItem {
   return Item.create({

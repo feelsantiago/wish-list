@@ -139,8 +139,6 @@ describe('Wishlist round-trip', () => {
       style: 'default',
     });
     if (created.isErr()) throw new Error('unreachable');
-    expect(Wishlist.from(Wishlist.plain(created.value))).toEqual(
-      created.value,
-    );
+    expect(Wishlist.from(Wishlist.plain(created.value))).toEqual(created.value);
   });
 });

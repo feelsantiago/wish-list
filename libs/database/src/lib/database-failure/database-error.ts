@@ -15,9 +15,8 @@ export class DatabaseError {
       cause?: { code?: unknown };
     };
     return match({ code: source.code ?? source.cause?.code })
-      .with(
-        { code: P.string.startsWith('SQLITE_CONSTRAINT') },
-        () => DatabaseFailure.constraint(this.source),
+      .with({ code: P.string.startsWith('SQLITE_CONSTRAINT') }, () =>
+        DatabaseFailure.constraint(this.source),
       )
       .otherwise(() => DatabaseFailure.query(this.source));
   }

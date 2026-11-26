@@ -1,7 +1,7 @@
 # Caller-supplied `QueryScope`; repositories never enforce ownership
 
 > **Amended by ADR-0030.** 403 and 404 are distinguishable again on the authorize path: a
-> caller loading an owned entity *in order to authorize it* reads with `QueryScope.all()`
+> caller loading an owned entity _in order to authorize it_ reads with `QueryScope.all()`
 > and `Authorization.authorize` decides, so absence (`not-found`) and denial (`forbidden`)
 > are separate answers. `QueryScope.user` keeps its job for collection reads, where
 > narrowing is subsetting rather than authorization.
@@ -11,7 +11,7 @@ against them should be narrowed to the acting User. The first attempt at this �
 `findForUser(user, id)` on `WishlistRepository` and `CategoryRepository`, behind a
 `ReadableForUser` capability — scaled by method name rather than by argument: every owned
 repository × every operation wanted a `ForUser` twin, mutations had no equivalent at all,
-and the name fixed *who* the narrowing was for rather than *what* it was.
+and the name fixed _who_ the narrowing was for rather than _what_ it was.
 
 **Narrowing is an argument, not a method, and not a policy. `QueryScope<TTable>` is a
 `WHERE` fragment the caller constructs and hands to the repository, which applies it
@@ -23,17 +23,17 @@ export interface QueryScope<TTable extends RepositoryTable> {
   readonly condition: (table: TTable) => SQL | undefined;
 }
 
-this.wishlists.find(id, QueryScope.user(actor));    // narrowed
-this.wishlists.find(id, QueryScope.all());          // deliberately not, and it says so
+this.wishlists.find(id, QueryScope.user(actor)); // narrowed
+this.wishlists.find(id, QueryScope.all()); // deliberately not, and it says so
 ```
 
 A row excluded by the scope is indistinguishable from a row that doesn't exist — both are
 `None` (ADR-0028). There is no "exists but not yours" signal anywhere in the stack. A
-caller that wants to call it *not yours* does so in its own vocabulary, at its own layer.
+caller that wants to call it _not yours_ does so in its own vocabulary, at its own layer.
 
 The scope argument is **required** on scoped repositories — there is no default. That is
 the one place this design is not permissive: the repository still refuses nothing, but a
-caller cannot *silently* forget to narrow. `wishlists.find(id)` is a compile error, and
+caller cannot _silently_ forget to narrow. `wishlists.find(id)` is a compile error, and
 opting out is spelled `QueryScope.all()`, which a reviewer can grep for.
 
 Gating comes from the type parameter, not from discipline. `QueryScope.user(u)` is a
@@ -62,9 +62,9 @@ guarantee with no other symptom.
   invisible control flow.
 - **A failing scope — `QueryScope.must(user)` (rejected).** The original sketch: a scope
   that errs when the row is out of scope. Its failure would land in the `DatabaseFailure`
-  channel, which every service maps wholesale to `unexpected` — so a caller wanting *not
-  yours* would have to pattern-match the tag back out. That is strictly more work than the
-  `Option.okOr` it replaced, and `Option.okOr` already *is* `must`, at the seam where the
+  channel, which every service maps wholesale to `unexpected` — so a caller wanting _not
+  yours_ would have to pattern-match the tag back out. That is strictly more work than the
+  `Option.okOr` it replaced, and `Option.okOr` already _is_ `must`, at the seam where the
   caller knows the right words.
 - **A value-based scope living in `libs/domain`** (`{ column: 'user', value: Id }`, resolved
   by the repository) (rejected). Keeps Drizzle out of the scope type, but the repository
@@ -79,7 +79,7 @@ guarantee with no other symptom.
 ## Consequences
 
 - This amends ADR-0021. Capability interfaces gain scoped twins — `ScopedReadable<TEntity,
-  TTable>`, `ScopedUpdatable`, `ScopedDeletable` — and the table type appears in the
+TTable>`, `ScopedUpdatable`, `ScopedDeletable` — and the table type appears in the
   interface. A repository implements one side or the other, never both: implementing
   `Readable` alongside `ScopedReadable` would restore the one-argument `find` and make the
   required argument optional in practice.
@@ -92,7 +92,7 @@ guarantee with no other symptom.
   extended.
 - `insert` takes no scope. Nothing prevents persisting an entity bearing another user's id.
   That is the stance, stated as a consequence rather than treated as a gap.
-- Transitive ownership — "is this *Item* mine", which is `items ⋈ wishlists.user = ?` — is
+- Transitive ownership — "is this _Item_ mine", which is `items ⋈ wishlists.user = ?` — is
   not expressible as a single-column scope. Services that need it perform two reads. The
   `condition` seam accepts a join-emitting implementation later without a call-site change.
 - Reservations are claimed by anonymous token holders (ADR-0015), not by Users, so

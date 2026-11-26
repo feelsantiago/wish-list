@@ -23,12 +23,12 @@ The auth lib owns an `AuthFailure` file, following CLAUDE.md's one-file-per-fail
 factories all produce the single `'unauthenticated'` tag and carry the cause in a closed
 `reason` metadata field:
 
-| factory | `reason` | when |
-| --- | --- | --- |
-| `AuthFailure.missingToken()` | `missing-token` | no `Authorization: Bearer` header |
-| `AuthFailure.invalidToken(cause)` | `invalid-token` | bad signature, wrong `iss`/`aud`, expired, empty `sub`. The `jose` error is the cause |
-| `AuthFailure.providerNotAllowed(provider)` | `provider-not-allowed` | `sign_in_provider` is not on ADR-0034's list |
-| `AuthFailure.missingEmail()` | `missing-email` | no `email` claim (ADR-0034) |
+| factory                                    | `reason`               | when                                                                                  |
+| ------------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------- |
+| `AuthFailure.missingToken()`               | `missing-token`        | no `Authorization: Bearer` header                                                     |
+| `AuthFailure.invalidToken(cause)`          | `invalid-token`        | bad signature, wrong `iss`/`aud`, expired, empty `sub`. The `jose` error is the cause |
+| `AuthFailure.providerNotAllowed(provider)` | `provider-not-allowed` | `sign_in_provider` is not on ADR-0034's list                                          |
+| `AuthFailure.missingEmail()`               | `missing-email`        | no `email` claim (ADR-0034)                                                           |
 
 `user-deactivated` is produced wherever the local `Status` is checked (ADR-0032). Unlike
 `unauthenticated`, it names the condition in its message: the caller has proven who they

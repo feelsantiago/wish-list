@@ -33,9 +33,7 @@ export namespace Wishlist {
     readonly style?: WishlistStyle;
   }
 
-  export function create(
-    input: CreateInput,
-  ): Result<Wishlist, DomainFailure> {
+  export function create(input: CreateInput): Result<Wishlist, DomainFailure> {
     return Result.fromThrowable<z.infer<typeof $>, ZodError>(() =>
       $.parse({ name: input.name, style: input.style }),
     )

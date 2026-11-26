@@ -21,7 +21,7 @@ Underneath sits a second problem the first one keeps running into. Singular read
 absence through the failure channel: `find` returns `AsyncResult<TEntity,
 DatabaseFailure>` and errs with `DatabaseFailure.notFound(id)`. Services map the whole
 `DatabaseFailure` channel wholesale — `ItemService` does `.mapErr(ServiceFailure.unexpected)` —
-so any caller that actually wants *not found* semantics has to fish a `'not-found'` tag
+so any caller that actually wants _not found_ semantics has to fish a `'not-found'` tag
 back out of a union it has otherwise decided is an internal error. `findForUser` sidestepped
 this by returning `Option<TEntity>` instead, leaving the two read paths of the same
 repository disagreeing about what absence is. `VendorRepository.findByVendorDomain` and
@@ -39,7 +39,7 @@ this.wishlists.find(input.wishlist, QueryScope.user(input.user));
 this.wishlists.update(edited, QueryScope.user(actor));
 this.wishlists.delete(id, QueryScope.user(actor));
 
-this.wishlists.find(id, QueryScope.all());   // deliberately unscoped, and it says so
+this.wishlists.find(id, QueryScope.all()); // deliberately unscoped, and it says so
 ```
 
 A row excluded by the scope is indistinguishable from a row that doesn't exist — both are
@@ -106,7 +106,10 @@ export interface Readable<TEntity> {
 }
 
 export interface ScopedReadable<TEntity, TTable extends RepositoryTable> {
-  find(id: Id, scope: QueryScope<TTable>): AsyncResult<Option<TEntity>, DatabaseFailure>;
+  find(
+    id: Id,
+    scope: QueryScope<TTable>,
+  ): AsyncResult<Option<TEntity>, DatabaseFailure>;
 }
 ```
 
@@ -118,12 +121,12 @@ scope" impossible to do silently.
 
 Which repositories are scoped follows from the schema, not from taste:
 
-| repository | scoping column | capability |
-| --- | --- | --- |
-| `wishlists`, `categories`, `coupons` | `user` | `Scoped*` |
-| `items` | `wishlist` | unscoped (transitive — out of scope, see below) |
-| `tracked_items`, `price_history`, `reservations` | `item` | unscoped (transitive) |
-| `users`, `vendors`, `extractions` | none | unscoped, unchanged |
+| repository                                       | scoping column | capability                                      |
+| ------------------------------------------------ | -------------- | ----------------------------------------------- |
+| `wishlists`, `categories`, `coupons`             | `user`         | `Scoped*`                                       |
+| `items`                                          | `wishlist`     | unscoped (transitive — out of scope, see below) |
+| `tracked_items`, `price_history`, `reservations` | `item`         | unscoped (transitive)                           |
+| `users`, `vendors`, `extractions`                | none           | unscoped, unchanged                             |
 
 Unscoped repositories need no edit at all in slices 2 and 3: `Readable<Vendor>` keeps its
 one-argument `find`.
@@ -197,19 +200,19 @@ Nothing outside `libs/database` calls `find` today, so the migration is specs pl
    `.okOr()` it replaced.
 2. **`condition` is a property with a function type, not a method.** TypeScript method
    shorthand is bivariant in its parameters even under `strict`. Writing `condition(table:
-   TTable): SQL | undefined` would let `QueryScope.user(u)` slip into `VendorRepository`
+TTable): SQL | undefined` would let `QueryScope.user(u)` slip into `VendorRepository`
    and the compile-time gate would evaporate with no other symptom.
 3. **The table generic defaults to `RepositoryTable`.** `Readable<Vendor>` keeps working
    unchanged, and the eight unscoped repositories are untouched by slices 2 and 3.
 4. **Scoped repositories implement only the scoped capability.** They do not also implement
    `Readable`, or the one-argument `find` would be back and the required argument would be
    optional again in practice.
-5. **`QueryScope` lives in `libs/database`, not `libs/domain`.** It *is* a `WHERE` fragment;
+5. **`QueryScope` lives in `libs/database`, not `libs/domain`.** It _is_ a `WHERE` fragment;
    modelling it as an abstract value object would mean translating it back into one
    immediately. Services already import concrete repositories from `@wish-list/database`
    (ADR-0016), so importing `QueryScope` from there crosses no new boundary.
 6. **Ownership transfer via scoped `update` behaves correctly by construction.**
-   `update(wishlist, QueryScope.user(b))` where `wishlist.user === a` matches on the *old*
+   `update(wishlist, QueryScope.user(b))` where `wishlist.user === a` matches on the _old_
    row's user (`b`), finds nothing, and returns `None`. A transfer only succeeds when the
    caller scopes to the current owner, which is the right rule.
 7. **`insert` takes no scope.** There is nothing to narrow. Nothing prevents inserting a
@@ -221,7 +224,7 @@ Nothing outside `libs/database` calls `find` today, so the migration is specs pl
    (real libSQL via `createTestDatabase`, one repository per spec file). For each of
    `find`, `update` and `delete` on each of the three scoped repositories: in scope →
    `Some`/applied; owned by a different user → `None`/no rows touched; missing id →
-   `None`. The out-of-scope `update`/`delete` cases assert the row is *unchanged*, not
+   `None`. The out-of-scope `update`/`delete` cases assert the row is _unchanged_, not
    merely that the call returned `None`.
 2. **Type-level spec** — `query-scope.spec.ts`, using `expectTypeOf` and `@ts-expect-error`
    (both already used in `libs/common/result` and `libs/domain`, and spec files are
@@ -233,12 +236,13 @@ Nothing outside `libs/database` calls `find` today, so the migration is specs pl
 
    This is the only test that can see slice 2's central promise. A variance regression
    leaves every behavioural test passing.
+
 3. **Slice 1 needs no new tests**, only rewritten assertions — the `notFound` cases become
    `None` cases.
 
 ## Out of Scope
 
-- **Transitive ownership.** "Is this *Item* mine" is `items ⋈ wishlists.user = ?`, a join,
+- **Transitive ownership.** "Is this _Item_ mine" is `items ⋈ wishlists.user = ?`, a join,
   and no single-column scope expresses it. Services that need it do two reads. The
   `condition` seam is where a join-emitting scope would later plug in without touching
   call sites.

@@ -12,11 +12,11 @@ that edit on their next sign-in.
 **`Identity.name` is an `Option<string>` holding what the broker reported. `User` gains a
 `nameSource: 'broker' | 'user'` field, and `AccountService.resolve` applies these rules:**
 
-| case | broker reports a name | broker reports none |
-| --- | --- | --- |
-| first sign-in (create) | store it, `nameSource: 'broker'` | store the email's local part (`jane.doe@x.com` → `jane.doe`), `nameSource: 'broker'` |
-| returning, `nameSource: 'broker'` | re-sync it if it differs | keep the stored name |
-| returning, `nameSource: 'user'` | keep the stored name | keep the stored name |
+| case                              | broker reports a name            | broker reports none                                                                  |
+| --------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------ |
+| first sign-in (create)            | store it, `nameSource: 'broker'` | store the email's local part (`jane.doe@x.com` → `jane.doe`), `nameSource: 'broker'` |
+| returning, `nameSource: 'broker'` | re-sync it if it differs         | keep the stored name                                                                 |
+| returning, `nameSource: 'user'`   | keep the stored name             | keep the stored name                                                                 |
 
 A fallback name counts as `'broker'`, so a GitHub user who later sets a profile name gets it
 on their next sign-in. Renaming in the app goes through a domain `User.rename(user, name)`,

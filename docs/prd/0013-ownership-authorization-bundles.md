@@ -3,8 +3,8 @@
 `ItemService.create` decides ownership itself:
 
 ```ts
-yield* this.authorizeWishlist(input.user, input.wishlist);
-yield* this.authorizeCategory(input.user, input.category);
+yield * this.authorizeWishlist(input.user, input.wishlist);
+yield * this.authorizeCategory(input.user, input.category);
 ```
 
 Two private methods, each comparing `entity.user === user.id`, each minting
@@ -23,8 +23,8 @@ Two private methods, each comparing `entity.user === user.id`, each minting
   update, delete and every future mutation. Per-service ownership checks means the same
   comparison rewritten at every call site forever, with the failure mode being silence.
 
-`CONTEXT.md` had no word for the relation being checked — Wishlist *"belonging to one
-User"*, Category *"global to the User"* and Coupon *"a discount code a User stores"* each
+`CONTEXT.md` had no word for the relation being checked — Wishlist _"belonging to one
+User"_, Category _"global to the User"_ and Coupon _"a discount code a User stores"_ each
 describe it separately, and none names it.
 
 ## Solution
@@ -54,8 +54,9 @@ The caller loads the entities, authorizes them together, and hands the proof to 
 service:
 
 ```ts
-const authorized = yield* new Authorization(user).authorize({ wishlist, category });
-yield* this.items.create({ authorized, url });
+const authorized =
+  yield * new Authorization(user).authorize({ wishlist, category });
+yield * this.items.create({ authorized, url });
 ```
 
 ```ts
@@ -66,22 +67,22 @@ export type CreateItemInput = {
 ```
 
 `user` leaves `CreateItemInput` entirely — the service had no other use for it, and the
-bundle *is* the user's presence.
+bundle _is_ the user's presence.
 
 ### Why the bundle, and not the entity
 
-A per-entity `UserAuthorized<Wishlist>` proves only that *some* User owns it. Two of them
+A per-entity `UserAuthorized<Wishlist>` proves only that _some_ User owns it. Two of them
 satisfy a two-field signature:
 
 ```ts
 type CreateItemInput = {
-  wishlist: UserAuthorized<Wishlist>;   // authorized for user A
-  category: UserAuthorized<Category>;   // authorized for user B
-};                                      // typechecks. Item lands in A's wishlist under B's category.
+  wishlist: UserAuthorized<Wishlist>; // authorized for user A
+  category: UserAuthorized<Category>; // authorized for user B
+}; // typechecks. Item lands in A's wishlist under B's category.
 ```
 
 That is the bug this PRD removes, re-expressed as valid code. Authorizing the members
-*together* against one actor makes same-owner coherence a property of the type rather than
+_together_ against one actor makes same-owner coherence a property of the type rather than
 of the caller's discipline. Tagging the brand with the actor instead (`UserAuthorized<T, U>`)
 was considered and is not implementable — every `Id` is the same type, and TypeScript has
 no rank-2 polymorphism to mint a distinct one per actor.
@@ -91,8 +92,10 @@ no rank-2 polymorphism to mint a distinct one per actor.
 With a constant tag, two separately-authorized bundles merge:
 
 ```ts
-const forged: UserAuthorized<{ wishlist: Wishlist; category: Category }> =
-  { ...authorizedWishlist, ...authorizedCategory };   // typechecks with a constant tag
+const forged: UserAuthorized<{ wishlist: Wishlist; category: Category }> = {
+  ...authorizedWishlist,
+  ...authorizedCategory,
+}; // typechecks with a constant tag
 ```
 
 Spread copies the phantom property verbatim, and both operands carry an identical one.
@@ -103,7 +106,7 @@ behaviours were verified against the workspace's TypeScript before this was writ
 ### What it does not stop
 
 ```ts
-const forged: Target = { ...authorized, wishlist: someoneElsesWishlist };  // typechecks
+const forged: Target = { ...authorized, wishlist: someoneElsesWishlist }; // typechecks
 ```
 
 No intersection brand can prevent this — spread copies the phantom property as a sibling.
@@ -135,7 +138,7 @@ debugging loop.
 `libs/domain` does not import `@wish-list/common-error/service`. `Failure<T>` is covariant
 in its tag, so `AuthorizationFailure` flows into a service channel with no `mapErr`:
 `'forbidden'` is already in `ServiceFailureType`, and `'user-deactivated'` is carried by
-widening the return type of whichever service *authorizes* — the same mechanism
+widening the return type of whichever service _authorizes_ — the same mechanism
 `ExtractionFailure = ServiceFailure<ExtractionFailureType>` already uses:
 
 ```ts
@@ -146,9 +149,9 @@ public add(input: AddItemInput): AsyncResult<Item, ServiceFailure<'user-deactiva
 
 ### How callers load
 
-Owned entities loaded *in order to authorize them* are read with `QueryScope.all()`, and
-`authorize` decides. `QueryScope.user` is repository vocabulary for *which rows*, not
-*whose* — it keeps its job for collection reads (listing one's own Wishlists is
+Owned entities loaded _in order to authorize them_ are read with `QueryScope.all()`, and
+`authorize` decides. `QueryScope.user` is repository vocabulary for _which rows_, not
+_whose_ — it keeps its job for collection reads (listing one's own Wishlists is
 subsetting, not authorization). This amends ADR-0029's "403 and 404 are collapsed
 permanently"; that ADR invited the revisit and this is it.
 
@@ -196,7 +199,7 @@ libs/domain/src/lib/authorization/
 1. **No single-entity overload.** Overload resolution would be unambiguous — `Wishlist`
    fails `Record<string, UserOwned>` (its `name: string` is not `UserOwned`), and
    `{ wishlist: Wishlist }` fails `UserOwned` (no `user` property) — but the single form's
-   *return type* would reintroduce the per-entity brand as a spellable type, manufacturing
+   _return type_ would reintroduce the per-entity brand as a spellable type, manufacturing
    the vocabulary for the exact bug this PRD removes. One entity is spelled
    `authorize(user, { wishlist })`.
 2. **Non-owned values stay outside the bundle.** `Url` has no `user` field and so cannot
@@ -213,7 +216,7 @@ libs/domain/src/lib/authorization/
 5. **Repositories do not mint the brand.** `find(id, QueryScope.user(u))` returning
    `Option<UserScoped<Wishlist>>` was probed and works mechanically — ADR-0029's variance
    gating survives, and the conditional return fires when written against the scope's
-   inferred *kind*. Rejected on meaning: narrowing is not authorization. It also cannot
+   inferred _kind_. Rejected on meaning: narrowing is not authorization. It also cannot
    replace `authorize`, since a repository fetches one entity and can only ever mint the
    per-entity brand rejected above.
 6. **The brand stops at the service boundary.** `Item.create` still takes trusted `Id`s.
@@ -260,7 +263,7 @@ regression in the tag shape leaves every behavioural test green.
   all. Services that need "is this Item mine" load the Item's Wishlist and authorize that.
   The intended shape when the first Item mutation ships is a witness form —
   `authorizeVia(user, { item }, { wishlist })`, checking both links in one place —
-  explicitly *not* a denormalized `Item.user`, which would create a second source of truth
+  explicitly _not_ a denormalized `Item.user`, which would create a second source of truth
   that disagrees after a future move-between-wishlists.
 - **Authentication and the session layer.** Nothing here loads a `User` or establishes who
   the actor is. `apps/api` does not exist.

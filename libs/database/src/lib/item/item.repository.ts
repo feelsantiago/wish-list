@@ -52,7 +52,9 @@ export class ItemRepository
     return update(this.options, entity);
   }
 
-  public all(scope: QueryScope<typeof items>): AsyncResult<Item[], DatabaseFailure> {
+  public all(
+    scope: QueryScope<typeof items>,
+  ): AsyncResult<Item[], DatabaseFailure> {
     return all(this.options, scope);
   }
 }
