@@ -48,80 +48,23 @@ jobs:
       - run: npx nx affected -t lint typecheck test build
 
   # Builds the pull request's head commit, the artifact staging tests and
-  # production later promotes (ADR-0046, ADR-0048). Pull requests from forks
-  # get no package write access or secrets, so they skip this and deploys.
+  # production later promotes (ADR-0046, ADR-0048). The head commit, not
+  # GitHub's merge preview: promotion looks images up by the head sha. Pull
+  # requests from forks get no package write access or secrets, so they skip
+  # this and deploys.
   image:
     needs: check
     if: >-
       github.event_name == 'pull_request'
       && github.event.action != 'closed'
       && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-    outputs:
-      # The immutable reference deploys use (ADR-0047).
-      ref: ${{ steps.tags.outputs.ref }}
-    steps:
-      # The head commit, not GitHub's merge preview: promotion looks images up
-      # by the pull request's head sha.
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-
-      - run: npm ci
-
-      # The image's build context: bundle, pruned lockfile, workspace_modules.
-      - run: npx nx run api:prune
-
-      - uses: docker/setup-buildx-action@v3
-
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # sha-<head short> never moves and is what deploys and promotion use;
-      # pr-<number> follows the pull request for humans.
-      - id: tags
-        env:
-          OWNER: ${{ github.repository_owner }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          PR: ${{ github.event.pull_request.number }}
-        run: |
-          image="ghcr.io/${OWNER,,}/wish-list-api"
-          ref="$image:sha-${HEAD_SHA::7}"
-          echo "ref=$ref" >> "$GITHUB_OUTPUT"
-          {
-            echo "tags<<EOF"
-            echo "$ref"
-            echo "$image:pr-$PR"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      # OCI labels only (source repository, revision); tags come from above.
-      - id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/wish-list-api
-
-      - uses: docker/build-push-action@v6
-        with:
-          context: apps/api/dist
-          file: apps/api/Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.tags.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+    uses: ./.github/workflows/image.yml
+    with:
+      sha: ${{ github.event.pull_request.head.sha }}
+      extra-tag: pr-${{ github.event.pull_request.number }}
 
   # Required to merge: the image deployed, migrated and passed /api/health.
   deploy-staging:
@@ -132,11 +75,15 @@ jobs:
       image: ${{ needs.image.outputs.ref }}
     secrets: inherit
 
-  # On close, merged or not, staging goes back to what production runs: its
-  # last successful deployment, which may differ from its configured image.
+  # A pull request closed without merging: staging goes back to what
+  # production runs, its last successful deployment (which may differ from
+  # its configured image). A merged one needs nothing: staging already runs
+  # its head image, the one production is being given at the same moment, and
+  # reading production now would race that deploy and find the old image.
   production-image:
     if: >-
       github.event.action == 'closed'
+      && !github.event.pull_request.merged
       && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     # Read-only use of the staging environment's Railway account token.
@@ -171,3 +118,87 @@ jobs:
       environment: staging
       image: ${{ needs.production-image.outputs.ref }}
     secrets: inherit
+
+  # Push to main: production runs the image staging tested, the merged pull
+  # request's head commit, with no rebuild (ADR-0048). A push with no pull
+  # request (an admin bypass) has no tested image and builds one instead.
+  promote:
+    needs: check
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      ref: ${{ steps.find.outputs.ref }}
+      build: ${{ steps.find.outputs.build }}
+    steps:
+      - id: find
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          image="ghcr.io/${OWNER,,}/wish-list-api"
+          head=$(gh api "repos/$REPO/commits/$GITHUB_SHA/pulls" \
+            --jq '[.[] | select(.merged_at != null and .base.ref == "main")] | first | .head.sha // empty')
+          if [ -z "$head" ]; then
+            echo "::warning::$GITHUB_SHA has no merged pull request; building and deploying an image staging never tested."
+            echo "build=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          ref="$image:sha-${head::7}"
+          # Required checks should make this impossible; fail loudly if not.
+          if ! docker buildx imagetools inspect "$ref" > /dev/null; then
+            echo "::error::$ref, the pull request's tested image, is not in GHCR"
+            exit 1
+          fi
+          echo "Promoting $ref (pull request head $head)"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          echo "build=false" >> "$GITHUB_OUTPUT"
+
+  image-main:
+    needs: promote
+    if: needs.promote.outputs.build == 'true'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/image.yml
+    with:
+      sha: ${{ github.sha }}
+
+  # The GitHub Environment `production` only accepts runs from main.
+  deploy-production:
+    needs: [promote, image-main]
+    if: >-
+      !cancelled()
+      && needs.promote.result == 'success'
+      && needs.image-main.result != 'failure'
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: production
+      image: ${{ needs.image-main.outputs.ref || needs.promote.outputs.ref }}
+    secrets: inherit
+
+  # `main` always names what production runs; retagging copies no layers.
+  tag-main:
+    needs: [promote, image-main, deploy-production]
+    if: >-
+      !cancelled()
+      && needs.deploy-production.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - env:
+          REF: ${{ needs.image-main.outputs.ref || needs.promote.outputs.ref }}
+        run: docker buildx imagetools create --tag "${REF%:*}:main" "$REF"

@@ -15,7 +15,7 @@ deploys that exact image to production.**
 ```
 pull request (head abc1234)
   push ─ check ─ image sha-abc1234 ─ deploy-staging          ← you test here
-  close ─ restore-staging: staging back on production's image
+  close unmerged ─ restore-staging: staging back on production's image
 
 merge (squash) → main (commit def5678)
   push ─ check ─ promote: PR of def5678 → head abc1234 → sha-abc1234
@@ -61,13 +61,16 @@ A ruleset on `main`, set in GitHub (repository settings, not code):
   still runs. GitHub counts a skipped required check as passed, so a fork's pull request
   could merge without ever reaching staging. Such a change is pushed to a branch here
   first, and merged from there.
-- **Closing a pull request, merged or not, puts staging back on production's image.** A
+- **Closing a pull request without merging puts staging back on production's image.** A
   `production-image` job finds the image of production's last **successful** deployment,
   and `restore-staging` deploys it to staging with the same deploy workflow. The image
-  configured in production isn't used, because it can point at a build that failed (it
-  does today: `sha-8a191d1`, from the first CI attempt). Until production has a successful
-  deployment (8c), there's nothing to restore to, and the job leaves a notice and skips
-  the restore.
+  configured in production isn't used, because it can point at a build that failed. If
+  production has no successful deployment, the job leaves a notice and skips the restore.
+- **A merged pull request needs no restore** (amended in 8c). Staging already runs its
+  head image (the required `deploy-staging / deploy` check guarantees it), and that's the
+  image production gets. The first version also restored on merge. Its close run starts
+  alongside the push run that deploys production, so it read production's _previous_
+  image and would have put staging on older code.
 - **Staging deploys are serialized** (ADR-0047's `deploy-staging` concurrency group). A
   newer push replaces a waiting run.
 - **An abandoned pull request's migrations stay in the staging database** (ADR-0047).
@@ -87,6 +90,9 @@ A ruleset on `main`, set in GitHub (repository settings, not code):
 - **A push to `main` with no pull request** (an admin bypass) has no tested image. The
   `promote` job then builds one from `main`, as the `image` job does today, and deploys
   it, and the run says it deployed an untested build.
+- **The image build is one reusable workflow, `image.yml`,** called with a commit and an
+  optional extra tag. It runs for a pull request's head commit (`pr-<n>`) and for a push
+  to `main` that has no pull request (`image-main`). The steps live in one place.
 - **The `main` tag follows production.** After a successful production deploy, the
   promoted image is also tagged `main` (`docker buildx imagetools create`, no rebuild).
   So `main` always names what production runs.
