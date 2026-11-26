@@ -49,6 +49,9 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      # The immutable reference deploys use (ADR-0047).
+      ref: ${{ steps.ref.outputs.ref }}
     steps:
       - uses: actions/checkout@v4
 
@@ -79,6 +82,12 @@ jobs:
             type=sha,prefix=sha-
             type=raw,value=main
 
+      # Same sha-<short> tag metadata-action computes (7 characters).
+      - id: ref
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: echo "ref=ghcr.io/${OWNER,,}/wish-list-api:sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
       - uses: docker/build-push-action@v6
         with:
           context: apps/api/dist
@@ -89,3 +98,12 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # main → staging for now; later pull requests → staging, main → production.
+  deploy-staging:
+    needs: image
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: staging
+      image: ${{ needs.image.outputs.ref }}
+    secrets: inherit

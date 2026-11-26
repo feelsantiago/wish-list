@@ -1,0 +1,52 @@
+name: Deploy
+
+# Points one Railway environment's `api` service at an exact image tag and
+# deploys it (ADR-0047). Called by ci.yml: today `main` → staging; later pull
+# requests → staging and `main` → production. Railway runs `node migrate.js`
+# as the pre-deploy command and moves traffic only once /api/health is 2xx.
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: GitHub Environment and Railway environment name
+        required: true
+        type: string
+      image:
+        description: Full image reference, always a sha-<short> tag
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Holds RAILWAY_TOKEN (secret) and RAILWAY_PROJECT_ID (variable).
+    environment: ${{ inputs.environment }}
+    # One deploy per environment at a time; a newer run replaces a waiting one.
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      cancel-in-progress: false
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_PROJECT: ${{ vars.RAILWAY_PROJECT_ID }}
+      RAILWAY_ENVIRONMENT: ${{ inputs.environment }}
+      IMAGE: ${{ inputs.image }}
+    steps:
+      - run: npm install --global @railway/cli@5.75.0
+
+      - name: Point the api service at the image
+        run: >-
+          railway service source connect
+          --image "$IMAGE"
+          --service api
+          --environment "$RAILWAY_ENVIRONMENT"
+          --project "$RAILWAY_PROJECT"
+
+      - name: Deploy the image
+        run: >-
+          railway service redeploy --from-source --yes
+          --service api
+          --environment "$RAILWAY_ENVIRONMENT"
+          --project "$RAILWAY_PROJECT"
