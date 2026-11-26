@@ -52,17 +52,13 @@ jobs:
 
       - run: npm install --global @railway/cli@5.75.0
 
-      - name: Point the service at the image
+      # Commits the image into the environment's config, which deploys it.
+      # One command, one deploy: `service source connect` left the config on
+      # `:main`, and a following `redeploy` raced two pre-deploy migrations.
+      - name: Pin the environment's service to the image
         run: >-
-          railway service source connect
-          --image "$IMAGE"
-          --service "$RAILWAY_SERVICE"
-          --environment "$RAILWAY_ENVIRONMENT"
+          railway environment edit
           --project "$RAILWAY_PROJECT"
-
-      - name: Deploy the image
-        run: >-
-          railway service redeploy --from-source --yes
-          --service "$RAILWAY_SERVICE"
           --environment "$RAILWAY_ENVIRONMENT"
-          --project "$RAILWAY_PROJECT"
+          --service-config "$RAILWAY_SERVICE" source.image "$IMAGE"
+          --message "Deploy $IMAGE"

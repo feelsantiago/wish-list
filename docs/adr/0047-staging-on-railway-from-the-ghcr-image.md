@@ -57,11 +57,14 @@ Infisical staging ──sync──▶ Railway staging/wish-list-api variables
 - **`deploy-staging`** runs only on `push` to `main`, with `needs: image`, in a GitHub
   Environment named `staging`. That gives the deploy its own history in GitHub and keeps
   the Railway token out of pull request runs.
-- It uses the Railway CLI: `railway service source connect --image <ref>` sets the
-  `sha-<short>` image on the service, then `railway service redeploy --from-source`
-  deploys it. Whether `connect` already starts a deploy on its own, which would make the
-  redeploy a second one, is confirmed on the first successful run. The Railway docs don't
-  say.
+- It uses the Railway CLI: `railway environment edit --service-config <service>
+source.image <ref> --message "Deploy <ref>"` writes the `sha-<short>` image into the
+  environment's configuration and commits it, which starts one deploy. The first version
+  used `railway service source connect --image` followed by `railway service redeploy`.
+  `connect` started a deploy of its own without changing the environment's configured
+  image (it stayed `:main`), and the redeploy started a second deploy whose pre-deploy
+  migration raced the first (`table categories already exists`). One deploy per run
+  keeps migrations from ever running concurrently.
 - **The token is a Railway account token**, stored as the GitHub Environment secret
   `RAILWAY_API_TOKEN` on `staging`, never as a repository-wide secret. A project token
   scoped to `staging` was tried first: it finds the service but is refused
