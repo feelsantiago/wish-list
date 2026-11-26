@@ -66,6 +66,7 @@ controller, nothing more.
 | 21  | Infisical Cloud is the single source of secrets: project `wishlist-api`, `dev`/`staging`/`prod`, keys at root; local dev via `infisical run`; `DATABASE_AUTH_TOKEN` required for remote URLs                                         | ADR-0045    |
 | 22  | API image: Nx builds, Docker packages the prune output on `node:24-slim`; bundled `migrate.js` (drizzle-orm migrator) for the release step; GHCR, tagged `sha-<short>` and `main`                                                    | ADR-0046    |
 | 23  | Staging on Railway Hobby from the public GHCR image; pre-deploy `node migrate.js`, `/api/health` gate; Infisical → Railway sync instead of CI-read secrets; CI deploys the exact `sha-<short>` tag; prod promotes the same tag later | ADR-0047    |
+| 24  | Pull requests deploy to staging from their head commit; `main` is squash-only, up to date, and gated on `check` + staging deploy; merging promotes the PR's tested image to production, with no rebuild                              | ADR-0048    |
 
 Glossary changes made alongside: **Identity** added; **Status (of a User)** corrected
 (deactivation refuses requests, it does not block login); **Extraction Status** reworded so
@@ -127,6 +128,15 @@ FailureRenderer`, email and auth headers redacted.
      GHCR image; `node migrate.js` as pre-deploy command, `/api/health` healthcheck;
      Infisical → Railway secret sync (no GitHub OIDC); `deploy-staging` job sets the
      `sha-<short>` tag on every push to `main` (ADR-0047).
+
+8. Pull requests on staging, `main` on production (ADR-0048). Squash-merged, up-to-date
+   pull requests only; production promotes the image staging tested instead of rebuilding.
+   - 8a. Protect `main` — GitHub ruleset: pull request required, `check` and
+     `deploy-staging / deploy` required, up to date, squash only, no force push.
+   - 8b. PR → staging — image from the head commit (`sha-<head>`, `pr-<n>`), same-repo
+     pull requests only, staging restored to production's image on close.
+   - 8c. Production — Railway `production` environment, Infisical `prod` values and sync,
+     GitHub Environment `production`, `promote` + `deploy-production` on `main`.
 
 ## M1 — Free tier breadth
 
