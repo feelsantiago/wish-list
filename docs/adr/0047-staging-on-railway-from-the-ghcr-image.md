@@ -64,9 +64,10 @@ Infisical staging ──sync──▶ Railway staging/wish-list-api variables
   one deploy.
 - **Two CLI commands were tried first and failed:**
   - `railway service source connect --image`, followed by `railway service redeploy`.
-    `connect` started a deploy without changing the configured image (it stayed `:main`).
-    The redeploy started a second deploy, whose pre-deploy migration raced the first
-    (`table categories already exists`).
+    `connect` changed the image and started a deploy in the **production** environment,
+    despite `--environment staging`. Staging's configured image stayed `:main`. Production
+    had no secrets, so that deploy failed, harmlessly. The redeploy then started two deploys
+    in staging, whose pre-deploy migrations raced (`table categories already exists`).
   - `railway environment edit --service-config <service> source.image <ref>`. It exits 0
     and reports "No changes to apply" when stdin isn't a terminal, which is always the case
     in CI.
