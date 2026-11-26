@@ -16,7 +16,7 @@ green. But most of it does nothing:
 
 **One workflow, `ci.yml`, runs on every pull request and every push to `main`. It checks
 formatting, then runs `lint`, `typecheck`, `test` and `build` on affected projects only.
-Nx Cloud is not used. The local Nx cache is persisted between runs with `actions/cache`.
+Nx Cloud is not used, and the Nx cache is not carried between runs.
 Node 24 LTS is pinned once in `.nvmrc`, and CI and `engines` follow it.**
 
 ```yaml
@@ -43,11 +43,6 @@ jobs:
         with: { node-version-file: .nvmrc, cache: npm }
       - run: npm ci
       - uses: nrwl/nx-set-shas@v4
-      - uses: actions/cache@v4
-        with:
-          path: .nx/cache
-          key: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
-          restore-keys: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
       - run: npx nx format:check --all
       - run: npx nx affected -t lint typecheck test build
 ```
@@ -56,9 +51,14 @@ jobs:
   request compares against the merge base with `main`. A push to `main` compares against
   the last commit whose CI run succeeded, so a red commit's changes are checked again on the
   next push instead of being skipped.
-- **The cache is keyed on the lockfile, then on the commit.** Each run restores the newest
-  cache for the same lockfile and saves a new one under its own SHA. Changing a dependency
-  starts the cache cold, which is intended.
+- **No Nx cache between runs** (amended 2026-11-26). The first version persisted
+  `.nx/cache` with `actions/cache`. It never produced a hit: Nx 23 records cache entries in
+  a SQLite database under `.nx/workspace-data/`, keyed by machine ID, and refuses
+  artifacts it has no record of ("Unrecognized Cache Artifacts"). Every GitHub runner is
+  a new machine, so caching the database too would not help, and
+  `NX_REJECT_UNKNOWN_LOCAL_CACHE=0` is no longer honoured. A remote cache (Nx Cloud, or a
+  self-hosted server implementing Nx's cache API) is the only way to share it, which is
+  more than this workspace needs today. `setup-node` still caches npm downloads.
 - **Concurrency cancels superseded pull request runs only.** A run on `main` always
   finishes, because 7c and 7d will deploy from it.
 - **CI holds no secrets.** Tests run against the local test harness and never reach Turso,
@@ -79,7 +79,9 @@ jobs:
   so is an additive change.
 - **`run-many` on everything, without a cache** (rejected). Simple, but CI time grows with
   the workspace instead of with the change.
-- **Affected plus `actions/cache`** (chosen). Uses only GitHub and Nx, and CI time stays
+- **Affected plus `actions/cache` on `.nx/cache`** (tried, then removed). See the
+  amendment above: Nx 23 cannot restore artifacts from another machine.
+- **Affected, no cross-run cache** (chosen). Uses only GitHub and Nx, and CI time stays
   proportional to the change.
 
 ## Consequences

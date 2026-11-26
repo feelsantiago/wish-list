@@ -37,14 +37,6 @@ jobs:
       # green commit on main for pushes.
       - uses: nrwl/nx-set-shas@v4
 
-      # Restores the newest cache for this lockfile; saves a new one per commit.
-      - uses: actions/cache@v4
-        with:
-          path: .nx/cache
-          key: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
-          restore-keys: |
-            nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
-
       - run: npx nx format:check --all
 
       - run: npx nx affected -t lint typecheck test build
@@ -66,14 +58,6 @@ jobs:
           cache: npm
 
       - run: npm ci
-
-      # check just saved this commit's cache, so the build is a cache hit.
-      - uses: actions/cache/restore@v4
-        with:
-          path: .nx/cache
-          key: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
-          restore-keys: |
-            nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
 
       # The image's build context: bundle, pruned lockfile, workspace_modules.
       - run: npx nx run api:prune
