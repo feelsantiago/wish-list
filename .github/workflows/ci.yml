@@ -2,12 +2,14 @@ name: CI
 
 on:
   pull_request:
+    # closed: put staging back on production's image (ADR-0048).
+    types: [opened, synchronize, reopened, closed]
   push:
     branches:
       - main
 
 # A newer push to the same pull request cancels the older run. Runs on main
-# always finish: the image and deploy jobs (M0 7c/7d) will run from them.
+# always finish: production deploys (M0 8c) will run from them.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -19,6 +21,7 @@ permissions:
 
 jobs:
   check:
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,19 +44,28 @@ jobs:
 
       - run: npx nx affected -t lint typecheck test build
 
-  # Builds and pushes the API image on main only, after check (ADR-0046).
+  # Builds the pull request's head commit, the artifact staging tests and
+  # production later promotes (ADR-0046, ADR-0048). Pull requests from forks
+  # get no package write access or secrets, so they skip this and deploys.
   image:
     needs: check
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.action != 'closed'
+      && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     outputs:
       # The immutable reference deploys use (ADR-0047).
-      ref: ${{ steps.ref.outputs.ref }}
+      ref: ${{ steps.tags.outputs.ref }}
     steps:
+      # The head commit, not GitHub's merge preview: promotion looks images up
+      # by the pull request's head sha.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - uses: actions/setup-node@v4
         with:
@@ -73,20 +85,29 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # sha-<short> never moves and is what deploys use; main follows the branch.
+      # sha-<head short> never moves and is what deploys and promotion use;
+      # pr-<number> follows the pull request for humans.
+      - id: tags
+        env:
+          OWNER: ${{ github.repository_owner }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          image="ghcr.io/${OWNER,,}/wish-list-api"
+          ref="$image:sha-${HEAD_SHA::7}"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          {
+            echo "tags<<EOF"
+            echo "$ref"
+            echo "$image:pr-$PR"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      # OCI labels only (source repository, revision); tags come from above.
       - id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository_owner }}/wish-list-api
-          tags: |
-            type=sha,prefix=sha-
-            type=raw,value=main
-
-      # Same sha-<short> tag metadata-action computes (7 characters).
-      - id: ref
-        env:
-          OWNER: ${{ github.repository_owner }}
-        run: echo "ref=ghcr.io/${OWNER,,}/wish-list-api:sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
       - uses: docker/build-push-action@v6
         with:
@@ -94,16 +115,56 @@ jobs:
           file: apps/api/Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.tags.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # main → staging for now; later pull requests → staging, main → production.
+  # Required to merge: the image deployed, migrated and passed /api/health.
   deploy-staging:
     needs: image
     uses: ./.github/workflows/deploy.yml
     with:
       environment: staging
       image: ${{ needs.image.outputs.ref }}
+    secrets: inherit
+
+  # On close, merged or not, staging goes back to what production runs: its
+  # last successful deployment, which may differ from its configured image.
+  production-image:
+    if: >-
+      github.event.action == 'closed'
+      && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    # Read-only use of the staging environment's Railway account token.
+    environment: staging
+    outputs:
+      ref: ${{ steps.find.outputs.ref }}
+    env:
+      RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+      RAILWAY_PROJECT: ${{ vars.RAILWAY_PROJECT_ID }}
+      RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
+    steps:
+      - run: npm install --global @railway/cli@5.75.0
+
+      - id: find
+        run: |
+          ref=$(railway deployment list --json --limit 20 \
+              --project "$RAILWAY_PROJECT" --environment production \
+              --service "$RAILWAY_SERVICE" \
+            | jq -r '[.[] | select(.status == "SUCCESS")] | sort_by(.createdAt) | last | .meta.image // empty')
+          if [ -z "$ref" ]; then
+            echo "::notice::Production has no successful deployment yet; staging stays as it is."
+          else
+            echo "Production runs $ref"
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+
+  restore-staging:
+    needs: production-image
+    if: needs.production-image.outputs.ref != ''
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: staging
+      image: ${{ needs.production-image.outputs.ref }}
     secrets: inherit

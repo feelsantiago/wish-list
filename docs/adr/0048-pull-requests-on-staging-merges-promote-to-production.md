@@ -62,9 +62,12 @@ A ruleset on `main`, set in GitHub (repository settings, not code):
   could merge without ever reaching staging. Such a change is pushed to a branch here
   first, and merged from there.
 - **Closing a pull request, merged or not, puts staging back on production's image.** A
-  `restore-staging` job reads the image configured in Railway's `production` environment
-  and deploys it to staging with the same deploy workflow. Until production exists (8c),
-  there's nothing to restore to, and the job logs that and exits.
+  `production-image` job finds the image of production's last **successful** deployment,
+  and `restore-staging` deploys it to staging with the same deploy workflow. The image
+  configured in production isn't used, because it can point at a build that failed (it
+  does today: `sha-8a191d1`, from the first CI attempt). Until production has a successful
+  deployment (8c), there's nothing to restore to, and the job leaves a notice and skips
+  the restore.
 - **Staging deploys are serialized** (ADR-0047's `deploy-staging` concurrency group). A
   newer push replaces a waiting run.
 - **An abandoned pull request's migrations stay in the staging database** (ADR-0047).
