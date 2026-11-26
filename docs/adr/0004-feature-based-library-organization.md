@@ -4,6 +4,9 @@
 > cross-feature rule was replaced (services use repositories directly and never import
 > other services); `vendor` was dropped from the slice list; `libs/extraction` was added
 > as a horizontal lib. The text below reflects those amendments.
+>
+> **Amended by ADR-0043.** `libs/domain` is isomorphic and may be imported at runtime by any
+> lib or app; the type-only clause for `data` libs is removed.
 
 Libraries are organized by feature (vertical slice) rather than by technical layer alone. Each feature gets up to three libs — `data`, `service`, `ui` — sitting alongside four cross-cutting horizontal libs shared by all features: `common`, `domain`, `database`, `extraction`.
 
@@ -27,15 +30,15 @@ Horizontal infrastructure libs (`database`, `extraction`) are single libs, not `
 
 ```
 apps/api  → libs/<feature>/service → libs/domain, libs/database, libs/extraction, libs/<feature>/data
-apps/web  → libs/<feature>/ui      → libs/<feature>/data
+apps/web  → libs/<feature>/ui      → libs/<feature>/data → libs/domain
 libs/extraction → libs/domain, libs/database
 libs/database   → libs/domain
 libs/domain     → libs/common
 ```
 
 - `libs/domain` never imports NestJS or Angular — it is the one layer both apps share unmodified.
-- **`libs/domain` is the ubiquitous language of the system.** Layers communicate through domain types; every other lib derives its own types from domain types rather than restating them. `libs/<feature>/data` may import `libs/domain` **type-only**, deriving wire contracts from `Plain<T>` (ADR-0009) — so `libs/<feature>/ui` gets those types transitively with no domain code in the bundle.
-- `libs/<feature>/ui` only ever imports its own feature's `data` lib, never another feature's `service`, and never `libs/domain`/`libs/database`/`libs/extraction` directly — the API is the seam between client and server, DTOs are what cross it.
+- **`libs/domain` is the ubiquitous language of the system.** Layers communicate through domain types; every other lib derives its own types from domain types rather than restating them. `libs/domain` is isomorphic (ADR-0043), so `libs/<feature>/data` and `libs/<feature>/ui` import it at runtime: `data` composes request schemas from domain schemas and types responses as `Plain<T>` (ADR-0009), and clients rebuild entities with `Entity.from`.
+- `libs/<feature>/ui` imports its own feature's `data` lib and `libs/domain`, never another feature's `service`, and never `libs/database`/`libs/extraction` — the API is the seam between client and server, DTOs are what cross it.
 - `libs/<feature>/service` and `libs/extraction` are the only places allowed to import `libs/database`. `apps/api` composes services; it does not talk to the database layer directly.
 - **Services never import other services.** A feature's `service` lib depends on `libs/domain`, `libs/database`, `libs/extraction`, and its own `data` lib — and on nothing else in `libs/`. Cross-feature reads go through `libs/database`'s repositories directly. By convention (review-time, not lint-enforced): a feature's service owns _writes_ to its own entities; other features may _read_ any repository. See ADR-0025 for why the original "go through the other feature's service lib" rule was replaced.
 - **Controllers live in `apps/api`**, not in `libs/<feature>/service`. Service libs stay API-agnostic so a CLI, cron worker, or queue consumer can use them unchanged (ADR-0020, ADR-0025).

@@ -61,6 +61,7 @@ controller, nothing more.
 | 16 | `Identity` in `libs/domain`; token verification in horizontal `libs/authentication`; `AccountService.resolve` in `libs/account/service`; global `AuthGuard` + `@CurrentUser()` in `apps/api`, `@Public()` opt-out | ADR-0038 |
 | 17 | `AuthGuard` refuses a Deactivated `User` (403 `user-deactivated`) unless the route is `@AllowDeactivated()` (built in M1 with reactivate); `Authorization`'s check stays | ADR-0039 |
 | 18 | `Identity.name` is `Option`; missing name falls back to the email local part; `User.nameSource` (`broker`/`user`) stops re-sync once the User renames | ADR-0040 |
+| 19 | `libs/domain` is isomorphic and imported at runtime by every lib and app; `data` libs compose request schemas from `Entity.$`; `Plain<T>` is the wire format both ways; services return domain types, controllers call `plain()` | ADR-0043 |
 
 Glossary changes made alongside: **Identity** added; **Status (of a User)** corrected
 (deactivation refuses requests, it does not block login); **Extraction Status** reworded so
@@ -99,10 +100,14 @@ envelope and deployment against real traffic before six service libs are built o
    `libs/account/service` with `resolve(identity)`: find by (provider, providerId), else
    create `User` + Unsorted Category in one transaction; re-sync name and email on drift.
 5. `libs/authorization` — `EntityAuthorizer` over the owned-entity registry (ADR-0031).
+6a. Isomorphic domain — replace `node:crypto` with Web Crypto, drop `types: ["node"]`,
+   lint-ban `node:*` in `libs/domain` (ADR-0043).
 6. First vertical — `libs/wishlist/data` + `libs/wishlist/service` + controller for
    `POST /wishlists` and `GET /wishlists`. `GET` is a collection read, so it uses
    `QueryScope.user` and never touches the authorizer; `POST` creates an entity that has no
    owner to check yet. Together they exercise the shell without needing seed data.
+   Built before step 5: step 6 has no authorizer call, so `libs/authorization` moves to the
+   start of M1, designed alongside `authorizeVia`.
 7. Deployment — container image, release-step `drizzle-kit migrate`, staging environment.
 
 ## M1 — Free tier breadth

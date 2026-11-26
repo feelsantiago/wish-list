@@ -1,5 +1,8 @@
 # Plain<T> utility type for serialization
 
+> **Extended by ADR-0043.** `Plain<T>` is the wire format in both directions: the API sends
+> `Entity.plain(x)`, and clients rebuild with `Entity.from(json)`.
+
 We use a recursive conditional type `Plain<T>` (ported into `libs/domain`) to derive a wire-safe, serializable form from any domain entity. It strips branded types to their base (`Id` → `string`, ADR-0006), converts `Option<X>` to `X | null`, converts `Date` to `string`, and recursively processes object fields and arrays. The `_tag` discriminator (ADR-0008) passes through unchanged.
 
 This creates a compile-time contract between `entity.plain()` (produces `Plain<T>`) and `Entity.from()` (consumes it) — see ADR-0007. The round-trip `Item.from(Item.plain(item))` is type-checked: if a field is added to an entity interface but not handled in `plain()`, the compiler catches it. This is also the shape `libs/database` repositories read/write against and the shape API responses in `apps/api` return, so one type definition covers persistence and wire formats both.
