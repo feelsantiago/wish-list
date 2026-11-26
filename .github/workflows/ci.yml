@@ -9,9 +9,12 @@ on:
       - main
 
 # A newer push to the same pull request cancels the older run. Runs on main
-# always finish: production deploys (M0 8c) will run from them.
+# always finish: production deploys (M0 8c) will run from them. Pull request
+# runs are grouped by number, not ref: a merged pull request's `closed` run
+# has github.ref = refs/heads/main, and grouping by ref let it cancel the
+# push run on main that the merge started.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
