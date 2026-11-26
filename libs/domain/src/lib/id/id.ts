@@ -1,8 +1,8 @@
-import { randomUUID } from 'node:crypto';
 import { z, ZodError } from 'zod';
 import { Result } from '@wish-list/common-result';
 import type { Brand } from '../brand/brand.js';
 import { DomainFailure } from '../domain-failure/domain-failure.js';
+import { Uuid } from './uuid.js';
 
 export type Id = Brand<string, 'Id'>;
 
@@ -10,7 +10,7 @@ export namespace Id {
   export const $ = z.string().uuid();
 
   export function generate(): Id {
-    return randomUUID() as unknown as Id;
+    return Uuid.generate() as unknown as Id;
   }
 
   export function create(input: string): Result<Id, DomainFailure> {

@@ -1,8 +1,8 @@
-import { randomUUID } from 'node:crypto';
 import { z, ZodError } from 'zod';
 import { Result } from '@wish-list/common-result';
 import type { Plain } from '../plain/plain.js';
 import { Id } from '../id/id.js';
+import { Uuid } from '../id/uuid.js';
 import { DomainFailure } from '../domain-failure/domain-failure.js';
 
 export interface Reservation {
@@ -36,7 +36,7 @@ export namespace Reservation {
         id: Id.generate(),
         item: input.item,
         name: value.name,
-        token: randomUUID(),
+        token: Uuid.generate(),
         createdAt: new Date(),
       }));
   }
