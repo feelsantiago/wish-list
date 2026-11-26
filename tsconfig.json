@@ -41,6 +41,9 @@
     },
     {
       "path": "./libs/account/service"
+    },
+    {
+      "path": "./libs/wishlist/data"
     }
   ]
 }
