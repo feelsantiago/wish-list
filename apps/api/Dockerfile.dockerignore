@@ -1,0 +1,3 @@
+# Applies to apps/api/Dockerfile, whose context is apps/api/dist (ADR-0046).
+# A local `npm ci` inside dist must not overwrite the image's Linux install.
+node_modules

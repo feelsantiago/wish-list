@@ -38,7 +38,11 @@ CMD ["node", "main.js"]
   changing dependencies reuses the cached `npm ci` layer.
 - **An `api:docker-build` Nx target** depends on `api:prune` and runs
   `docker build -f apps/api/Dockerfile apps/api/dist`, so one command builds the image
-  locally, and CI calls the same target.
+  locally (tagged `wish-list-api:local`). CI runs `api:prune` the same way, then hands the
+  same Dockerfile and context to `docker/build-push-action`, which adds what a local
+  build doesn't need: pushing, tags, OCI labels and a layer cache on GitHub Actions.
+- **`apps/api/Dockerfile.dockerignore`** excludes `node_modules`, so a stray local
+  `npm ci` inside `dist` never replaces the image's Linux install.
 - **`NODE_ENV` belongs to the image**, not to Infisical. Infisical holds configuration
   that varies by environment; how the bundle runs does not.
 
@@ -46,8 +50,8 @@ CMD ["node", "main.js"]
 
 - **`apps/api/src/migrate.ts`** is a second webpack entry (`additionalEntryPoints`). It
   validates only `DATABASE_URL` and `DATABASE_AUTH_TOKEN` (the same rules as `Env.$`, so
-  a remote URL still requires the token), runs the migrations, logs what was applied, and
-  exits non-zero on failure.
+  a remote URL still requires the token), runs the migrations, prints that the database is up to
+  date, and on failure renders the `Failure` and exits non-zero.
 - **The migration logic lives in `libs/database`**, as `Database.migrate(db, folder)`
   returning an `AsyncResult`. The lib owns the schema and the migration files, so it also
   owns applying them. The entry only wires env to it.
@@ -83,9 +87,10 @@ db:migrate` still applies them locally. Both write to the same `__drizzle_migrat
 
 ## Consequences
 
-- **The image is roughly 75 MB of base plus about 110 MB of `node_modules`.**
-  `workspace_modules` also copies each lib's sources (about 8 MB), which the runtime never
-  reads. Trimming that is possible but not worth a custom prune step yet.
+- **Our layers add about 140 MB to the base**: `node_modules` (about 120 MB) and
+  `workspace_modules` (about 9 MB, mostly lib sources the runtime never reads). Trimming
+  `workspace_modules` is possible but not worth a custom prune step yet. `docker image ls`
+  reports about 510 MB in total, because it counts the base image unpacked.
 - **Migrations are part of the image's version.** The `sha-…` tag that runs the code also
   carries exactly the migrations that code expects, so 7d's release step and the deploy
   that follows always agree.

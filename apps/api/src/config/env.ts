@@ -7,6 +7,31 @@ const HOUR = 60 * MINUTE;
 /** A local file or in-memory database needs no token; anything else is remote. */
 const LOCAL_DATABASE_URL = /^(file:|:memory:$)/;
 
+/** Shared by the server (`Env.$`) and the migrator (`Env.database`). */
+const DATABASE = {
+  DATABASE_URL: z.string().min(1),
+  /** Turso token. Required for remote URLs, checked by `requireRemoteToken`. */
+  DATABASE_AUTH_TOKEN: z
+    .string()
+    .min(1)
+    .optional()
+    .transform((token) => Option.from(token)),
+};
+
+type DatabaseEnv = z.infer<z.ZodObject<typeof DATABASE>>;
+
+const REMOTE_TOKEN_REQUIRED = {
+  path: ['DATABASE_AUTH_TOKEN'],
+  message: 'Required when DATABASE_URL is a remote database',
+};
+
+function hasRequiredToken(env: DatabaseEnv): boolean {
+  return (
+    LOCAL_DATABASE_URL.test(env.DATABASE_URL) ||
+    env.DATABASE_AUTH_TOKEN.isSome()
+  );
+}
+
 export type Env = z.infer<typeof Env.$>;
 
 export namespace Env {
@@ -32,13 +57,7 @@ export namespace Env {
         .enum(['true', 'false'])
         .default('false')
         .transform((v) => v === 'true'),
-      DATABASE_URL: z.string().min(1),
-      /** Turso token. Required for remote URLs, checked below (ADR-0045). */
-      DATABASE_AUTH_TOKEN: z
-        .string()
-        .min(1)
-        .optional()
-        .transform((token) => Option.from(token)),
+      ...DATABASE,
       /** Firebase project whose ID tokens the API accepts (ADR-0034). */
       FIREBASE_PROJECT_ID: z.string().min(1),
       LLM_API_KEY: z.string().min(1),
@@ -60,13 +79,15 @@ export namespace Env {
         .positive()
         .default(5 * MINUTE),
     })
-    .refine(
-      (env) =>
-        LOCAL_DATABASE_URL.test(env.DATABASE_URL) ||
-        env.DATABASE_AUTH_TOKEN.isSome(),
-      {
-        path: ['DATABASE_AUTH_TOKEN'],
-        message: 'Required when DATABASE_URL is a remote database',
-      },
-    );
+    .refine(hasRequiredToken, REMOTE_TOKEN_REQUIRED);
+
+  /**
+   * What `migrate.js` reads (ADR-0046): the database keys alone, under the
+   * same rules, so a migration never needs the server's other secrets.
+   */
+  export const database = z
+    .object(DATABASE)
+    .refine(hasRequiredToken, REMOTE_TOKEN_REQUIRED);
+
+  export type Database = z.infer<typeof database>;
 }

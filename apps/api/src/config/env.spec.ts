@@ -43,6 +43,16 @@ describe('Env', () => {
       ]);
     });
 
+    it('applies the same rule to the migrator schema', () => {
+      expect(
+        Env.database.safeParse({ DATABASE_URL: 'libsql://db.turso.io' })
+          .success,
+      ).toBe(false);
+      expect(
+        Env.database.safeParse({ DATABASE_URL: 'file:./local.db' }).success,
+      ).toBe(true);
+    });
+
     it('rejects an empty token', () => {
       expect(
         Env.$.safeParse({

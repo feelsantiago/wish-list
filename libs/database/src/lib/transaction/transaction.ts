@@ -1,4 +1,5 @@
 import type { LibSQLDatabase, LibSQLTransaction } from 'drizzle-orm/libsql';
+import { migrate as drizzleMigrate } from 'drizzle-orm/libsql/migrator';
 import type { ExtractTablesWithRelations } from 'drizzle-orm';
 import { AsyncResult } from '@wish-list/common-result';
 import { match, P } from 'ts-pattern';
@@ -44,6 +45,21 @@ export namespace Database {
         match(error)
           .with(P.instanceOf(Rollback<E>), (rollback) => rollback.error)
           .otherwise((thrown) => DatabaseError.from(thrown).failure()),
+    );
+  }
+
+  /**
+   * Applies the SQL migrations in `folder` that `db` has not seen yet,
+   * tracked in `__drizzle_migrations`, the same table drizzle-kit uses, so
+   * either tool can migrate a database the other has touched (ADR-0046).
+   */
+  export function migrate(
+    db: LibSQLDatabase,
+    folder: string,
+  ): AsyncResult<void, DatabaseFailure> {
+    return AsyncResult.fromThrowable(
+      () => drizzleMigrate(db, { migrationsFolder: folder }),
+      (thrown) => DatabaseError.from(thrown).failure(),
     );
   }
 }

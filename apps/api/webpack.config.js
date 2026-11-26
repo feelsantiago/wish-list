@@ -14,8 +14,20 @@ module.exports = {
       target: 'node',
       compiler: 'tsc',
       main: './src/main.ts',
+      // Release-step migrator (ADR-0046), run as `node migrate.js`.
+      additionalEntryPoints: [
+        { entryName: 'migrate', entryPath: './src/migrate.ts' },
+      ],
       tsConfig: './tsconfig.webpack.json',
-      assets: ['./src/assets'],
+      assets: [
+        './src/assets',
+        // SQL migrations, read by migrate.js from `__dirname/drizzle`.
+        {
+          input: '../../libs/database/drizzle',
+          glob: '**/*',
+          output: 'drizzle',
+        },
+      ],
       optimization: false,
       outputHashing: 'none',
       generatePackageJson: false,
