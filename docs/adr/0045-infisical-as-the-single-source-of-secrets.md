@@ -52,7 +52,12 @@ infisical run --env=staging -- npx nx run database:db:migrate
 | `DATABASE_AUTH_TOKEN`  | —                    | staging DB token             | prod DB token             |
 | `FIREBASE_PROJECT_ID`  | `wishlist-porto-dev` | dev project for now          | its own project, later    |
 | `LOG_PRETTY`           | `true`               | `false`                      | `false`                   |
-| `HTTP_EXPOSE_FAILURES` | `true`               | `false`                      | `false`                   |
+| `HTTP_EXPOSE_FAILURES` | `true`               | `true`                       | `false`                   |
+
+Staging exposes failures (amended 2026-11-26): it exists for testing, and a 4xx/5xx body
+that carries the failure chain saves a trip to the logs. Its bodies then include stack
+traces with bundle paths. That's acceptable for a testing environment holding no real
+user data, and never for production.
 
 The other keys (`LLM_*`, `LOG_LEVEL`, the extraction tunables) hold the same meaning
 everywhere and are set per environment as needed. Production is created now and stays
