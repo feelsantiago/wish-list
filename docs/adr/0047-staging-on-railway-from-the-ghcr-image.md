@@ -62,9 +62,12 @@ Infisical staging ──sync──▶ Railway staging/wish-list-api variables
   deploys it. Whether `connect` already starts a deploy on its own, which would make the
   redeploy a second one, is confirmed on the first successful run. The Railway docs don't
   say.
-- **The token is a Railway project token** scoped to the `staging` environment, stored
-  as the GitHub Environment secret `RAILWAY_TOKEN` on `staging`, never as a
-  repository-wide secret. The project ID and the service name are the Environment
+- **The token is a Railway account token**, stored as the GitHub Environment secret
+  `RAILWAY_API_TOKEN` on `staging`, never as a repository-wide secret. A project token
+  scoped to `staging` was tried first: it finds the service but is refused
+  (`Unauthorized`) when `source connect` changes the image. An account token reaches
+  every project on the account, which is broader than this job needs. That's the price
+  of setting the image from CI. The project ID and the service name are the Environment
   variables `RAILWAY_PROJECT_ID` and `RAILWAY_SERVICE`. Railway names a service created
   from an image after the image (`wish-list-api`), so the workflow reads the name instead
   of assuming one. A missing value fails the job by name before the CLI runs, because the
