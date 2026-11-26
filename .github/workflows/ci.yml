@@ -1,40 +1,50 @@
 name: CI
 
 on:
+  pull_request:
   push:
     branches:
       - main
-  pull_request:
+
+# A newer push to the same pull request cancels the older run. Runs on main
+# always finish: the image and deploy jobs (M0 7c/7d) will run from them.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
-  actions: read
   contents: read
+  # nrwl/nx-set-shas reads previous workflow runs to find the last green commit.
+  actions: read
 
 jobs:
-  main:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          filter: tree:0
           fetch-depth: 0
+          filter: tree:0
 
-      # This enables task distribution via Nx Cloud
-      # Run this command as early as possible, before dependencies are installed
-      # Learn more at https://nx.dev/docs/reference/nx-cloud-cli#npx-nxcloud-startcirun
-      - run: npx nx start-ci-run --distribute-on="3 linux-medium-js" --stop-agents-after="e2e"
-
-      # Cache node_modules
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
-          cache: 'npm'
+          node-version-file: .nvmrc
+          cache: npm
 
       - run: npm ci
 
-      # Prepend any command with "nx record --" to record its logs to Nx Cloud
-      - run: npx nx record -- npx nx format:check --base="remotes/origin/main"
-      - run: npx nx run-many -t lint test build typecheck e2e
-      # Nx Cloud recommends fixes for failures to help you get CI green faster. Learn more: https://nx.dev/docs/features/ci-features/self-healing-ci
-      - run: npx nx fix-ci
-        if: always()
+      # Sets NX_BASE / NX_HEAD: the merge base for pull requests, the last
+      # green commit on main for pushes.
+      - uses: nrwl/nx-set-shas@v4
+
+      # Restores the newest cache for this lockfile; saves a new one per commit.
+      - uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+
+      - run: npx nx format:check --all
+
+      - run: npx nx affected -t lint typecheck test build

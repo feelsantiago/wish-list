@@ -48,7 +48,7 @@ jobs:
           path: .nx/cache
           key: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
           restore-keys: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
-      - run: npx nx format:check
+      - run: npx nx format:check --all
       - run: npx nx affected -t lint typecheck test build
 ```
 
