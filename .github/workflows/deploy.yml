@@ -1,6 +1,6 @@
 name: Deploy
 
-# Points one Railway environment's `api` service at an exact image tag and
+# Points one Railway environment's API service at an exact image tag and
 # deploys it (ADR-0047). Called by ci.yml: today `main` → staging; later pull
 # requests → staging and `main` → production. Railway runs `node migrate.js`
 # as the pre-deploy command and moves traffic only once /api/health is 2xx.
@@ -22,7 +22,8 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # Holds RAILWAY_TOKEN (secret) and RAILWAY_PROJECT_ID (variable).
+    # Holds RAILWAY_TOKEN (secret: a project token scoped to this environment),
+    # RAILWAY_PROJECT_ID and RAILWAY_SERVICE (variables).
     environment: ${{ inputs.environment }}
     # One deploy per environment at a time; a newer run replaces a waiting one.
     concurrency:
@@ -31,22 +32,36 @@ jobs:
     env:
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       RAILWAY_PROJECT: ${{ vars.RAILWAY_PROJECT_ID }}
+      RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
       RAILWAY_ENVIRONMENT: ${{ inputs.environment }}
       IMAGE: ${{ inputs.image }}
     steps:
+      # An empty value makes the CLI answer "Unauthorized", which misleads.
+      - name: Check the environment's Railway settings
+        run: |
+          missing=()
+          [ -n "$RAILWAY_TOKEN" ] || missing+=("secret RAILWAY_TOKEN")
+          [ -n "$RAILWAY_PROJECT" ] || missing+=("variable RAILWAY_PROJECT_ID")
+          [ -n "$RAILWAY_SERVICE" ] || missing+=("variable RAILWAY_SERVICE")
+          if [ "${#missing[@]}" -gt 0 ]; then
+            printf '::error::GitHub Environment "%s" is missing: %s\n' \
+              "$RAILWAY_ENVIRONMENT" "${missing[*]}"
+            exit 1
+          fi
+
       - run: npm install --global @railway/cli@5.75.0
 
-      - name: Point the api service at the image
+      - name: Point the service at the image
         run: >-
           railway service source connect
           --image "$IMAGE"
-          --service api
+          --service "$RAILWAY_SERVICE"
           --environment "$RAILWAY_ENVIRONMENT"
           --project "$RAILWAY_PROJECT"
 
       - name: Deploy the image
         run: >-
           railway service redeploy --from-source --yes
-          --service api
+          --service "$RAILWAY_SERVICE"
           --environment "$RAILWAY_ENVIRONMENT"
           --project "$RAILWAY_PROJECT"

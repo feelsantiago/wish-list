@@ -7,7 +7,7 @@ runs, how it gets its secrets, how migrations run before traffic moves, and how 
 triggers all of that.
 
 **Railway (Hobby plan) hosts the API. A `wish-list` project has a `staging` environment
-now and a `production` environment later, each with one `api` service whose source is the
+now and a `production` environment later, each with one API service (`wish-list-api`) whose source is the
 public GHCR image. Railway runs `node migrate.js` as the pre-deploy command and switches
 traffic only after `/api/health` answers 2xx. Infisical's native Railway sync pushes
 each Infisical environment into the matching Railway environment. CI never reads
@@ -17,11 +17,11 @@ staging service at the new `sha-<short>` tag.**
 ```
 push to main
   └─ check ─ image (ghcr.io/…/wish-list-api:sha-abc1234)
-               └─ deploy-staging: railway → staging/api → image sha-abc1234
+               └─ deploy-staging: railway → staging/wish-list-api → image sha-abc1234
                     ├─ pre-deploy: node migrate.js   (non-zero → deploy stops)
                     ├─ start: node main.js
                     └─ /api/health 2xx → traffic moves; else old deploy stays
-Infisical staging ──sync──▶ Railway staging/api variables
+Infisical staging ──sync──▶ Railway staging/wish-list-api variables
 ```
 
 ### The image is public
@@ -38,7 +38,7 @@ Infisical staging ──sync──▶ Railway staging/api variables
 
 - **One Infisical secret sync per environment.** Source: the `wishlist-api` project,
   environment `staging`, path `/`. Destination: Railway project `wish-list`, environment
-  `staging`, service `api`. Auto-sync is on, so a change in Infisical reaches Railway
+  `staging`, service `wish-list-api`. Auto-sync is on, so a change in Infisical reaches Railway
   without a commit.
 - **The sync authenticates with a Railway project token** scoped to that environment,
   which is the narrowest token Railway offers.
@@ -57,14 +57,18 @@ Infisical staging ──sync──▶ Railway staging/api variables
 - **`deploy-staging`** runs only on `push` to `main`, with `needs: image`, in a GitHub
   Environment named `staging`. That gives the deploy its own history in GitHub and keeps
   the Railway token out of pull request runs.
-- It uses the Railway CLI:
-  `railway service source connect --image ghcr.io/feelsantiago/wish-list-api:sha-<short>
---service api --environment staging`. If setting the source doesn't start a deploy by
-  itself, a `railway redeploy` follows. Which of the two is needed, and which token type
-  the command accepts (project or account), is confirmed when the job is first run. The
-  Railway docs don't say.
-- **The token is a GitHub Environment secret** (`RAILWAY_TOKEN`) on `staging`, never a
-  repository-wide secret.
+- It uses the Railway CLI: `railway service source connect --image <ref>` sets the
+  `sha-<short>` image on the service, then `railway service redeploy --from-source`
+  deploys it. Whether `connect` already starts a deploy on its own, which would make the
+  redeploy a second one, is confirmed on the first successful run. The Railway docs don't
+  say.
+- **The token is a Railway project token** scoped to the `staging` environment, stored
+  as the GitHub Environment secret `RAILWAY_TOKEN` on `staging`, never as a
+  repository-wide secret. The project ID and the service name are the Environment
+  variables `RAILWAY_PROJECT_ID` and `RAILWAY_SERVICE`. Railway names a service created
+  from an image after the image (`wish-list-api`), so the workflow reads the name instead
+  of assuming one. A missing value fails the job by name before the CLI runs, because the
+  CLI reports an empty project as `Unauthorized`.
 - **The job deploys the exact tag `image` pushed**, never `main`. Railway's own
   auto-update on a moving tag isn't used: it polls on its own schedule, and the deploy
   would no longer be tied to the commit that triggered it.
