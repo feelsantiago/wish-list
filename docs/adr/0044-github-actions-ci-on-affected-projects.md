@@ -26,7 +26,7 @@ on:
     branches: [main]
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -60,7 +60,11 @@ jobs:
   self-hosted server implementing Nx's cache API) is the only way to share it, which is
   more than this workspace needs today. `setup-node` still caches npm downloads.
 - **Concurrency cancels superseded pull request runs only.** A run on `main` always
-  finishes, because 7c and 7d will deploy from it.
+  finishes, because 7c and 7d will deploy from it. Pull request runs are grouped by
+  pull request number, pushes by ref (amended 2026-11-26). The first version grouped
+  everything by `github.ref`. When a pull request is merged, its `closed` run gets
+  `github.ref = refs/heads/main`, so it joined `main`'s group and cancelled the push run
+  the merge had started (PR #1).
 - **CI holds no secrets.** Tests run against the local test harness and never reach Turso,
   Firebase or the LLM. That stays true: a test that needs a real secret belongs in the M2
   e2e suite, not in this job.
