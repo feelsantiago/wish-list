@@ -50,7 +50,7 @@ infisical run --env=staging -- npx nx run database:db:migrate
 | ---------------------- | -------------------- | ---------------------------- | ------------------------- |
 | `DATABASE_URL`         | `file:./local.db`    | Turso `libsql://` staging DB | Turso `libsql://` prod DB |
 | `DATABASE_AUTH_TOKEN`  | —                    | staging DB token             | prod DB token             |
-| `FIREBASE_PROJECT_ID`  | `wishlist-porto-dev` | dev project for now          | its own project, later    |
+| `FIREBASE_PROJECT_ID`  | `wishlist-porto-dev` | dev project for now          | `wishlist-prod`           |
 | `LOG_PRETTY`           | `true`               | `false`                      | `false`                   |
 | `HTTP_EXPOSE_FAILURES` | `true`               | `true`                       | `false`                   |
 
@@ -60,8 +60,8 @@ traces with bundle paths. That's acceptable for a testing environment holding no
 user data, and never for production.
 
 The other keys (`LLM_*`, `LOG_LEVEL`, the extraction tunables) hold the same meaning
-everywhere and are set per environment as needed. Production is created now and stays
-empty until there is something to deploy there.
+everywhere and are set per environment as needed. Production has its own Firebase project (`wishlist-prod`) and Turso database, so staging
+and production share no users and no data.
 
 ## Considered options
 
