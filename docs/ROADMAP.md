@@ -64,6 +64,7 @@ controller, nothing more.
 | 19  | `libs/domain` is isomorphic and imported at runtime by every lib and app; `data` libs compose request schemas from `Entity.$`; `Plain<T>` is the wire format both ways; services return domain types, controllers call `plain()` | ADR-0043    |
 | 20  | CI on GitHub Actions over affected projects; Nx Cloud dropped; Node 24 in `.nvmrc`                                                                                                                                               | ADR-0044    |
 | 21  | Infisical Cloud is the single source of secrets: project `wishlist-api`, `dev`/`staging`/`prod`, keys at root; local dev via `infisical run`; `DATABASE_AUTH_TOKEN` required for remote URLs                                     | ADR-0045    |
+| 22  | API image: Nx builds, Docker packages the prune output on `node:24-slim`; bundled `migrate.js` (drizzle-orm migrator) for the release step; GHCR, tagged `sha-<short>` and `main`                                                | ADR-0046    |
 
 Glossary changes made alongside: **Identity** added; **Status (of a User)** corrected
 (deactivation refuses requests, it does not block login); **Extraction Status** reworded so
@@ -118,7 +119,9 @@ FailureRenderer`, email and auth headers redacted.
      `infisical run` for local dev, `.env` retired; add the missing `DATABASE_AUTH_TOKEN`
      to `Env` and `DatabaseModule` (the API cannot reach a remote Turso without it)
      (ADR-0045).
-   - 7c. Image — Dockerfile over the `api:prune` output, `.dockerignore`, push to GHCR.
+   - 7c. Image — `node:24-slim` Dockerfile over the `api:prune` output, built from
+     `apps/api/dist` as context; `migrate.js` entry with drizzle-orm's migrator; pushed to
+     GHCR on `main` after `check` (ADR-0046).
    - 7d. Deploy — host choice, GitHub OIDC machine identity for Infisical, how the
      container receives its secrets, migrations as a release step, staging deploy on
      `main`.
