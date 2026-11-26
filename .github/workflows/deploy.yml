@@ -52,13 +52,61 @@ jobs:
 
       - run: npm install --global @railway/cli@5.75.0
 
-      # Commits the image into the environment's config, which deploys it.
-      # One command, one deploy: `service source connect` left the config on
-      # `:main`, and a following `redeploy` raced two pre-deploy migrations.
-      - name: Pin the environment's service to the image
-        run: >-
-          railway environment edit
-          --project "$RAILWAY_PROJECT"
-          --environment "$RAILWAY_ENVIRONMENT"
-          --service-config "$RAILWAY_SERVICE" source.image "$IMAGE"
-          --message "Deploy $IMAGE"
+      # Railway's GraphQL API needs IDs; the Environment stores names.
+      - name: Resolve Railway IDs
+        id: ids
+        run: |
+          # shellcheck disable=SC2016 # $id is a GraphQL variable, not shell
+          ids=$(railway api --compact --raw-var id="$RAILWAY_PROJECT" \
+            'query($id: String!) { project(id: $id) {
+              environments { edges { node { id name } } }
+              services { edges { node { id name } } } } }')
+          env_id=$(jq -r --arg n "$RAILWAY_ENVIRONMENT" \
+            '.data.project.environments.edges[].node | select(.name == $n) | .id' <<<"$ids")
+          service_id=$(jq -r --arg n "$RAILWAY_SERVICE" \
+            '.data.project.services.edges[].node | select(.name == $n) | .id' <<<"$ids")
+          if [ -z "$env_id" ] || [ -z "$service_id" ]; then
+            echo "::error::Railway project has no environment \"$RAILWAY_ENVIRONMENT\" or service \"$RAILWAY_SERVICE\""
+            exit 1
+          fi
+          echo "env=$env_id" >> "$GITHUB_OUTPUT"
+          echo "service=$service_id" >> "$GITHUB_OUTPUT"
+
+      # Commits the image into the environment's config, which deploys it once.
+      # `railway service source connect` deployed without changing the config,
+      # and `railway environment edit --service-config` exits 0 but applies
+      # nothing when stdin isn't a terminal, so the API is called directly.
+      - name: Pin the service to the image and deploy
+        env:
+          ENV_ID: ${{ steps.ids.outputs.env }}
+          SERVICE_ID: ${{ steps.ids.outputs.service }}
+        run: |
+          patch=$(jq -nc --arg s "$SERVICE_ID" --arg i "$IMAGE" \
+            '{services: {($s): {source: {image: $i}}}}')
+          # shellcheck disable=SC2016 # $env, $patch, $msg are GraphQL variables
+          railway api --compact \
+            --raw-var env="$ENV_ID" --var patch="$patch" --raw-var msg="Deploy $IMAGE" \
+            'mutation($env: String!, $patch: EnvironmentConfig!, $msg: String) {
+              environmentPatchCommit(environmentId: $env, patch: $patch, commitMessage: $msg) }'
+
+      # A green job means the deploy succeeded, not just that Railway accepted
+      # it: migrations ran and /api/health answered 2xx.
+      - name: Wait for the deployment
+        run: |
+          for _ in $(seq 1 90); do
+            status=$(railway deployment list --json --limit 10 \
+                --project "$RAILWAY_PROJECT" --environment "$RAILWAY_ENVIRONMENT" \
+                --service "$RAILWAY_SERVICE" \
+              | jq -r --arg i "$IMAGE" \
+                '[.[] | select(.meta.image == $i)] | sort_by(.createdAt) | last | .status // "PENDING"')
+            echo "$IMAGE: $status"
+            case "$status" in
+              SUCCESS) exit 0 ;;
+              FAILED|CRASHED|REMOVED|SKIPPED)
+                echo "::error::Deployment of $IMAGE ended $status; see its logs in Railway"
+                exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "::error::Deployment of $IMAGE did not finish within 15 minutes"
+          exit 1

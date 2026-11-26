@@ -57,14 +57,24 @@ Infisical staging ──sync──▶ Railway staging/wish-list-api variables
 - **`deploy-staging`** runs only on `push` to `main`, with `needs: image`, in a GitHub
   Environment named `staging`. That gives the deploy its own history in GitHub and keeps
   the Railway token out of pull request runs.
-- It uses the Railway CLI: `railway environment edit --service-config <service>
-source.image <ref> --message "Deploy <ref>"` writes the `sha-<short>` image into the
-  environment's configuration and commits it, which starts one deploy. The first version
-  used `railway service source connect --image` followed by `railway service redeploy`.
-  `connect` started a deploy of its own without changing the environment's configured
-  image (it stayed `:main`), and the redeploy started a second deploy whose pre-deploy
-  migration raced the first (`table categories already exists`). One deploy per run
-  keeps migrations from ever running concurrently.
+- **It calls Railway's GraphQL API through `railway api`.** It resolves the environment
+  and service IDs from their names, then calls `environmentPatchCommit` with
+  `{services: {<id>: {source: {image: <ref>}}}}` and the message `Deploy <ref>`. That
+  writes the `sha-<short>` image into the environment's configuration and starts exactly
+  one deploy.
+- **Two CLI commands were tried first and failed:**
+  - `railway service source connect --image`, followed by `railway service redeploy`.
+    `connect` started a deploy without changing the configured image (it stayed `:main`).
+    The redeploy started a second deploy, whose pre-deploy migration raced the first
+    (`table categories already exists`).
+  - `railway environment edit --service-config <service> source.image <ref>`. It exits 0
+    and reports "No changes to apply" when stdin isn't a terminal, which is always the case
+    in CI.
+- **The job waits for the outcome.** It polls `railway deployment list` for the deployment
+  whose `meta.image` is the pushed tag, and passes only on `SUCCESS`. It fails on
+  `FAILED`, `CRASHED`, `REMOVED` or `SKIPPED`, or after 15 minutes. A green job therefore
+  means the migrations ran and `/api/health` answered, not only that Railway accepted the
+  request.
 - **The token is a Railway account token**, stored as the GitHub Environment secret
   `RAILWAY_API_TOKEN` on `staging`, never as a repository-wide secret. A project token
   scoped to `staging` was tried first: it finds the service but is refused
