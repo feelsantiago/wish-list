@@ -62,6 +62,7 @@ controller, nothing more.
 | 17 | `AuthGuard` refuses a Deactivated `User` (403 `user-deactivated`) unless the route is `@AllowDeactivated()` (built in M1 with reactivate); `Authorization`'s check stays | ADR-0039 |
 | 18 | `Identity.name` is `Option`; missing name falls back to the email local part; `User.nameSource` (`broker`/`user`) stops re-sync once the User renames | ADR-0040 |
 | 19 | `libs/domain` is isomorphic and imported at runtime by every lib and app; `data` libs compose request schemas from `Entity.$`; `Plain<T>` is the wire format both ways; services return domain types, controllers call `plain()` | ADR-0043 |
+| 20 | CI on GitHub Actions over affected projects; Nx Cloud dropped; Node 24 in `.nvmrc` | ADR-0044 |
 
 Glossary changes made alongside: **Identity** added; **Status (of a User)** corrected
 (deactivation refuses requests, it does not block login); **Extraction Status** reworded so
@@ -109,6 +110,14 @@ envelope and deployment against real traffic before six service libs are built o
    Built before step 5: step 6 has no authorizer call, so `libs/authorization` moves to the
    start of M1, designed alongside `authorizeVia`.
 7. Deployment — container image, release-step `drizzle-kit migrate`, staging environment.
+   Automated from GitHub Actions, with Infisical as the single source of secrets. Split:
+   - 7a. CI — PR and `main` checks over affected projects, no Nx Cloud, Node 24 pinned in
+     `.nvmrc` (ADR-0044).
+   - 7b. Secrets — Infisical project with `dev` / `staging` / `prod`, GitHub OIDC machine
+     identity, `infisical run` for local dev; add the missing `DATABASE_AUTH_TOKEN` to
+     `Env` and `DatabaseModule` (the API cannot reach a remote Turso without it).
+   - 7c. Image — Dockerfile over the `api:prune` output, `.dockerignore`, push to GHCR.
+   - 7d. Deploy — host choice, migrations as a release step, staging deploy on `main`.
 
 ## M1 — Free tier breadth
 
