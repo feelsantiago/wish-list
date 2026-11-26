@@ -63,6 +63,7 @@ controller, nothing more.
 | 18  | `Identity.name` is `Option`; missing name falls back to the email local part; `User.nameSource` (`broker`/`user`) stops re-sync once the User renames                                                                            | ADR-0040    |
 | 19  | `libs/domain` is isomorphic and imported at runtime by every lib and app; `data` libs compose request schemas from `Entity.$`; `Plain<T>` is the wire format both ways; services return domain types, controllers call `plain()` | ADR-0043    |
 | 20  | CI on GitHub Actions over affected projects; Nx Cloud dropped; Node 24 in `.nvmrc`                                                                                                                                               | ADR-0044    |
+| 21  | Infisical Cloud is the single source of secrets: project `wishlist-api`, `dev`/`staging`/`prod`, keys at root; local dev via `infisical run`; `DATABASE_AUTH_TOKEN` required for remote URLs                                     | ADR-0045    |
 
 Glossary changes made alongside: **Identity** added; **Status (of a User)** corrected
 (deactivation refuses requests, it does not block login); **Extraction Status** reworded so
@@ -113,11 +114,14 @@ FailureRenderer`, email and auth headers redacted.
    Automated from GitHub Actions, with Infisical as the single source of secrets. Split:
    - 7a. CI — PR and `main` checks over affected projects, no Nx Cloud, Node 24 pinned in
      `.nvmrc` (ADR-0044).
-   - 7b. Secrets — Infisical project with `dev` / `staging` / `prod`, GitHub OIDC machine
-     identity, `infisical run` for local dev; add the missing `DATABASE_AUTH_TOKEN` to
-     `Env` and `DatabaseModule` (the API cannot reach a remote Turso without it).
+   - 7b. Secrets — Infisical project `wishlist-api` with `dev` / `staging` / `prod`,
+     `infisical run` for local dev, `.env` retired; add the missing `DATABASE_AUTH_TOKEN`
+     to `Env` and `DatabaseModule` (the API cannot reach a remote Turso without it)
+     (ADR-0045).
    - 7c. Image — Dockerfile over the `api:prune` output, `.dockerignore`, push to GHCR.
-   - 7d. Deploy — host choice, migrations as a release step, staging deploy on `main`.
+   - 7d. Deploy — host choice, GitHub OIDC machine identity for Infisical, how the
+     container receives its secrets, migrations as a release step, staging deploy on
+     `main`.
 
 ## M1 — Free tier breadth
 
