@@ -41,30 +41,31 @@ controller, nothing more.
 
 ## Decisions taken
 
-| #   | Decision                                                                                                                                                                                                                         | Recorded in |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| 1   | Done = Free tier over HTTP; Pro stays domain-only                                                                                                                                                                                | this file   |
-| 2   | Managed identity broker; local `User` mirrors it; JIT provisioning with drift re-sync                                                                                                                                            | ADR-0032    |
-| 3   | `provider` holds the social connection, `providerId` the broker subject; unique email index kept                                                                                                                                 | ADR-0032    |
-| 4   | `libs/authorization` loads owned entities and mints `UserAuthorized` bundles                                                                                                                                                     | ADR-0031    |
-| 5   | Item creation stays synchronous for v1; async is a later, additive change                                                                                                                                                        | this file   |
-| 6   | Request validation: zod schemas in `data` libs, `createZodDto` wrappers in `apps/api`, one global pipe                                                                                                                           | this file   |
-| 7   | Every response is enveloped: `{ status, data }` / `{ status, error }`                                                                                                                                                            | this file   |
-| 8   | Controllers return `Result`; a per-controller failure interceptor maps `ServiceFailure` to `HttpException` with a user-facing message; a global filter builds the envelope                                                       | this file   |
-| 9   | Error bodies carry no failure tag, no metadata, no cause chain in production                                                                                                                                                     | this file   |
-| 10  | Logging at the edge only, with `libs/extraction` the one exception; `nestjs-pino`                                                                                                                                                | this file   |
-| 11  | Long-running container; migrations as a release step; env validated once at bootstrap with zod                                                                                                                                   | this file   |
-| 12  | `libs/<feature>/data` libs created per slice                                                                                                                                                                                     | this file   |
-| 13  | Firebase Authentication is the broker; lookup by `providerId` alone, `provider` re-synced as drift                                                                                                                               | ADR-0034    |
-| 14  | HTTP edge in `@wish-list/common-http`: `nestjs-zod` pipe, per-tag defaults with `@FailureResponses` map or `FailureTranslator` overrides, `HTTP_EXPOSE_FAILURES` for dev                                                         | ADR-0036    |
-| 15  | `unauthenticated` (401) and `user-deactivated` (403) join `ServiceFailureType`; one generic 401 message, reason in metadata, logged by the guard, `WWW-Authenticate: Bearer`                                                     | ADR-0037    |
-| 16  | `Identity` in `libs/domain`; token verification in horizontal `libs/authentication`; `AccountService.resolve` in `libs/account/service`; global `AuthGuard` + `@CurrentUser()` in `apps/api`, `@Public()` opt-out                | ADR-0038    |
-| 17  | `AuthGuard` refuses a Deactivated `User` (403 `user-deactivated`) unless the route is `@AllowDeactivated()` (built in M1 with reactivate); `Authorization`'s check stays                                                         | ADR-0039    |
-| 18  | `Identity.name` is `Option`; missing name falls back to the email local part; `User.nameSource` (`broker`/`user`) stops re-sync once the User renames                                                                            | ADR-0040    |
-| 19  | `libs/domain` is isomorphic and imported at runtime by every lib and app; `data` libs compose request schemas from `Entity.$`; `Plain<T>` is the wire format both ways; services return domain types, controllers call `plain()` | ADR-0043    |
-| 20  | CI on GitHub Actions over affected projects; Nx Cloud dropped; Node 24 in `.nvmrc`                                                                                                                                               | ADR-0044    |
-| 21  | Infisical Cloud is the single source of secrets: project `wishlist-api`, `dev`/`staging`/`prod`, keys at root; local dev via `infisical run`; `DATABASE_AUTH_TOKEN` required for remote URLs                                     | ADR-0045    |
-| 22  | API image: Nx builds, Docker packages the prune output on `node:24-slim`; bundled `migrate.js` (drizzle-orm migrator) for the release step; GHCR, tagged `sha-<short>` and `main`                                                | ADR-0046    |
+| #   | Decision                                                                                                                                                                                                                             | Recorded in |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
+| 1   | Done = Free tier over HTTP; Pro stays domain-only                                                                                                                                                                                    | this file   |
+| 2   | Managed identity broker; local `User` mirrors it; JIT provisioning with drift re-sync                                                                                                                                                | ADR-0032    |
+| 3   | `provider` holds the social connection, `providerId` the broker subject; unique email index kept                                                                                                                                     | ADR-0032    |
+| 4   | `libs/authorization` loads owned entities and mints `UserAuthorized` bundles                                                                                                                                                         | ADR-0031    |
+| 5   | Item creation stays synchronous for v1; async is a later, additive change                                                                                                                                                            | this file   |
+| 6   | Request validation: zod schemas in `data` libs, `createZodDto` wrappers in `apps/api`, one global pipe                                                                                                                               | this file   |
+| 7   | Every response is enveloped: `{ status, data }` / `{ status, error }`                                                                                                                                                                | this file   |
+| 8   | Controllers return `Result`; a per-controller failure interceptor maps `ServiceFailure` to `HttpException` with a user-facing message; a global filter builds the envelope                                                           | this file   |
+| 9   | Error bodies carry no failure tag, no metadata, no cause chain in production                                                                                                                                                         | this file   |
+| 10  | Logging at the edge only, with `libs/extraction` the one exception; `nestjs-pino`                                                                                                                                                    | this file   |
+| 11  | Long-running container; migrations as a release step; env validated once at bootstrap with zod                                                                                                                                       | this file   |
+| 12  | `libs/<feature>/data` libs created per slice                                                                                                                                                                                         | this file   |
+| 13  | Firebase Authentication is the broker; lookup by `providerId` alone, `provider` re-synced as drift                                                                                                                                   | ADR-0034    |
+| 14  | HTTP edge in `@wish-list/common-http`: `nestjs-zod` pipe, per-tag defaults with `@FailureResponses` map or `FailureTranslator` overrides, `HTTP_EXPOSE_FAILURES` for dev                                                             | ADR-0036    |
+| 15  | `unauthenticated` (401) and `user-deactivated` (403) join `ServiceFailureType`; one generic 401 message, reason in metadata, logged by the guard, `WWW-Authenticate: Bearer`                                                         | ADR-0037    |
+| 16  | `Identity` in `libs/domain`; token verification in horizontal `libs/authentication`; `AccountService.resolve` in `libs/account/service`; global `AuthGuard` + `@CurrentUser()` in `apps/api`, `@Public()` opt-out                    | ADR-0038    |
+| 17  | `AuthGuard` refuses a Deactivated `User` (403 `user-deactivated`) unless the route is `@AllowDeactivated()` (built in M1 with reactivate); `Authorization`'s check stays                                                             | ADR-0039    |
+| 18  | `Identity.name` is `Option`; missing name falls back to the email local part; `User.nameSource` (`broker`/`user`) stops re-sync once the User renames                                                                                | ADR-0040    |
+| 19  | `libs/domain` is isomorphic and imported at runtime by every lib and app; `data` libs compose request schemas from `Entity.$`; `Plain<T>` is the wire format both ways; services return domain types, controllers call `plain()`     | ADR-0043    |
+| 20  | CI on GitHub Actions over affected projects; Nx Cloud dropped; Node 24 in `.nvmrc`                                                                                                                                                   | ADR-0044    |
+| 21  | Infisical Cloud is the single source of secrets: project `wishlist-api`, `dev`/`staging`/`prod`, keys at root; local dev via `infisical run`; `DATABASE_AUTH_TOKEN` required for remote URLs                                         | ADR-0045    |
+| 22  | API image: Nx builds, Docker packages the prune output on `node:24-slim`; bundled `migrate.js` (drizzle-orm migrator) for the release step; GHCR, tagged `sha-<short>` and `main`                                                    | ADR-0046    |
+| 23  | Staging on Railway Hobby from the public GHCR image; pre-deploy `node migrate.js`, `/api/health` gate; Infisical → Railway sync instead of CI-read secrets; CI deploys the exact `sha-<short>` tag; prod promotes the same tag later | ADR-0047    |
 
 Glossary changes made alongside: **Identity** added; **Status (of a User)** corrected
 (deactivation refuses requests, it does not block login); **Extraction Status** reworded so
@@ -122,9 +123,10 @@ FailureRenderer`, email and auth headers redacted.
    - 7c. Image — `node:24-slim` Dockerfile over the `api:prune` output, built from
      `apps/api/dist` as context; `migrate.js` entry with drizzle-orm's migrator; pushed to
      GHCR on `main` after `check` (ADR-0046).
-   - 7d. Deploy — host choice, GitHub OIDC machine identity for Infisical, how the
-     container receives its secrets, migrations as a release step, staging deploy on
-     `main`.
+   - 7d. Deploy — Railway (Hobby) `staging` environment, `api` service from the public
+     GHCR image; `node migrate.js` as pre-deploy command, `/api/health` healthcheck;
+     Infisical → Railway secret sync (no GitHub OIDC); `deploy-staging` job sets the
+     `sha-<short>` tag on every push to `main` (ADR-0047).
 
 ## M1 — Free tier breadth
 

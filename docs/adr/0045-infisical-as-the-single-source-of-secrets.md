@@ -76,8 +76,8 @@ empty until there is something to deploy there.
   one developer today.
 - **Local dev depends on Infisical being reachable** at startup. A hand-written `.env`
   remains the offline fallback.
-- **CI still holds no secrets (ADR-0044).** The GitHub OIDC machine identity that lets
-  Actions read `staging` is created in 7d, with the first job that needs it. How the
-  running container gets its secrets also depends on the host and is decided in 7d.
+- **CI still holds no secrets (ADR-0044).** How the running container gets its secrets
+  depends on the host and is decided in 7d. Amended by ADR-0047: Infisical's Railway sync
+  delivers them, so no GitHub OIDC identity is created and CI never reads Infisical.
 - **`apps/api/.env` is deleted** once its values are in Infisical's `dev` environment.
   `.gitignore` keeps ignoring `.env*`.
